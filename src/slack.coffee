@@ -80,11 +80,13 @@ class Slack extends Adapter
         callback "No services token provided to Hubot", null
       return
 
+    path += "?token=" + @options.token
+
     req_options =
       "agent"  : false
       "host"   : host
       "port"   : 443
-      "path"   : path += "?token=" + @options.token
+      "path"   : path
       "method" : method
       "headers": headers
 
