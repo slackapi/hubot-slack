@@ -80,19 +80,19 @@ class Slack extends Adapter
             callback "No services token provided to Hubot", null
          return
 
-      options =
+      req_options =
          "agent"  : false
          "host"   : host
          "port"   : 443
-         "path"   : path += "?token=#{@options.token}"
+         "path"   : path += "?token=" + @options.token
          "method" : method
          "headers": headers
 
       if method is "POST"
          headers["Content-Type"] = "application/x-www-form-urlencoded"
-         options.headers["Content-Length"] = body.length
+         req_options.headers["Content-Length"] = body.length
 
-      request = HTTPS.request options, (response) ->
+      request = HTTPS.request req_options, (response) ->
          data = ""
          response.on "data", (chunk) ->
             data += chunk
