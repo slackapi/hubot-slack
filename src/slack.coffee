@@ -5,6 +5,8 @@ HTTPS = require 'https'
 
 class Slack extends Adapter
    send: (params, strings...) ->
+      console.log "Sending message"
+
       user = @userFromParams(params)
       strings.forEach (str) =>
          args = JSON.stringify({"channel": user.reply_to, "text": str})
@@ -23,7 +25,7 @@ class Slack extends Adapter
    run: ->
       self = @
 
-      options =
+      @options =
          token:   process.env.HUBOT_SLACK_TOKEN
          team:    process.env.HUBOT_SLACK_TEAM
          name:    process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
@@ -73,7 +75,9 @@ class Slack extends Adapter
       headers = "Host": host
 
       unless @options.token
-         callback "No services token provided to Hubot", null
+         console.log "No services token provided to Hubot"
+         if callback
+            callback "No services token provided to Hubot", null
          return
 
       options =
