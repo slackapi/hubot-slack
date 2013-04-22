@@ -22,7 +22,7 @@ class Slack extends Adapter
       options =
          token:   process.env.HUBOT_SLACK_TOKEN
          team:    process.env.HUBOT_SLACK_TEAM
-         name:    process.env.HUBOT_SLACK_BOTNAME
+         name:    process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
 
       # Listen to incoming webhooks from slack
       self.robot.router.post "/hubot/slack-webhook", (req, res) ->
