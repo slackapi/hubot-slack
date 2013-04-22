@@ -4,7 +4,9 @@ HTTPS = require 'https'
 class Slack extends Adapter
    send: (params, strings...) ->
       user = @userFromParams(params)
-      @post "/services/hooks/hubot" JSON.stringify({channel: user.reply_to, text: str}) for str in strings
+      strings.forEach (str) =>
+         args = JSON.stringify({"channel": user.reply_to, "text": str})
+         @post "/services/hooks/hubot", args
 
    reply: (params, strings...) ->
       user = @userFromParams(params)
@@ -43,7 +45,8 @@ class Slack extends Adapter
          # Pass to the robot
          self.receive new TextMessage(author, hubot_msg)
 
-         # Just send back an empty reply, since our actual reply, if any, will be async above
+         # Just send back an empty reply, since our actual reply,
+         # if any, will be async above
          res.end
 
       # Provide our name to Hubot
@@ -89,10 +92,12 @@ class Slack extends Adapter
             if response.statusCode >= 400
                console.log "Slack services error: #{response.statusCode}"
 
-            if (callback) callback null, data
+            if callback
+               callback null, data
 
          response.on "error", (err) ->
-            if (callback) callback err, null
+            if callback
+               callback err, null
 
       if method is "POST"
          request.end(body, 'binary')
