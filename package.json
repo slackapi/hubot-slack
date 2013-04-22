@@ -1,0 +1,42 @@
+{
+  "name": "hubot-slack",
+  "version": "0.1.0",
+  "author": {
+    "name": "Tinyi Speck",
+    "url": "https://www.tinyspeck.com/"
+  },
+  "contributors": [
+    {
+      "name": "Myles Grant",
+      "email": "myles@tinyspeck.com"
+    }
+  ],
+  "keywords": [
+    "hubot",
+    "tinyspeck",
+    "adapter",
+    "slack"
+  ],
+  "description": "A Slack adapter for hubot",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/mit-license.php"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/tinyspeck/hubot-slack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tinyspeck/hubot-slack/issues",
+    "email": "help@tinyspeck.com"
+  },
+  "devDependencies": {
+    "coffee-script": ">=1.2.0"
+  },
+  "main": "./src/slack",
+  "engines": {
+    "node": ">=0.4.7"
+  }
+}
