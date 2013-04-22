@@ -1,4 +1,6 @@
-{Adapter,TextMessage} = require 'hubot'
+Robot   = require('hubot').Robot
+Adapter = require('hubot').Adapter
+TextMessage = require('hubot').TextMessage
 HTTPS = require 'https'
 
 class Slack extends Adapter
@@ -25,9 +27,12 @@ class Slack extends Adapter
          token:   process.env.HUBOT_SLACK_TOKEN
          team:    process.env.HUBOT_SLACK_TEAM
          name:    process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
+      console.log "Slack adapter options:", @options
 
       # Listen to incoming webhooks from slack
       self.robot.router.post "/hubot/slack-webhook", (req, res) ->
+         console.log "Incoming message received"
+
          # Parse the payload
          from = req.param('user_id')
          from_name = req.param('user_name')
@@ -47,7 +52,7 @@ class Slack extends Adapter
 
          # Just send back an empty reply, since our actual reply,
          # if any, will be async above
-         res.end
+         res.end ""
 
       # Provide our name to Hubot
       self.robot.name = options.name
