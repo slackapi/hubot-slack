@@ -26,10 +26,18 @@ class Slack extends Adapter
     self = @
 
     @options =
-      token:   process.env.HUBOT_SLACK_TOKEN
-      team:    process.env.HUBOT_SLACK_TEAM
+      token:   process.env.HUBOT_SLACK_TOKEN or null
+      team:    process.env.HUBOT_SLACK_TEAM or null
       name:    process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
     console.log "Slack adapter options:", @options
+
+    unless @options.token
+      console.log "No services token provided to Hubot"
+      return
+
+    unless @options.team
+      console.log "No team provided to Hubot"
+      return
 
     # Listen to incoming webhooks from slack
     self.robot.router.post "/hubot/slack-webhook", (req, res) ->
@@ -57,7 +65,7 @@ class Slack extends Adapter
       res.end ""
 
     # Provide our name to Hubot
-    self.robot.name = options.name
+    self.robot.name = @options.name
 
     # Tell Hubot we're connected so it can load scripts
     self.emit "connected"
@@ -73,12 +81,6 @@ class Slack extends Adapter
     console.log method, path, body
     host = @options.team + '.dev.hny.co'
     headers = "Host": host
-
-    unless @options.token
-      console.log "No services token provided to Hubot"
-      if callback
-        callback "No services token provided to Hubot", null
-      return
 
     path += "?token=" + @options.token
 
