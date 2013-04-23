@@ -120,6 +120,7 @@ class Slack extends Adapter
       response.on "end", ->
         if response.statusCode >= 400
           console.error "Slack services error: #{response.statusCode}"
+          console.error data
 
         #console.log "HTTPS response:", data
         if callback
