@@ -103,7 +103,7 @@ class Slack extends Adapter
       headers["Content-Type"] = "application/x-www-form-urlencoded"
       req_options.headers["Content-Length"] = body.length
 
-    console.log req_options.method, req_options.host, req_options.path
+    console.log "Sending request:", req_options.method, req_options.host, req_options.path
     request = HTTPS.request req_options, (response) ->
       data = ""
       response.on "data", (chunk) ->
@@ -117,6 +117,7 @@ class Slack extends Adapter
             callback null, data
 
         response.on "error", (err) ->
+          console.error "HTTPS response error:", err
           if callback
             callback err, null
 
@@ -126,7 +127,7 @@ class Slack extends Adapter
         request.end()
 
     request.on "error", (err) ->
-      console.error err
+      console.error "HTTPS request error:", err
       console.error err.stack
       if callback
         callback err
