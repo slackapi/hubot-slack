@@ -111,7 +111,6 @@ class Slack extends Adapter
       headers["Content-Type"] = "application/x-www-form-urlencoded"
       req_options.headers["Content-Length"] = body.length
 
-    #console.log "Sending request:", req_options.method, req_options.hostname, req_options.path
     request = HTTPS.request req_options, (response) ->
       data = ""
       response.on "data", (chunk) ->
