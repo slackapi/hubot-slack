@@ -14,7 +14,8 @@ class Slack extends Adapter
       str = str.replace(/</g, '&lt;')
       str = str.replace(/>/g, '&gt;')
 
-      # TODO: Linkify
+      # Linkify. We assume that the bot is well-behaved and consistently sending links with the protocol part
+      str = str.replace(/((\bhttp)\S+)/g, '<$1>')
 
       args = JSON.stringify({"channel": user.reply_to, "text": str})
       @post "/services/hooks/hubot", args
