@@ -122,10 +122,10 @@ class Slack extends Adapter
           if callback
             callback err, null
 
-      if method is "POST"
-        request.end(body, 'binary')
-      else
-        request.end()
+    if method is "POST"
+      request.end(body, 'binary')
+    else
+      request.end()
 
     request.on "error", (err) ->
       console.error "HTTPS request error:", err
