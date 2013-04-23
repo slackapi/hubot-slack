@@ -9,15 +9,15 @@ First, read and understand the [instructions on the Hubot wiki](https://github.c
 1. Edit `package.json` and add `hubot-slack` to the `dependencies` section.
 1. Edit `Procfile` and change it to use the `slack` adapter:
 
-    web: bin/hubot --adapter hipchat
+        web: bin/hubot --adapter hipchat
 
 1. Activate the Hubot service on your Slack's "Team Services" page.
 1. Configure your Hubot install using the variables displayed on the Hubot Team Service page. Examples:
 
-    % heroku config:add HEROKU_URL=http://soothing-mists-4567.herokuapp.com
-    % heroku config:add HUBOT_SLACK_TOKEN=foo
-    % heroku config:add HUBOT_SLACK_TEAM=tinyspeck
-    % heroku config:add HUBOT_SLACK_BOTNAME=slackbot
+        % heroku config:add HEROKU_URL=http://soothing-mists-4567.herokuapp.com
+        % heroku config:add HUBOT_SLACK_TOKEN=foo
+        % heroku config:add HUBOT_SLACK_TEAM=tinyspeck
+        % heroku config:add HUBOT_SLACK_BOTNAME=slackbot
 
 1. Follow the rest of the Hubot instructions to get up-and-running.
 
