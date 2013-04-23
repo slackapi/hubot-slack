@@ -10,9 +10,9 @@ class Slack extends Adapter
     user = @userFromParams(params)
     strings.forEach (str) =>
       # Escape this
-      str = str.replace('&', '&amp;')
-      str = str.replace('<', '&lt;')
-      str = str.replace('>', '&gt;')
+      str = str.replace(/&/g, '&amp;')
+      str = str.replace(/</g, '&lt;')
+      str = str.replace(/>/g, '&gt;')
 
       # TODO: Linkify
 
