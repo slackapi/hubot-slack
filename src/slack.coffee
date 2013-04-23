@@ -13,9 +13,14 @@ class Slack extends Adapter
       @post "/services/hooks/hubot", args
 
   reply: (params, strings...) ->
+    console.log "Sending reply"
+
     user = @userFromParams(params)
     strings.forEach (str) =>
       @send params, "#{user.name}: #{str}"
+
+  topic: (params, strings...) ->
+    # TODO: Set the topic
 
   userFromParams: (params) ->
     # hubot < 2.4.2: params = user
@@ -32,11 +37,11 @@ class Slack extends Adapter
     console.log "Slack adapter options:", @options
 
     unless @options.token
-      console.log "No services token provided to Hubot"
+      console.error "No services token provided to Hubot"
       return
 
     unless @options.team
-      console.log "No team provided to Hubot"
+      console.error "No team provided to Hubot"
       return
 
     # Listen to incoming webhooks from slack
@@ -58,6 +63,7 @@ class Slack extends Adapter
       author.room = channel_name
 
       # Pass to the robot
+      console.log "Received #{hubot_msg} from #{author}"
       self.receive new TextMessage(author, hubot_msg)
 
       # Just send back an empty reply, since our actual reply,
@@ -68,6 +74,7 @@ class Slack extends Adapter
     self.robot.name = @options.name
 
     # Tell Hubot we're connected so it can load scripts
+    console.log "Successfully 'connected' as", self.robot.name
     self.emit "connected"
 
   # Convenience HTTP Methods for sending data back to slack
@@ -78,7 +85,7 @@ class Slack extends Adapter
     @request "POST", path, body, callback
 
   request: (method, path, body, callback) ->
-    console.log method, path, body
+    #console.log method, path, body
     host = @options.team + '.dev.hny.co'
     headers = "Host": host
 
@@ -96,6 +103,7 @@ class Slack extends Adapter
       headers["Content-Type"] = "application/x-www-form-urlencoded"
       req_options.headers["Content-Length"] = body.length
 
+    console.log req_options.method, req_options.host, req_options.path
     request = HTTPS.request req_options, (response) ->
       data = ""
       response.on "data", (chunk) ->
@@ -103,7 +111,7 @@ class Slack extends Adapter
 
       response.on "end", ->
         if response.statusCode >= 400
-          console.log "Slack services error: #{response.statusCode}"
+          console.error "Slack services error: #{response.statusCode}"
 
           if callback
             callback null, data
@@ -118,9 +126,10 @@ class Slack extends Adapter
         request.end()
 
     request.on "error", (err) ->
-      console.log err
-      console.log err.stack
-      callback err
+      console.error err
+      console.error err.stack
+      if callback
+        callback err
 
 exports.use = (robot) ->
   new Slack robot
