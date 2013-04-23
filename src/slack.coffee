@@ -9,6 +9,13 @@ class Slack extends Adapter
 
     user = @userFromParams(params)
     strings.forEach (str) =>
+      # Escape this
+      str = str.replace('&', '&amp;')
+      str = str.replace('<', '&lt;')
+      str = str.replace('>', '&gt;')
+
+      # TODO: Linkify
+
       args = JSON.stringify({"channel": user.reply_to, "text": str})
       @post "/services/hooks/hubot", args
 
@@ -103,7 +110,7 @@ class Slack extends Adapter
       headers["Content-Type"] = "application/x-www-form-urlencoded"
       req_options.headers["Content-Length"] = body.length
 
-    console.log "Sending request:", req_options.method, req_options.hostname, req_options.path
+    #console.log "Sending request:", req_options.method, req_options.hostname, req_options.path
     request = HTTPS.request req_options, (response) ->
       data = ""
       response.on "data", (chunk) ->
@@ -113,7 +120,7 @@ class Slack extends Adapter
         if response.statusCode >= 400
           console.error "Slack services error: #{response.statusCode}"
 
-        console.log "HTTPS response:", data
+        #console.log "HTTPS response:", data
         if callback
           callback null, data
 
