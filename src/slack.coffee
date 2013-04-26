@@ -64,6 +64,14 @@ class Slack extends Adapter
       channel_name = req.param('channel_name')
       hubot_msg = req.param('text')
 
+      # Make links back into html
+      hubot_msg = hubot_msg.replace(/<((\bhttp)[^|]+)(\|(.*))?>/g, '<a href="$1">$4</a>')
+
+      # Unescape
+      hubot_msg = hubot_msg.replace(/&amp;/g, '&')
+      hubot_msg = hubot_msg.replace(/&lt;/g, '<')
+      hubot_msg = hubot_msg.replace(/&gt;/g, '>')
+
       # Construct an author object
       author = {}
       author.id = from
