@@ -9,7 +9,7 @@ First, read and understand the [instructions on the Hubot wiki](https://github.c
 1. Edit `package.json` and add `hubot-slack` to the `dependencies` section.
 1. Edit `Procfile` and change it to use the `slack` adapter:
 
-        web: bin/hubot --adapter hipchat
+        web: bin/hubot --adapter slack
 
 1. Activate the Hubot service on your Slack's "Team Services" page.
 1. Configure your Hubot install using the variables displayed on the Hubot Team Service page. Examples:
