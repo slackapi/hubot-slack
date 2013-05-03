@@ -18,7 +18,7 @@ class Slack extends Adapter
       # consistently sending links with the protocol part
       str = str.replace(/((\bhttp)\S+)/g, '<$1>')
 
-      args = JSON.stringify({"channel": user.reply_to, "text": str})
+      args = JSON.stringify({"channel": user.reply_to, "text": str, username: self.robot.name})
       @post "/services/hooks/hubot", args
 
   reply: (params, strings...) ->
