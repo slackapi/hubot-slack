@@ -64,25 +64,26 @@ class Slack extends Adapter
       channel_name = req.param('channel_name')
       hubot_msg = req.param('text')
 
-      # Make links back into html
-      hubot_msg = hubot_msg.replace(/<((\bhttp)[^|]+)(\|(.*))+>/g, '<a href="$1">$4</a>')
-      hubot_msg = hubot_msg.replace(/<((\bhttp)(.*))?>/g, '<a href="$1">$1</a>')
+      if hubot_msg
+        # Make links back into html
+        hubot_msg = hubot_msg.replace(/<((\bhttp)[^|]+)(\|(.*))+>/g, '<a href="$1">$4</a>')
+        hubot_msg = hubot_msg.replace(/<((\bhttp)(.*))?>/g, '<a href="$1">$1</a>')
 
-      # Unescape
-      hubot_msg = hubot_msg.replace(/&amp;/g, '&')
-      hubot_msg = hubot_msg.replace(/&lt;/g, '<')
-      hubot_msg = hubot_msg.replace(/&gt;/g, '>')
+        # Unescape
+        hubot_msg = hubot_msg.replace(/&amp;/g, '&')
+        hubot_msg = hubot_msg.replace(/&lt;/g, '<')
+        hubot_msg = hubot_msg.replace(/&gt;/g, '>')
 
-      # Construct an author object
-      author = {}
-      author.id = from
-      author.name = from_name
-      author.reply_to = channel
-      author.room = channel_name
+        # Construct an author object
+        author = {}
+        author.id = from
+        author.name = from_name
+        author.reply_to = channel
+        author.room = channel_name
 
-      # Pass to the robot
-      console.log "Received #{hubot_msg} from #{author}"
-      self.receive new TextMessage(author, hubot_msg)
+        # Pass to the robot
+        console.log "Received #{hubot_msg} from #{author}"
+        self.receive new TextMessage(author, hubot_msg)
 
       # Just send back an empty reply, since our actual reply,
       # if any, will be async above
