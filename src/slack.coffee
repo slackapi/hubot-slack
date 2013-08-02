@@ -105,7 +105,7 @@ class Slack extends Adapter
 
   request: (method, path, body, callback) ->
     #console.log method, path, body
-    host = @options.team + '.hny.co'
+    host = @options.team + '.slack.com'
     headers = "Host": host
 
     path += "?token=" + @options.token
