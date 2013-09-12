@@ -4,7 +4,7 @@ This is a [Hubot](http://hubot.github.com/) adapter to use with Slack.
 
 ## Quickstart: Hubot for Slack on Heroku
 
-First, read and understand the [instructions on the Hubot wiki](https://github.com/github/hubot/wiki/Deploying-Hubot-onto-Heroku). You will be following those instructions, with the following modifications:
+First, read and understand the [instructions on the Hubot wiki](https://github.com/github/hubot/blob/master/docs/deploying/heroku.md). You will be following those instructions, with the following modifications:
 
 1. Edit `package.json` and add `hubot-slack` to the `dependencies` section.
 1. Edit `Procfile` and change it to use the `slack` adapter:
