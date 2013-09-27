@@ -32,7 +32,7 @@
       <file leaf-file-name="slack.coffee" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/slack.coffee">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="75" column="13" selection-start="2254" selection-end="2254" vertical-scroll-proportion="0.2974239">
+            <state line="70" column="24" selection-start="2052" selection-end="2052" vertical-scroll-proportion="0.42154565">
               <folding />
             </state>
           </provider>
@@ -231,7 +231,7 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/slack.coffee">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="75" column="13" selection-start="2254" selection-end="2254" vertical-scroll-proportion="0.2974239">
+        <state line="70" column="24" selection-start="2052" selection-end="2052" vertical-scroll-proportion="0.42154565">
           <folding />
         </state>
       </provider>

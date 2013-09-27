@@ -68,11 +68,11 @@ class Slack extends Adapter
 
       try
         # Parse the payload
-        from = req.params('user_id')
-        from_name = req.params('user_name')
-        channel = req.params('channel_id')
-        channel_name = req.params('channel_name')
-        hubot_msg = req.params('text')
+        from = req.param('user_id')
+        from_name = req.param('user_name')
+        channel = req.param('channel_id')
+        channel_name = req.param('channel_name')
+        hubot_msg = req.param('text')
       catch e
         console.log req
         console.log e
