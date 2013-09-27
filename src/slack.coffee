@@ -66,12 +66,16 @@ class Slack extends Adapter
     self.robot.router.post "/hubot/slack-webhook", (req, res) ->
       console.log "Incoming message received"
 
-      # Parse the payload
-      from = req.param('user_id')
-      from_name = req.param('user_name')
-      channel = req.param('channel_id')
-      channel_name = req.param('channel_name')
-      hubot_msg = req.param('text')
+      try
+        # Parse the payload
+        from = req.body.user_id
+        from_name = req.body.user_name
+        channel = req.body.channel_id
+        channel_name = req.body.channel_name
+        hubot_msg = req.body.text
+      catch e
+        console.log req
+        console.log e
 
       if hubot_msg
         # Make links back into html
