@@ -8,6 +8,7 @@ class Slack extends Adapter
     console.log "Sending message"
 
     user = @userFromParams(params)
+
     strings.forEach (str) =>
       # Escape this
       str = str.replace(/&/g, '&amp;')
@@ -34,7 +35,15 @@ class Slack extends Adapter
   userFromParams: (params) ->
     # hubot < 2.4.2: params = user
     # hubot >= 2.4.2: params = {user: user, ...}
-    if params.user then params.user else params
+    params = if params.user then params.user else params
+
+    # Ghetto hack to make robot.messageRoom work with Slack's adapter
+    #
+    # Note: Slack's API here uses rooom ID's, not room names. They look
+    # something like C0capitallettersandnumbershere
+    params.reply_to ||= params.room
+
+    params
 
   run: ->
     self = @
