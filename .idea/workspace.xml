@@ -7,7 +7,9 @@
     <ignored path="hubot-slack.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/Dummy.txt" changelist="cf143c93-7748-4089-936b-ab749ac9966d" time="1380316502840" ignored="false" />
-    <file path="/slack.coffee" changelist="cf143c93-7748-4089-936b-ab749ac9966d" time="1380316672299" ignored="false" />
+    <file path="/slack.coffee" changelist="cf143c93-7748-4089-936b-ab749ac9966d" time="1380318566084" ignored="false" />
+    <file path="$USER_HOME$/carwoo/carwoo-bot-production/package.json" changelist="cf143c93-7748-4089-936b-ab749ac9966d" time="1380317998885" ignored="false" />
+    <file path="$USER_HOME$/carwoo/carwoo-bot-production/scripts/jenkins-notification.coffee" changelist="cf143c93-7748-4089-936b-ab749ac9966d" time="1380317470503" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,7 +32,7 @@
       <file leaf-file-name="slack.coffee" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/slack.coffee">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="108" column="0" selection-start="3319" selection-end="3319" vertical-scroll-proportion="0.9355972">
+            <state line="78" column="0" selection-start="2296" selection-end="2296" vertical-scroll-proportion="0.3501171">
               <folding />
             </state>
           </provider>
@@ -229,7 +231,7 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/slack.coffee">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="108" column="0" selection-start="3319" selection-end="3319" vertical-scroll-proportion="0.9355972">
+        <state line="78" column="0" selection-start="2296" selection-end="2296" vertical-scroll-proportion="0.3501171">
           <folding />
         </state>
       </provider>

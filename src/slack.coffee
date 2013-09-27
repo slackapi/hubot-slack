@@ -74,6 +74,7 @@ class Slack extends Adapter
         channel_name = req.param('channel_name')
         hubot_msg = req.param('text')
       catch e
+        console.log req
         console.log e
 
       if hubot_msg
