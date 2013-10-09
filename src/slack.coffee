@@ -74,9 +74,9 @@ class Slack extends Adapter
       hubot_msg = req.param('text')
 
       if hubot_msg
-        # Make links back into html
-        hubot_msg = hubot_msg.replace(/<((\bhttp)[^|]+)(\|(.*))+>/g, '<a href="$1">$4</a>')
-        hubot_msg = hubot_msg.replace(/<((\bhttp)(.*))?>/g, '<a href="$1">$1</a>')
+        # Convert markup into plain url string.
+        hubot_msg = hubot_msg.replace(/<((\bhttps?)[^|]+)(\|(.*))+>/g, '< $1 >')
+        hubot_msg = hubot_msg.replace(/<((\bhttps?)(.*))?>/g, '< $1 >')
 
         # Unescape
         hubot_msg = hubot_msg.replace(/&amp;/g, '&')
