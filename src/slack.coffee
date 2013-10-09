@@ -75,7 +75,7 @@ class Slack extends Adapter
 
       if hubot_msg
         # Convert markup into plain url string.
-        hubot_msg = hubot_msg.replace(/<((\bhttp)[^|]+)(\|(.*))+>/g, '$1')
+        hubot_msg = hubot_msg.replace(/<((\bhttps?)[^|]+)(\|(.*))+>/g, '< $1 >')
 
         # Unescape
         hubot_msg = hubot_msg.replace(/&amp;/g, '&')
