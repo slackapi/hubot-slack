@@ -199,3 +199,6 @@ class Slack extends Adapter
 ###################################################################
 exports.use = (robot) ->
   new Slack robot
+
+# Export class for unit tests
+exports.Slack = Slack
