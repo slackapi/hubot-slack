@@ -42,7 +42,9 @@
     "email": "help@tinyspeck.com"
   },
   "devDependencies": {
-    "coffee-script": ">=1.2.0"
+    "coffee-script": ">=1.2.0",
+    "grunt": "~0.4.1",
+    "grunt-release": "~0.6.0"
   },
   "main": "./src/slack",
   "engines": {
