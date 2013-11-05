@@ -1,41 +1,77 @@
-Robot   = require('hubot').Robot
-Adapter = require('hubot').Adapter
-TextMessage = require('hubot').TextMessage
-HTTPS = require 'https'
+{Robot, Adapter, TextMessage} = require 'hubot'
+https = require 'https'
 
 class Slack extends Adapter
-  send: (params, strings...) ->
-    console.log "Sending message"
+  ###################################################################
+  # Slightly abstract logging, primarily so that it can
+  # be easily altered for unit tests.
+  ###################################################################
+  log: console.log.bind console
+  logError: console.error.bind console
 
-    user = @userFromParams(params)
+
+  ###################################################################
+  # Communicating back to the chat rooms. These are exposed
+  # as methods on the argument passed to callbacks from
+  # robot.respond, robot.listen, etc.
+  ###################################################################
+  send: (params, strings...) ->
+    @log "Sending message"
+    user = @userFromParams params
 
     strings.forEach (str) =>
-      # Escape this
-      str = str.replace(/&/g, '&amp;')
-      str = str.replace(/</g, '&lt;')
-      str = str.replace(/>/g, '&gt;')
+      str = @escapeHtml str
+      args = JSON.stringify
+        username : @robot.name
+        channel  : user.reply_to
+        text     : str
 
-      # Linkify. We assume that the bot is well-behaved and
-      # consistently sending links with the protocol part
-      str = str.replace(/((\bhttp)\S+)/g, '<$1>')
-
-      args = JSON.stringify({"channel": user.reply_to, "text": str, username: @robot.name})
       @post "/services/hooks/hubot", args
 
   reply: (params, strings...) ->
-    console.log "Sending reply"
+    @log "Sending reply"
 
-    user = @userFromParams(params)
+    user = @userFromParams params
     strings.forEach (str) =>
       @send params, "#{user.name}: #{str}"
 
   topic: (params, strings...) ->
     # TODO: Set the topic
 
+
+  ###################################################################
+  # HTML helpers.
+  ###################################################################
+  escapeHtml: (string) ->
+    string
+      # Escape entities
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+
+      # Linkify. We assume that the bot is well-behaved and
+      # consistently sending links with the protocol part
+      .replace(/((\bhttp)\S+)/g, '<$1>')
+
+  unescapeHtml: (string) ->
+    string
+      # Unescape entities
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+
+      # Convert markup into plain url string.
+      .replace(/<((\bhttps?)[^|]+)(\|(.*))+>/g, '$1')
+      .replace(/<((\bhttps?)(.*))?>/g, '$1')
+
+
+  ###################################################################
+  # Parsing inputs.
+  ###################################################################
   userFromParams: (params) ->
     # hubot < 2.4.2: params = user
     # hubot >= 2.4.2: params = {user: user, ...}
-    params = if params.user then params.user else params
+    params = params.user or params
 
     # Ghetto hack to make robot.messageRoom work with Slack's adapter
     #
@@ -45,54 +81,48 @@ class Slack extends Adapter
 
     params
 
+  parseOptions: ->
+    @options =
+      token : process.env.HUBOT_SLACK_TOKEN
+      team  : process.env.HUBOT_SLACK_TEAM
+      name  : process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
+
+  getMessageFromRequest: (req) ->
+    # Parse the payload
+    hubotMsg = req.param 'text'
+    @unescapeHtml hubotMsg if hubotMsg
+
+  getAuthorFromRequest: (req) ->
+    # Return an author object
+    id       : req.param 'user_id'
+    name     : req.param 'user_name'
+    reply_to : req.param 'channel_id'
+    room     : req.param 'channel_name'
+
+
+  ###################################################################
+  # The star.
+  ###################################################################
   run: ->
     self = @
+    @parseOptions()
 
-    @options =
-      token:   process.env.HUBOT_SLACK_TOKEN or null
-      team:    process.env.HUBOT_SLACK_TEAM or null
-      name:    process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
-    console.log "Slack adapter options:", @options
+    @log "Slack adapter options:", @options
 
-    unless @options.token
-      console.error "No services token provided to Hubot"
-      return
-
-    unless @options.team
-      console.error "No team provided to Hubot"
-      return
+    return @logError "No services token provided to Hubot" unless @options.token
+    return @logError "No team provided to Hubot" unless @options.team
 
     # Listen to incoming webhooks from slack
     self.robot.router.post "/hubot/slack-webhook", (req, res) ->
-      console.log "Incoming message received"
+      self.log "Incoming message received"
 
-      # Parse the payload
-      from = req.param('user_id')
-      from_name = req.param('user_name')
-      channel = req.param('channel_id')
-      channel_name = req.param('channel_name')
-      hubot_msg = req.param('text')
+      hubotMsg = self.getMessageFromRequest req
+      author = self.getAuthorFromRequest req
 
-      if hubot_msg
-        # Convert markup into plain url string.
-        hubot_msg = hubot_msg.replace(/<((\bhttps?)[^|]+)(\|(.*))+>/g, '$1')
-        hubot_msg = hubot_msg.replace(/<((\bhttps?)(.*))?>/g, '$1')
-
-        # Unescape
-        hubot_msg = hubot_msg.replace(/&amp;/g, '&')
-        hubot_msg = hubot_msg.replace(/&lt;/g, '<')
-        hubot_msg = hubot_msg.replace(/&gt;/g, '>')
-
-        # Construct an author object
-        author = {}
-        author.id = from
-        author.name = from_name
-        author.reply_to = channel
-        author.room = channel_name
-
+      if hubotMsg and author
         # Pass to the robot
-        console.log "Received #{hubot_msg} from #{author.name}"
-        self.receive new TextMessage(author, hubot_msg)
+        self.log "Received #{hubotMsg} from #{author.name}"
+        self.receive new TextMessage(author, hubotMsg)
 
       # Just send back an empty reply, since our actual reply,
       # if any, will be async above
@@ -102,10 +132,13 @@ class Slack extends Adapter
     self.robot.name = @options.name
 
     # Tell Hubot we're connected so it can load scripts
-    console.log "Successfully 'connected' as", self.robot.name
+    @log "Successfully 'connected' as", self.robot.name
     self.emit "connected"
 
-  # Convenience HTTP Methods for sending data back to slack
+
+  ###################################################################
+  # Convenience HTTP Methods for sending data back to slack.
+  ###################################################################
   get: (path, callback) ->
     @request "GET", path, null, callback
 
@@ -113,53 +146,59 @@ class Slack extends Adapter
     @request "POST", path, body, callback
 
   request: (method, path, body, callback) ->
-    #console.log method, path, body
-    host = @options.team + '.slack.com'
-    headers = "Host": host
+    self = @
 
-    path += "?token=" + @options.token
+    host = "#{@options.team}.slack.com"
+    headers =
+      Host: host
 
-    req_options =
-      "agent"  : false
-      "hostname"   : host
-      "port"   : 443
-      "path"   : path
-      "method" : method
-      "headers": headers
+    path += "?token=#{@options.token}"
+
+    reqOptions =
+      agent    : false
+      hostname : host
+      port     : 443
+      path     : path
+      method   : method
+      headers  : headers
 
     if method is "POST"
-      headers["Content-Type"] = "application/x-www-form-urlencoded"
-      req_options.headers["Content-Length"] = body.length
+      reqOptions.headers["Content-Type"] = "application/x-www-form-urlencoded"
+      reqOptions.headers["Content-Length"] = body.length
 
-    request = HTTPS.request req_options, (response) ->
+    request = https.request reqOptions, (response) ->
       data = ""
       response.on "data", (chunk) ->
         data += chunk
 
       response.on "end", ->
         if response.statusCode >= 400
-          console.error "Slack services error: #{response.statusCode}"
-          console.error data
+          self.logError "Slack services error: #{response.statusCode}"
+          self.logError data
 
         #console.log "HTTPS response:", data
-        if callback
-          callback null, data
+        callback? null, data
 
         response.on "error", (err) ->
-          console.error "HTTPS response error:", err
-          if callback
-            callback err, null
+          self.logError "HTTPS response error:", err
+          callback? err, null
 
     if method is "POST"
-      request.end(body, 'binary')
+      request.end body, "binary"
     else
       request.end()
 
     request.on "error", (err) ->
-      console.error "HTTPS request error:", err
-      console.error err.stack
-      if callback
-        callback err
+      self.logError "HTTPS request error:", err
+      self.logError err.stack
+      callback? err
 
+
+###################################################################
+# Exports to handle actual usage and unit testing.
+###################################################################
 exports.use = (robot) ->
   new Slack robot
+
+# Export class for unit tests
+exports.Slack = Slack
