@@ -163,6 +163,7 @@ class Slack extends Adapter
       headers  : headers
 
     if method is "POST"
+      body = new Buffer body
       reqOptions.headers["Content-Type"] = "application/x-www-form-urlencoded"
       reqOptions.headers["Content-Length"] = body.length
 
