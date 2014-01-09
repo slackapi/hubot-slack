@@ -86,11 +86,17 @@ class Slack extends Adapter
       token : process.env.HUBOT_SLACK_TOKEN
       team  : process.env.HUBOT_SLACK_TEAM
       name  : process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
+      mode  : process.env.HUBOT_SLACK_CHANNELMODE or 'blacklist'
+      channels: process.env.HUBOT_SLACK_CHANNELS?.split(',') or []
 
   getMessageFromRequest: (req) ->
     # Parse the payload
     hubotMsg = req.param 'text'
-    @unescapeHtml hubotMsg if hubotMsg
+    room = req.param 'channel_name'
+    mode = @options.mode
+    channels = @options.channels
+    
+    @unescapeHtml hubotMsg if hubotMsg and (mode is 'blacklist' and room not in channels or mode is 'whitelist' and room in channels)
 
   getAuthorFromRequest: (req) ->
     # Return an author object

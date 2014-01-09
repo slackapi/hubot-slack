@@ -59,3 +59,11 @@ This is your team's Slack subdomain. For example, if your team is `https://mytea
 #### HUBOT\_SLACK\_BOTNAME
 
 Optional. What your Hubot is called on Slack. If you entered `slackbot` here, you would address your bot like `slackbot: help`. Otherwise, defaults to `hubot`.
+
+#### HUBOT\_SLACK\_CHANNELMODE
+
+Optional. If you entered `blacklist`, Hubot will not post in the rooms specified by HUBOT_SLACK_CHANNELS, or alternately *only* in those rooms if `whitelist` is specified instead. Defaults to `blacklist`.
+
+#### HUBOT\_SLACK\_CHANNELS
+
+Optional. A comma-separated list of channels to either be blacklisted or whitelisted, depending on the value of HUBOT_SLACK_CHANNELMODE.
