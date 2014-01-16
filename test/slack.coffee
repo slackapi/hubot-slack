@@ -91,13 +91,22 @@ describe 'Sending a message', ->
       reply_to: 'A fake room'
 
     args = slack.send params, 'Hello, fake world'
-
-
+    
 describe 'Parsing options', ->
   it 'Should default to the name "slackbot"', ->
     slack.parseOptions()
 
     slack.options.name.should.equal 'slackbot'
+    
+  it 'Should default to the "blacklist" channel mode', ->
+    slack.parseOptions()
+    
+    slack.options.mode.should.equal 'blacklist'
+    
+  it 'Should default to [] for channel list', ->
+    slack.parseOptions()
+    
+    slack.options.channels.should.be.instanceof(Array).and.have.lengthOf(0);
 
   it 'Should default to null for missing environment variables', ->
     slack.parseOptions()
@@ -126,17 +135,33 @@ describe 'Parsing options', ->
     slack.options.name.should.eql 'Lonely Bot'
     delete process.env.HUBOT_SLACK_BOTNAME
 
+  it 'Should use HUBOT_SLACK_CHANNELMODE environment variable', ->
+    process.env.HUBOT_SLACK_CHANNELMODE = 'a channel mode'
+    slack.parseOptions()
+    
+    slack.options.mode.should.eql 'a channel mode'
+    delete process.env.HUBOT_SLACK_CHANNELMODE
+    
+  it 'Should use HUBOT_SLACK_CHANNELS environment variable', ->
+    process.env.HUBOT_SLACK_CHANNELS = 'a,list,of,channels'
+    slack.parseOptions()
+    
+    slack.options.channels.should.eql ['a', 'list', 'of', 'channels']
+    delete process.env.HUBOT_SLACK_CHANNELS
 
 describe 'Parsing the request', ->
   it 'Should get the message', ->
+    slack.parseOptions()
+    
     requestText = 'The message from the request'
-
     req = stubs.request()
     req.data.text = requestText
 
     slack.getMessageFromRequest(req).should.eql requestText
 
   it 'Should return null if the message is missing', ->
+    slack.parseOptions()
+    
     message = slack.getMessageFromRequest stubs.request()
     should.not.exist message
 
@@ -154,3 +179,65 @@ describe 'Parsing the request', ->
       name: 'Luke'
       reply_to: 760
       room: 'Home'
+
+  it 'Should ignore blacklisted rooms', ->
+    process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
+    process.env.HUBOT_SLACK_CHANNELS = 'test'
+    slack.parseOptions()
+    
+    requestText = 'The message from the request'
+    req = stubs.request()
+    req.data =
+      channel_name: 'test'
+      text: requestText
+
+    message = slack.getMessageFromRequest req
+    should.not.exist message
+    delete process.env.HUBOT_SLACK_CHANNELMODE
+    delete process.env.HUBOT_SLACK_CHANNELS
+    
+  it 'Should not ignore not blacklisted rooms', ->
+    process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
+    process.env.HUBOT_SLACK_CHANNELS = 'test'
+    slack.parseOptions()
+    
+    requestText = 'The message from the request'
+    req = stubs.request()
+    req.data =
+      channel_name: 'not-test'
+      text: requestText
+
+    slack.getMessageFromRequest(req).should.eql requestText    
+    delete process.env.HUBOT_SLACK_CHANNELMODE
+    delete process.env.HUBOT_SLACK_CHANNELS
+        
+  it 'Should not ignore whitelisted rooms', ->
+    process.env.HUBOT_SLACK_CHANNELMODE = 'whitelist'
+    process.env.HUBOT_SLACK_CHANNELS = 'test'
+    slack.parseOptions()
+    
+    requestText = 'The message from the request'
+    req = stubs.request()
+    req.data =
+      channel_name: 'test'
+      text: requestText
+
+    slack.getMessageFromRequest(req).should.eql requestText
+    delete process.env.HUBOT_SLACK_CHANNELMODE
+    delete process.env.HUBOT_SLACK_CHANNELS
+    
+  it 'Should ignore not whitelisted rooms', ->
+    process.env.HUBOT_SLACK_CHANNELMODE = 'whitelist'
+    process.env.HUBOT_SLACK_CHANNELS = 'test'
+    slack.parseOptions()
+    
+    requestText = 'The message from the request'
+    req = stubs.request()
+    req.data =
+      channel_name: 'not-test'
+      text: requestText
+
+    message = slack.getMessageFromRequest req
+    should.not.exist message
+    delete process.env.HUBOT_SLACK_CHANNELMODE
+    delete process.env.HUBOT_SLACK_CHANNELS
