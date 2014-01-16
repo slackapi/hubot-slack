@@ -95,7 +95,7 @@ class Slack extends Adapter
     room = req.param 'channel_name'
     mode = @options.mode
     channels = @options.channels
-    
+
     @unescapeHtml hubotMsg if hubotMsg and (mode is 'blacklist' and room not in channels or mode is 'whitelist' and room in channels)
 
   getAuthorFromRequest: (req) ->
