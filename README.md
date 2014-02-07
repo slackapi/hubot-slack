@@ -67,3 +67,7 @@ Optional. If you entered `blacklist`, Hubot will not post in the rooms specified
 #### HUBOT\_SLACK\_CHANNELS
 
 Optional. A comma-separated list of channels to either be blacklisted or whitelisted, depending on the value of HUBOT_SLACK_CHANNELMODE.
+
+#### HUBOT\_SLACK\_LINK\_NAMES
+
+Optional. By default, Slack will not linkify channel names (starting with a '#') and usernames (starting with an '@'). You can enable this behavior by setting HUBOT_SLACK_LINK_NAMES to 1. Otherwise, defaults to 0. See [Slack API : Message Formatting Docs](https://api.slack.com/docs/formatting) for more information.
