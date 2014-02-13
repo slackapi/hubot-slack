@@ -128,7 +128,6 @@ class Slack extends Adapter
 
       if hubotMsg and author
         # Pass to the robot
-        self.log "Received #{hubotMsg} from #{author.name}"
         self.receive new TextMessage(author, hubotMsg)
 
       # Just send back an empty reply, since our actual reply,
