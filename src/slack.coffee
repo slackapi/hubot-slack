@@ -102,8 +102,6 @@ class Slack extends Adapter
     # Return an author object
     id       : req.param 'user_id'
     name     : req.param 'user_name'
-    reply_to : req.param 'channel_id'
-    room     : req.param 'channel_name'
 
 
   ###################################################################
@@ -124,6 +122,9 @@ class Slack extends Adapter
 
       hubotMsg = self.getMessageFromRequest req
       author = self.getAuthorFromRequest req
+      author = self.robot.brain.userForId author.id, author
+      author.room = req.param 'channel_name'
+      author.reply_to = req.param 'channel_id'
 
       if hubotMsg and author
         # Pass to the robot
