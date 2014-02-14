@@ -22,9 +22,10 @@ class Slack extends Adapter
     strings.forEach (str) =>
       str = @escapeHtml str
       args = JSON.stringify
-        username : @robot.name
-        channel  : user.reply_to
-        text     : str
+        username   : @robot.name
+        channel    : user.reply_to
+        text       : str
+        link_names : @options.link_names
 
       @post "/services/hooks/hubot", args
 
@@ -88,6 +89,7 @@ class Slack extends Adapter
       name  : process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
       mode  : process.env.HUBOT_SLACK_CHANNELMODE or 'blacklist'
       channels: process.env.HUBOT_SLACK_CHANNELS?.split(',') or []
+      link_names: process.env.HUBOT_SLACK_LINK_NAMES or 0
 
   getMessageFromRequest: (req) ->
     # Parse the payload
