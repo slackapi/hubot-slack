@@ -44,8 +44,7 @@ class Slack extends Adapter
     @log "Sending custom message"
     user = @userFromParams message
 
-    attachments = []
-    attachments.push
+    attachment =
       text     : @escapeHtml data.text
       fallback : @escapeHtml data.fallback
       pretext  : @escapeHtml data.pretext
@@ -54,7 +53,7 @@ class Slack extends Adapter
     args = JSON.stringify
       username    : @robot.name
       channel     : user.reply_to
-      attachments : attachments
+      attachments : [attachment]
       link_names  : @options.link_names
     @post "/services/hooks/hubot", args
   ###################################################################
@@ -127,9 +126,6 @@ class Slack extends Adapter
   # The star.
   ###################################################################
   run: ->
-    @robot.on 'slack-attachment', (payload)=>
-      @custom(payload.message, payload.content)
-
     self = @
     @parseOptions()
 
@@ -137,6 +133,9 @@ class Slack extends Adapter
 
     return @logError "No services token provided to Hubot" unless @options.token
     return @logError "No team provided to Hubot" unless @options.team
+
+    @robot.on 'slack-attachment', (payload)=>
+      @custom(payload.message, payload.content)
 
     # Listen to incoming webhooks from slack
     self.robot.router.post "/hubot/slack-webhook", (req, res) ->
