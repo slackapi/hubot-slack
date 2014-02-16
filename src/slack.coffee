@@ -40,6 +40,23 @@ class Slack extends Adapter
     # TODO: Set the topic
 
 
+  custom: (message, data)->
+    @log "Sending custom message"
+    user = @userFromParams message
+
+    attachments = []
+    attachments.push
+      text     : @escapeHtml data.text
+      fallback : @escapeHtml data.fallback
+      pretext  : @escapeHtml data.pretext
+      color    : data.color
+      fields   : data.fields
+    args = JSON.stringify
+      username    : @robot.name
+      channel     : user.reply_to
+      attachments : attachments
+      link_names  : @options.link_names
+    @post "/services/hooks/hubot", args
   ###################################################################
   # HTML helpers.
   ###################################################################
@@ -110,6 +127,9 @@ class Slack extends Adapter
   # The star.
   ###################################################################
   run: ->
+    @robot.on 'slack-attachment', (payload)=>
+      @custom(payload.message, payload.content)
+
     self = @
     @parseOptions()
 
