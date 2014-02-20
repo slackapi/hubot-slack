@@ -2,6 +2,11 @@
 https = require 'https'
 
 class Slack extends Adapter
+  constructor: (robot) ->
+    super robot
+    @channelMapping = {}
+
+
   ###################################################################
   # Slightly abstract logging, primarily so that it can
   # be easily altered for unit tests.
@@ -94,7 +99,7 @@ class Slack extends Adapter
     #
     # Note: Slack's API here uses rooom ID's, not room names. They look
     # something like C0capitallettersandnumbershere
-    params.reply_to ||= params.room
+    params.reply_to ||= @channelMapping[params.room]
 
     params
 
@@ -145,7 +150,8 @@ class Slack extends Adapter
       author = self.getAuthorFromRequest req
       author = self.robot.brain.userForId author.id, author
       author.room = req.param 'channel_name'
-      author.reply_to = req.param 'channel_id'
+      author.reply_to = undefined
+      self.channelMapping[author.room] = req.param 'channel_id'
 
       if hubotMsg and author
         # Pass to the robot
