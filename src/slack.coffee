@@ -20,26 +20,27 @@ class Slack extends Adapter
   # as methods on the argument passed to callbacks from
   # robot.respond, robot.listen, etc.
   ###################################################################
-  send: (params, strings...) ->
+  send: (envelope, strings...) ->
     @log "Sending message"
-    user = @userFromParams params
+    channel = envelope.reply_to || @channelMapping[envelope.room]
 
     strings.forEach (str) =>
       str = @escapeHtml str
       args = JSON.stringify
         username   : @robot.name
-        channel    : user.reply_to
+        channel    : channel
         text       : str
         link_names : @options.link_names
 
       @post "/services/hooks/hubot", args
 
-  reply: (params, strings...) ->
+  reply: (envelope, strings...) ->
     @log "Sending reply"
 
-    user = @userFromParams params
+    user_name = envelope.user?.name || envelope?.name
+
     strings.forEach (str) =>
-      @send params, "#{user.name}: #{str}"
+      @send envelope, "#{user_name}: #{str}"
 
   topic: (params, strings...) ->
     # TODO: Set the topic
@@ -47,7 +48,8 @@ class Slack extends Adapter
 
   custom: (message, data)->
     @log "Sending custom message"
-    user = @userFromParams message
+
+    channel = message.reply_to || @channelMapping[message.room]
 
     attachment =
       text     : @escapeHtml data.text
@@ -57,7 +59,7 @@ class Slack extends Adapter
       fields   : data.fields
     args = JSON.stringify
       username    : @robot.name
-      channel     : user.reply_to
+      channel     : channel
       attachments : [attachment]
       link_names  : @options.link_names
     @post "/services/hooks/hubot", args
@@ -90,18 +92,6 @@ class Slack extends Adapter
   ###################################################################
   # Parsing inputs.
   ###################################################################
-  userFromParams: (params) ->
-    # hubot < 2.4.2: params = user
-    # hubot >= 2.4.2: params = {user: user, ...}
-    params = params.user or params
-
-    # Ghetto hack to make robot.messageRoom work with Slack's adapter
-    #
-    # Note: Slack's API here uses rooom ID's, not room names. They look
-    # something like C0capitallettersandnumbershere
-    params.reply_to ||= @channelMapping[params.room]
-
-    params
 
   parseOptions: ->
     @options =
@@ -150,8 +140,7 @@ class Slack extends Adapter
       author = self.getAuthorFromRequest req
       author = self.robot.brain.userForId author.id, author
       author.room = req.param 'channel_name'
-      author.reply_to = undefined
-      self.channelMapping[author.room] = req.param 'channel_id'
+      self.channelMapping[req.param 'channel_name'] = req.param 'channel_id'
 
       if hubotMsg and author
         # Pass to the robot
