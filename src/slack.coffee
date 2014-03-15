@@ -22,7 +22,10 @@ class Slack extends Adapter
   ###################################################################
   send: (envelope, strings...) ->
     @log "Sending message"
-    channel = envelope.reply_to || @channelMapping[envelope.room]
+    channel = envelope.reply_to || envelope.room
+
+    if channel[0] != 'C'
+      channel = "##{channel}"
 
     strings.forEach (str) =>
       str = @escapeHtml str
