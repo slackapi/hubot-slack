@@ -116,7 +116,19 @@ class Slack extends Adapter
     id       : req.param 'user_id'
     name     : req.param 'user_name'
 
+  userFromParams: (params) ->
+    # hubot < 2.4.2: params = user
+    # hubot >= 2.4.2: params = {user: user, ...}
+    user = {}
+    if params.user
+      user = params.user 
+    else 
+      user = params
 
+    if user.room and not user.reply_to
+      user.reply_to = user.room
+
+    user 
   ###################################################################
   # The star.
   ###################################################################
