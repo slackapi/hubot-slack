@@ -46,7 +46,7 @@
     "email": "help@tinyspeck.com"
   },
   "devDependencies": {
-    "coffee-script": ">=1.6.0",
+    "coffee-script": "~1.7.1",
     "grunt": "~0.4.1",
     "grunt-release": "~0.6.0",
     "should": "~2.0.2",
