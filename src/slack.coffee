@@ -115,6 +115,8 @@ class Slack extends Adapter
     # Return an author object
     id       : req.param 'user_id'
     name     : req.param 'user_name'
+    reply_to : req.param 'channel_id'
+    room     : req.param 'channel_name'
 
   userFromParams: (params) ->
     # hubot < 2.4.2: params = user
