@@ -30,7 +30,7 @@ class Slack extends Adapter
         username   : @robot.name
         channel    : channel
         text       : str
-        link_names : @options.link_names
+        link_names : @options.link_names if @options?.link_names?
 
       @post "/services/hooks/hubot", args
 
@@ -61,7 +61,7 @@ class Slack extends Adapter
       username    : @robot.name
       channel     : channel
       attachments : [attachment]
-      link_names  : @options.link_names
+      link_names  : @options.link_names if @options?.link_names?
     @post "/services/hooks/hubot", args
   ###################################################################
   # HTML helpers.
@@ -115,8 +115,22 @@ class Slack extends Adapter
     # Return an author object
     id       : req.param 'user_id'
     name     : req.param 'user_name'
+    reply_to : req.param 'channel_id'
+    room     : req.param 'channel_name'
 
+  userFromParams: (params) ->
+    # hubot < 2.4.2: params = user
+    # hubot >= 2.4.2: params = {user: user, ...}
+    user = {}
+    if params.user
+      user = params.user 
+    else 
+      user = params
 
+    if user.room and not user.reply_to
+      user.reply_to = user.room
+
+    user 
   ###################################################################
   # The star.
   ###################################################################
