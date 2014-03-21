@@ -36,7 +36,7 @@ This is a modified set of instructions based on the [instructions on the Hubot w
         % heroku config:add HEROKU_URL=http://soothing-mists-4567.herokuapp.com
         % heroku config:add HUBOT_SLACK_TOKEN=dqqQP9xlWXAq5ybyqKAU0axG
         % heroku config:add HUBOT_SLACK_TEAM=myteam
-        % heroku config:add HUBOT_SLACK_BOTNAME=slackbot
+        % heroku config:add HUBOT_SLACK_BOTNAME=slack-hubot
 
 - Deploy and start the bot:
 
@@ -59,7 +59,7 @@ This is your team's Slack subdomain. For example, if your team is `https://mytea
 
 #### HUBOT\_SLACK\_BOTNAME
 
-Optional. What your Hubot is called on Slack. If you entered `slackbot` here, you would address your bot like `slackbot: help`. Otherwise, defaults to `hubot`.
+Optional. What your Hubot is called on Slack. If you entered `slack-hubot` here, you would address your bot like `slack-hubot: help`. Otherwise, defaults to `hubot`.
 
 #### HUBOT\_SLACK\_CHANNELMODE
 
