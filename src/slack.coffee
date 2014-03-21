@@ -22,7 +22,7 @@ class Slack extends Adapter
   ###################################################################
   send: (envelope, strings...) ->
     @log "Sending message"
-    channel = envelope.reply_to || @channelMapping[envelope.room]
+    channel = envelope.reply_to || @channelMapping[envelope.room] || envelope.room
 
     strings.forEach (str) =>
       str = @escapeHtml str
@@ -49,7 +49,7 @@ class Slack extends Adapter
   custom: (message, data)->
     @log "Sending custom message"
 
-    channel = message.reply_to || @channelMapping[message.room]
+    channel = message.reply_to || @channelMapping[message.room] || message.room
 
     attachment =
       text     : @escapeHtml data.text
@@ -123,14 +123,14 @@ class Slack extends Adapter
     # hubot >= 2.4.2: params = {user: user, ...}
     user = {}
     if params.user
-      user = params.user 
-    else 
+      user = params.user
+    else
       user = params
 
     if user.room and not user.reply_to
       user.reply_to = user.room
 
-    user 
+    user
   ###################################################################
   # The star.
   ###################################################################
