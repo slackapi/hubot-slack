@@ -59,7 +59,7 @@ This is your team's Slack subdomain. For example, if your team is `https://mytea
 
 #### HUBOT\_SLACK\_BOTNAME
 
-Optional. What your Hubot is called on Slack. If you entered `slack-hubot` here, you would address your bot like `slack-hubot: help`. Otherwise, defaults to `hubot`.
+Optional. What your Hubot is called on Slack. If you entered `slack-hubot` here, you would address your bot like `slack-hubot: help`. Otherwise, defaults to `slackbot`.
 
 #### HUBOT\_SLACK\_CHANNELMODE
 
