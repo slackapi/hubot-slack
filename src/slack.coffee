@@ -5,6 +5,7 @@ class Slack extends Adapter
   constructor: (robot) ->
     super robot
     @channelMapping = {}
+    @debug = process.env.HUBOT_LOG_LEVEL == 'debug'
 
 
   ###################################################################
@@ -21,7 +22,7 @@ class Slack extends Adapter
   # robot.respond, robot.listen, etc.
   ###################################################################
   send: (envelope, strings...) ->
-    @log "Sending message"
+    @log "Sending message" if @debug
     channel = envelope.reply_to || @channelMapping[envelope.room]
 
     strings.forEach (str) =>
@@ -35,7 +36,7 @@ class Slack extends Adapter
       @post "/services/hooks/hubot", args
 
   reply: (envelope, strings...) ->
-    @log "Sending reply"
+    @log "Sending reply" if @debug
 
     user_name = envelope.user?.name || envelope?.name
 
@@ -47,7 +48,7 @@ class Slack extends Adapter
 
 
   custom: (message, data)->
-    @log "Sending custom message"
+    @log "Sending custom message" if @debug
 
     channel = message.reply_to || @channelMapping[message.room]
 
@@ -148,7 +149,7 @@ class Slack extends Adapter
 
     # Listen to incoming webhooks from slack
     self.robot.router.post "/hubot/slack-webhook", (req, res) ->
-      self.log "Incoming message received"
+      self.log "Incoming message received" if @debug
 
       hubotMsg = self.getMessageFromRequest req
       author = self.getAuthorFromRequest req
