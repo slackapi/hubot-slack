@@ -250,13 +250,13 @@ describe 'Parsing the request', ->
     delete process.env.HUBOT_SLACK_CHANNELS
 
   it 'Should ignore user request', ->
-    process.env.HUBOT_SLACK_IGNORE_USERS = 'luke'
+    process.env.HUBOT_SLACK_IGNORE_USERS = 'Luke'
     slack.parseOptions()
 
     requestText = 'The message from the request'
     req = stubs.request()
     req.data =
-      user_name: 'luke'
+      user: 'Luke'
       text: requestText
 
     message = slack.getMessageFromRequest req
