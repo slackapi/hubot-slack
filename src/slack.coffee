@@ -63,13 +63,6 @@ class Slack extends Adapter
 
     channel = message.reply_to || @channelMapping[message.room] || message.room
 
-    #user_name = envelope.user?.name || envelope?.name
-
-    #if user_name in @options.ignoreUsers
-      #console.log('Ignoring user: %s', user_name)
-      # we'll ignore this message if it's from someone we want to ignore
-      #return
-
     attachment =
       text     : @escapeHtml data.text
       fallback : @escapeHtml data.fallback
