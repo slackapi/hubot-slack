@@ -26,7 +26,7 @@ class Slack extends Adapter
 
     user_name = envelope.user?.name || envelope?.name
 
-    if user_name in @options.ignoreUsers
+    if user_name in @options.ignore_users
       # console.log('Ignoring user: %s', user_name)
       # we'll ignore this message if it's from someone we want to ignore
       return
@@ -46,7 +46,7 @@ class Slack extends Adapter
 
     user_name = envelope.user?.name || envelope?.name
 
-    if user_name in @options.ignoreUsers
+    if user_name in @options.ignore_users
       # console.log('Ignoring user: %s', user_name)
       # we'll ignore this message if it's from someone we want to ignore
       return
@@ -112,7 +112,7 @@ class Slack extends Adapter
       name  : process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
       mode  : process.env.HUBOT_SLACK_CHANNELMODE or 'blacklist'
       channels: process.env.HUBOT_SLACK_CHANNELS?.split(',') or []
-      ignoreUsers: process.env.HUBOT_SLACK_IGNORE_USERS?.split(",") or []
+      ignore_users: process.env.HUBOT_SLACK_IGNORE_USERS?.split(",") or []
       link_names: process.env.HUBOT_SLACK_LINK_NAMES or 0
 
   getMessageFromRequest: (req) ->
