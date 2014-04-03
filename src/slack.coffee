@@ -27,7 +27,7 @@ class Slack extends Adapter
     user_name = envelope.user?.name || envelope?.name
 
     if user_name in @options.ignoreUsers
-      console.log('Ignoring user: %s', user_name)
+      # console.log('Ignoring user: %s', user_name)
       # we'll ignore this message if it's from someone we want to ignore
       return
 
@@ -47,7 +47,7 @@ class Slack extends Adapter
     user_name = envelope.user?.name || envelope?.name
 
     if user_name in @options.ignoreUsers
-      console.log('Ignoring user: %s', user_name)
+      # console.log('Ignoring user: %s', user_name)
       # we'll ignore this message if it's from someone we want to ignore
       return
 
