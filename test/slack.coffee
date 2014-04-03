@@ -153,7 +153,7 @@ describe 'Parsing options', ->
     process.env.HUBOT_SLACK_IGNORE_USERS = 'a,list,of,users'
     slack.parseOptions()
 
-    slack.options.ignoreUsers.should.eql ['a', 'list', 'of', 'users']
+    slack.options.ignore_users.should.eql ['a', 'list', 'of', 'users']
     delete process.env.HUBOT_SLACK_IGNORE_USERS
 
 describe 'Parsing the request', ->
