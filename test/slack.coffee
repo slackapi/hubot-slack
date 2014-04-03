@@ -149,6 +149,13 @@ describe 'Parsing options', ->
     slack.options.channels.should.eql ['a', 'list', 'of', 'channels']
     delete process.env.HUBOT_SLACK_CHANNELS
 
+  it 'Should use HUBOT_SLACK_IGNORE_USERS environment variable', ->
+    process.env.HUBOT_SLACK_IGNORE_USERS = 'a,list,of,users'
+    slack.parseOptions()
+
+    slack.options.ignoreUsers.should.eql ['a', 'list', 'of', 'users']
+    delete process.env.HUBOT_SLACK_IGNORE_USERS
+
 describe 'Parsing the request', ->
   it 'Should get the message', ->
     slack.parseOptions()
@@ -241,3 +248,17 @@ describe 'Parsing the request', ->
     should.not.exist message
     delete process.env.HUBOT_SLACK_CHANNELMODE
     delete process.env.HUBOT_SLACK_CHANNELS
+
+  it 'Should ignore user request', ->
+    process.env.HUBOT_SLACK_IGNORE_USERS = 'luke'
+    slack.parseOptions()
+
+    requestText = 'The message from the request'
+    req = stubs.request()
+    req.data =
+      user_name: 'luke'
+      text: requestText
+
+    message = slack.getMessageFromRequest req
+    should.not.exist message
+    delete process.env.HUBOT_SLACK_IGNORE_USERS
