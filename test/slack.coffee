@@ -149,6 +149,13 @@ describe 'Parsing options', ->
     slack.options.channels.should.eql ['a', 'list', 'of', 'channels']
     delete process.env.HUBOT_SLACK_CHANNELS
 
+  it 'Should use HUBOT_SLACK_IGNORE_USERS environment variable', ->
+    process.env.HUBOT_SLACK_IGNORE_USERS = 'Lonely Bot'
+    slack.parseOptions()
+
+    slack.options.name.should.eql 'Lonely Bot'
+    delete process.env.HUBOT_SLACK_IGNORE_USERS
+
 describe 'Parsing the request', ->
   it 'Should get the message', ->
     slack.parseOptions()

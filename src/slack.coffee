@@ -24,6 +24,13 @@ class Slack extends Adapter
     @log "Sending message"
     channel = envelope.reply_to || @channelMapping[envelope.room] || envelope.room
 
+    user_name = envelope.user?.name || envelope?.name
+
+    if user_name in @options.ignoreUsers
+      console.log('Ignoring user: %s', user_name)
+      # we'll ignore this message if it's from someone we want to ignore
+      return
+
     strings.forEach (str) =>
       str = @escapeHtml str
       args = JSON.stringify
@@ -39,6 +46,11 @@ class Slack extends Adapter
 
     user_name = envelope.user?.name || envelope?.name
 
+    if user_name in @options.ignoreUsers
+      console.log('Ignoring user: %s', user_name)
+      # we'll ignore this message if it's from someone we want to ignore
+      return
+
     strings.forEach (str) =>
       @send envelope, "#{user_name}: #{str}"
 
@@ -50,6 +62,13 @@ class Slack extends Adapter
     @log "Sending custom message"
 
     channel = message.reply_to || @channelMapping[message.room] || message.room
+
+    #user_name = envelope.user?.name || envelope?.name
+
+    #if user_name in @options.ignoreUsers
+      #console.log('Ignoring user: %s', user_name)
+      # we'll ignore this message if it's from someone we want to ignore
+      #return
 
     attachment =
       text     : @escapeHtml data.text
@@ -100,6 +119,7 @@ class Slack extends Adapter
       name  : process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
       mode  : process.env.HUBOT_SLACK_CHANNELMODE or 'blacklist'
       channels: process.env.HUBOT_SLACK_CHANNELS?.split(',') or []
+      ignoreUsers: process.env.HUBOT_SLACK_IGNORE_USERS?.split(",") or []
       link_names: process.env.HUBOT_SLACK_LINK_NAMES or 0
 
   getMessageFromRequest: (req) ->
