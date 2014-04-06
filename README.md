@@ -25,7 +25,8 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 - Make sure `hubot-slack` is in your `package.json` dependencies
 - Edit your `Procfile` and change it to use the `slack` adapter:
 
-        web: bin/hubot --adapter slack
+        web: bin/hubot -a slack -n Hubot
+
 
 - Install [heroku toolbelt](https://toolbelt.heroku.com/) if you haven't already.
 - `heroku create my-company-slackbot`
