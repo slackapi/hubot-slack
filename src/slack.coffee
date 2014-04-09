@@ -138,8 +138,6 @@ class Slack extends Adapter
     self = @
     @parseOptions()
 
-    @log "Slack adapter options:", @options
-
     return @logError "No services token provided to Hubot" unless @options.token
     return @logError "No team provided to Hubot" unless @options.team
 
