@@ -51,7 +51,3 @@ This adapter uses the following environment variables:
 #### HUBOT\_SLACK\_TOKEN
 
 This is the API token for the Slack user you would like to run Hubot under.
-
-#### HUBOT\_SLACK\_BOTNAME
-
-Optional. What your Hubot is called on Slack. If you entered `slack-hubot` here, you would address your bot like `slack-hubot: help`. Otherwise, defaults to `slackbot`.
