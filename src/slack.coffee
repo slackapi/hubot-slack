@@ -52,13 +52,15 @@ class SlackBot extends Adapter
     @robot.logger.info 'Slack client closed'
 
   message: (message) =>
-    if message.hidden then return
-    if not message.text and not message.attachments then return
+    return if message.hidden
+    return if not message.text and not message.attachments
 
     channel = @client.getChannelGroupOrDMByID message.channel
     user = @client.getUserByID message.user
     # TODO: Handle message.username for bot messages?
-    # TODO: Do we need to ignore our own messages? Probably!
+
+    # Ignore our own messages
+    return if user.name == @robot.name
 
     # Build message text to respond to, including all attachments
     txt = ''
@@ -69,17 +71,31 @@ class SlackBot extends Adapter
         if k > 0 then txt += "\n"
         txt += attach.fallback
 
-    # TODO: Need to process the user into a full hubot user using @robot.brain.userForId user etc
+    # Process the user into a full hubot user
+    user = @robot.brain.userForId user.name
+    user.room = channel.name
 
     @robot.logger.debug "Received message: #{txt} in channel: #{channel.name}, from: #{user.name}"
 
     @receive new TextMessage(user, txt)
 
-  # TODO: Send
+  send: (envelope, messages...) ->
+    channel = slack.getChannelGroupOrDMByName envelope.room
 
-  # TODO: Reply
+    for msg in messages
+      @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
-  # TODO: Topic
+      channel.send msg
+
+  reply: (envelope, messages...) ->
+    @robot.logger.debug "Sending reply"
+
+    for msg in messages
+      @send envelope, "#{envelope.user.name}: #{msg}"
+
+  topic: (params, strings...) ->
+    channel = slack.getChannelGroupOrDMByName envelope.room
+    channel.setTopic strings.join "\n"
 
 exports.use = (robot) ->
   new SlackBot robot
