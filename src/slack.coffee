@@ -1,4 +1,4 @@
-{Robot, Adapter, TextMessage} = require 'hubot'
+{Robot, Adapter, TextMessage, EnterMessage, LeaveMessage} = require 'hubot'
 SlackClient = require 'slack-client'
 Util = require 'util'
 
@@ -22,7 +22,7 @@ class SlackBot extends Adapter
     @client = new SlackClient options.token, options.autoReconnect, options.autoMark
 
     # Setup event handlers
-    # TODO: I think hubot would like to know when people come online
+    # TODO: I think hubot would like to know when people come online and enter/leave channels
     # TODO: Handle eventual events at (re-)connection time for unreads and provide a config for whether we want to process them
     @client.on 'error', @.error
     @client.on 'loggedIn', @.loggedIn
@@ -43,7 +43,7 @@ class SlackBot extends Adapter
     @robot.name = self.name
 
   open: =>
-    @robot.logger.info 'Slack client connected'
+    @robot.logger.info 'Slack client now connected'
 
     # Tell Hubot we're connected so it can load scripts
     @emit "connected"
@@ -75,9 +75,9 @@ class SlackBot extends Adapter
     user = @robot.brain.userForId user.name
     user.room = channel.name
 
-    @robot.logger.debug "Received message: #{txt} in channel: #{channel.name}, from: #{user.name}"
+    @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
 
-    @receive new TextMessage(user, txt)
+    @receive new TextMessage user, txt, message.ts
 
   send: (envelope, messages...) ->
     channel = slack.getChannelGroupOrDMByName envelope.room
@@ -91,6 +91,7 @@ class SlackBot extends Adapter
     @robot.logger.debug "Sending reply"
 
     for msg in messages
+      # TODO: Don't prefix username if replying in DM
       @send envelope, "#{envelope.user.name}: #{msg}"
 
   topic: (params, strings...) ->
