@@ -63,13 +63,17 @@ class SlackBot extends Adapter
     return if user.name == @robot.name
 
     # Test for enter/leave messages
-    if msg.type is 'channel_join' or 'group_join'
+    if msg.subtype is 'channel_join' or msg.subtype is 'group_join'
       @robot.logger.debug "#{user.name} has joined #{channel.name}"
       @receive new EnterMessage user
 
-    else if msg.type is 'channel_leave' or 'group_leave'
+    else if msg.subtype is 'channel_leave' or msg.subtype is 'group_leave'
       @robot.logger.debug "#{user.name} has left #{channel.name}"
       @receive new LeaveMessage user
+
+    else if msg.subtype is 'channel_topic' or msg.subtype is 'group_topic'
+      @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{msg.topic}"
+      @receive new TopicMessage user, msg.topic, msg.ts
 
     else
       # Build message text to respond to, including all attachments
