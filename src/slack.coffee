@@ -76,7 +76,7 @@ class SlackBot extends Adapter
     @receive new TextMessage user, txt, msg.ts
 
   send: (envelope, messages...) ->
-    channel = slack.getChannelGroupOrDMByName envelope.room
+    channel = @client.getChannelGroupOrDMByName envelope.room
 
     for msg in messages
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
@@ -91,7 +91,7 @@ class SlackBot extends Adapter
       @send envelope, "#{envelope.user.name}: #{msg}"
 
   topic: (params, strings...) ->
-    channel = slack.getChannelGroupOrDMByName envelope.room
+    channel = @client.getChannelGroupOrDMByName envelope.room
     channel.setTopic strings.join "\n"
 
 exports.use = (robot) ->
