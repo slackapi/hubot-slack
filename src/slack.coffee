@@ -23,7 +23,6 @@ class SlackBot extends Adapter
     @client = new SlackClient options.token, options.autoReconnect, options.autoMark
 
     # Setup event handlers
-    # TODO: I think hubot would like to know when people come online and enter/leave channels
     # TODO: Handle eventual events at (re-)connection time for unreads and provide a config for whether we want to process them
     @client.on 'error', @.error
     @client.on 'loggedIn', @.loggedIn
@@ -63,17 +62,26 @@ class SlackBot extends Adapter
     # Ignore our own messages
     return if user.name == @robot.name
 
-    # Build message text to respond to, including all attachments
-    txt = msg.getBody()
+    # Test for enter/leave messages
+    if msg.type is 'channel_join' or 'group_join'
+      @robot.logger.debug "#{user.name} has joined #{channel.name}"
+      @receive new EnterMessage user
 
-    # Process the user into a full hubot user
-    user = @robot.brain.userForId user.name
-    user.room = channel.name
-    user.type = 'groupchat'
+    else if msg.type is 'channel_leave' or 'group_leave'
+      @robot.logger.debug "#{user.name} has left #{channel.name}"
+      @receive new LeaveMessage user
 
-    @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
+    else
+      # Build message text to respond to, including all attachments
+      txt = msg.getBody()
 
-    @receive new TextMessage user, txt, msg.ts
+      # Process the user into a full hubot user
+      user = @robot.brain.userForId user.name
+      user.room = channel.name
+
+      @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
+
+      @receive new TextMessage user, txt, msg.ts
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room

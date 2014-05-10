@@ -35,7 +35,6 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 
         % heroku config:add HEROKU_URL=http://soothing-mists-4567.herokuapp.com
         % heroku config:add HUBOT_SLACK_TOKEN=xoxp-1234-5678-91011-00e4dd
-        % heroku config:add HUBOT_SLACK_BOTNAME=slack-hubot
 
 - Deploy and start the bot:
 
