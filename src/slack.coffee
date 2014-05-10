@@ -62,6 +62,10 @@ class SlackBot extends Adapter
     # Ignore our own messages
     return if user.name == @robot.name
 
+    # Process the user into a full hubot user
+    user = @robot.brain.userForId user.name
+    user.room = channel.name
+
     # Test for enter/leave messages
     if msg.subtype is 'channel_join' or msg.subtype is 'group_join'
       @robot.logger.debug "#{user.name} has joined #{channel.name}"
@@ -78,10 +82,6 @@ class SlackBot extends Adapter
     else
       # Build message text to respond to, including all attachments
       txt = msg.getBody()
-
-      # Process the user into a full hubot user
-      user = @robot.brain.userForId user.name
-      user.room = channel.name
 
       @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
 
