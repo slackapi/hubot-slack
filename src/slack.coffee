@@ -1,10 +1,11 @@
-{Robot, Adapter, TextMessage, EnterMessage, LeaveMessage} = require 'hubot'
+{Robot, Adapter, TextMessage, EnterMessage, LeaveMessage} = require '../../hubot/node_modules/hubot'
+
 SlackClient = require 'slack-client'
 Util = require 'util'
 
 class SlackBot extends Adapter
   constructor: (robot) ->
-    super robot
+    @robot = robot
 
   run: ->
     # Take our options from the environment, and set otherwise suitable defaults
@@ -51,33 +52,28 @@ class SlackBot extends Adapter
   close: =>
     @robot.logger.info 'Slack client closed'
 
-  message: (message) =>
-    return if message.hidden
-    return if not message.text and not message.attachments
+  message: (msg) =>
+    return if msg.hidden
+    return if not msg.text and not msg.attachments
 
-    channel = @client.getChannelGroupOrDMByID message.channel
-    user = @client.getUserByID message.user
-    # TODO: Handle message.username for bot messages?
+    channel = @client.getChannelGroupOrDMByID msg.channel
+    user = @client.getUserByID msg.user
+    # TODO: Handle msg.username for bot messages?
 
     # Ignore our own messages
     return if user.name == @robot.name
 
     # Build message text to respond to, including all attachments
-    txt = ''
-    if message.text then txt += message.text
-    
-    if message.attachments
-      for k, attach of message.attachments
-        if k > 0 then txt += "\n"
-        txt += attach.fallback
+    txt = msg.getBody()
 
     # Process the user into a full hubot user
     user = @robot.brain.userForId user.name
     user.room = channel.name
+    user.type = 'groupchat'
 
     @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
 
-    @receive new TextMessage user, txt, message.ts
+    @receive new TextMessage user, txt, msg.ts
 
   send: (envelope, messages...) ->
     channel = slack.getChannelGroupOrDMByName envelope.room
