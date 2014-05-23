@@ -92,6 +92,72 @@ describe 'Sending a message', ->
 
     args = slack.send params, 'Hello, fake world'
 
+describe 'Sending a custom message', ->
+  it 'Should JSON-ify args', ->
+    # Shim the post()
+    slack.post = (path, args) ->
+      (-> JSON.parse args).should.not.throw()
+
+    message =
+      reply_to: 'A fake room'
+
+    payload =
+      text: 'Some text'
+      fallback: 'A fallback message'
+      pretext: 'Some pretext'
+
+    args = slack.custom message, payload
+
+  it 'Should use a blank mrkdwn_in array if none given', ->
+    slack.post = (path, args) ->
+      (-> JSON.parse args)().attachments[0].mrkdwn_in.should.be.empty
+
+    message =
+      reply_to: 'A fake room'
+
+    payload =
+      text: 'Some text'
+      fallback: 'A fallback message'
+      pretext: 'Some pretext'
+
+    args = slack.custom message, payload
+
+  it 'Should use the given mrkdwn_in array if supplied', ->
+    slack.post = (path, args) ->
+      args = JSON.parse args
+
+      args.attachments[0].mrkdwn_in
+        .should.be.an.Array
+        .should.not.be.empty
+      args.attachments[0].mrkdwn_in
+        .should.have.length(3)
+
+    message =
+      reply_to: 'A fake room'
+
+    payload =
+      text: 'Some text'
+      fallback: 'A fallback message'
+      pretext: 'Some pretext'
+      mrkdwn_in: ['text', 'pretext', 'fallback']
+
+    args = slack.custom message, payload
+
+  it 'Should use the channel mapping for channel if none given', ->
+    slack.channelMapping['A fake room'] = 'A real room'
+    slack.post = (path, args) ->
+      (-> JSON.parse args)().channel.should.eql('A real room')
+
+    message =
+      room: 'A fake room'
+
+    payload =
+      text: 'Some text'
+      fallback: 'A fallback message'
+      pretext: 'Some pretext'
+
+    args = slack.custom message, payload
+
 describe 'Parsing options', ->
   it 'Should default to the name "slackbot"', ->
     slack.parseOptions()
