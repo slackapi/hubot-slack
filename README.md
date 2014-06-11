@@ -97,7 +97,7 @@ If there is a message and it can deduce an author from those paramters, it'll cr
 
 When a script calls `send()` or `reply()` this adapter makes a POST request to your team's specific URL webhook:
 
-https://<your_team_name>.slack.com/services/hooks/hubot
+`https://<your_team_name>.slack.com/services/hooks/hubot`
 
 with a JSON-formatted body including the following dictionary:
 
