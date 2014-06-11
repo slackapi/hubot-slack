@@ -81,7 +81,7 @@ The slack adapter adds a path to the robot's router that will accept POST reques
 
 `/hubot/slack-webhook`
 
-Source: [https://github.com/tinyspeck/hubot-slack/blob/master/src/slack.coffee#L149-165](https://github.com/tinyspeck/hubot-slack/blob/master/src/slack.coffee#L149-165)
+Source: [https://github.com/tinyspeck/hubot-slack/blob/2.1.0/src/slack.coffee#L149-L165](https://github.com/tinyspeck/hubot-slack/blob/2.1.0/src/slack.coffee#L149-L165)
 
 Expected parameters:
 
@@ -91,7 +91,7 @@ Expected parameters:
 - channel_id
 - channel_name
 
-If there is a message and it can deduce an author from those paramters, it'll create a new [TextMessage](https://github.com/github/hubot/blob/master/src/message.coffee#L14) object and have the robot receive it, from there proceeding down the regular hubot path.
+If there is a message and it can deduce an author from those paramters, it'll create a new [TextMessage](https://github.com/github/hubot/blob/v2.7.2/src/message.coffee#L14) object and have the robot receive it, from there proceeding down the regular hubot path.
 
 #### Sending Messages
 
