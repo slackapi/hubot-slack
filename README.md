@@ -72,3 +72,37 @@ Optional. A comma-separated list of channels to either be blacklisted or whiteli
 #### HUBOT\_SLACK\_LINK\_NAMES
 
 Optional. By default, Slack will not linkify channel names (starting with a '#') and usernames (starting with an '@'). You can enable this behavior by setting HUBOT_SLACK_LINK_NAMES to 1. Otherwise, defaults to 0. See [Slack API : Message Formatting Docs](https://api.slack.com/docs/formatting) for more information.
+
+## Under the Hood
+
+#### Receiving Messages:
+
+The slack adapter adds a path to the robot's router that will accept POST requests to:
+
+`/hubot/slack-webhook`
+
+Source: [https://github.com/tinyspeck/hubot-slack/blob/2.1.0/src/slack.coffee#L149-L165](https://github.com/tinyspeck/hubot-slack/blob/2.1.0/src/slack.coffee#L149-L165)
+
+Expected parameters:
+
+- text
+- user_id
+- user_name
+- channel_id
+- channel_name
+
+If there is a message and it can deduce an author from those paramters, it'll create a new [TextMessage](https://github.com/github/hubot/blob/v2.7.2/src/message.coffee#L14) object and have the robot receive it, from there proceeding down the regular hubot path.
+
+#### Sending Messages
+
+When a script calls `send()` or `reply()` this adapter makes a POST request to your team's specific URL webhook:
+
+`https://<your_team_name>.slack.com/services/hooks/hubot`
+
+with a JSON-formatted body including the following dictionary:
+
+- username
+- channel
+- text
+- link_names (optionally)
+
