@@ -99,7 +99,9 @@ class Slack extends Adapter
       team  : process.env.HUBOT_SLACK_TEAM
       name  : process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
       mode  : process.env.HUBOT_SLACK_CHANNELMODE or 'blacklist'
-      channels: process.env.HUBOT_SLACK_CHANNELS?.split(',') or []
+      # Make sure channel settings don't include leading hashes
+      channels: (process.env.HUBOT_SLACK_CHANNELS?.split(',') or []).map (channel) ->
+        channel.replace /^#/, ''
       link_names: process.env.HUBOT_SLACK_LINK_NAMES or 0
 
   getMessageFromRequest: (req) ->

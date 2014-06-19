@@ -196,6 +196,22 @@ describe 'Parsing the request', ->
     delete process.env.HUBOT_SLACK_CHANNELMODE
     delete process.env.HUBOT_SLACK_CHANNELS
 
+  it 'Should strip leading hashes from blacklisted room names', ->
+    process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
+    process.env.HUBOT_SLACK_CHANNELS = '#foo,#test'
+    slack.parseOptions()
+
+    requestText = 'The message from the request'
+    req = stubs.request()
+    req.data =
+      channel_name: 'test'
+      text: requestText
+
+    message = slack.getMessageFromRequest req
+    should.not.exist message
+    delete process.env.HUBOT_SLACK_CHANNELMODE
+    delete process.env.HUBOT_SLACK_CHANNELS
+
   it 'Should not ignore not blacklisted rooms', ->
     process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
     process.env.HUBOT_SLACK_CHANNELS = 'test'
