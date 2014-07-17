@@ -117,8 +117,6 @@ class Slack extends Adapter
     # Return an author object
     id       : req.param 'user_id'
     name     : req.param 'user_name'
-    reply_to : req.param 'channel_id'
-    room     : req.param 'channel_name'
 
   userFromParams: (params) ->
     # hubot < 2.4.2: params = user
@@ -155,6 +153,7 @@ class Slack extends Adapter
       hubotMsg = self.getMessageFromRequest req
       author = self.getAuthorFromRequest req
       author = self.robot.brain.userForId author.id, author
+      author.reply_to = req.param 'channel_id'
       author.room = req.param 'channel_name'
       self.channelMapping[req.param 'channel_name'] = req.param 'channel_id'
 
