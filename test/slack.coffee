@@ -177,8 +177,6 @@ describe 'Parsing the request', ->
     author.should.include
       id: 37
       name: 'Luke'
-      reply_to: 760
-      room: 'Home'
 
   it 'Should ignore blacklisted rooms', ->
     process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
