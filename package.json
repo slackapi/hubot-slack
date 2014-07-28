@@ -2,30 +2,13 @@
   "name": "hubot-slack",
   "version": "2.1.0",
   "author": {
-    "name": "Tiny Speck",
-    "url": "https://www.tinyspeck.com/"
+    "name": "hajimeni",
+    "url": "https://github.com/hajimeni/hubot-slack/"
   },
   "contributors": [
     {
-      "name": "Myles Grant",
-      "email": "myles@tinyspeck.com"
-    },
-    {
-      "name": "Evan Solomon"
-    },
-    {
-      "name": "Jon Dalberg"
-    },
-    {
-      "name": "Patrick Connolly"
-    },
-    {
-      "name": "Chip Hayner",
-      "email": "chayner@centresource.com"
-    },
-    {
-      "name": "Eric Lindvall",
-      "email": "eric@papertrailapp.com"
+      "name": "hajimeni",
+      "email": "hajimeni373@gmail.com"
     }
   ],
   "keywords": [
@@ -43,10 +26,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/tinyspeck/hubot-slack.git"
+    "url": "https://github.com/hajimeni/hubot-slack"
   },
   "bugs": {
-    "url": "https://github.com/tinyspeck/hubot-slack/issues",
+    "url": "https://github.com/hajimeni/hubot-slack/issues",
     "email": "help@tinyspeck.com"
   },
   "devDependencies": {
