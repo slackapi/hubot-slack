@@ -50,6 +50,11 @@ class SlackBot extends Adapter
 
   close: =>
     @robot.logger.info 'Slack client closed'
+    @client.removeListener 'error', @.error
+    @client.removeListener 'loggedIn', @.loggedIn
+    @client.removeListener 'open', @.open
+    @client.removeListener 'close', @.close
+    @client.removeListener 'message', @.message
 
   message: (msg) =>
     return if msg.hidden
