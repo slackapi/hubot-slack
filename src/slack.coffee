@@ -67,26 +67,34 @@ class Slack extends Adapter
   # HTML helpers.
   ###################################################################
   escapeHtml: (string) ->
-    string
-      # Escape entities
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
+    try
+      string
+        # Escape entities
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
 
-      # Linkify. We assume that the bot is well-behaved and
-      # consistently sending links with the protocol part
-      .replace(/((\bhttp)\S+)/g, '<$1>')
+        # Linkify. We assume that the bot is well-behaved and
+        # consistently sending links with the protocol part
+        .replace(/((\bhttp)\S+)/g, '<$1>')
+    catch e
+      @logError "Failed to escape HTML: #{e}"
+      return ''
 
   unescapeHtml: (string) ->
-    string
-      # Unescape entities
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
+    try
+      string
+        # Unescape entities
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
 
-      # Convert markup into plain url string.
-      .replace(/<((\bhttps?)[^|]+)(\|(.*))+>/g, '$1')
-      .replace(/<((\bhttps?)(.*))?>/g, '$1')
+        # Convert markup into plain url string.
+        .replace(/<((\bhttps?)[^|]+)(\|(.*))+>/g, '$1')
+        .replace(/<((\bhttps?)(.*))?>/g, '$1')
+    catch e
+      @logError "Failed to unescape HTML: #{e}"
+      return ''
 
 
   ###################################################################

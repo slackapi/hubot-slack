@@ -6,6 +6,7 @@ should = require 'should'
 # Import our hero. Noop logging so that we don't clutter the test output
 {Slack} = require '../src/slack'
 Slack::log = ->
+Slack::logError = ->
 
 # Stub a few interfaces to grease the skids for tests. These are intentionally
 # as minimal as possible and only provide enough to make the tests possible.
@@ -57,6 +58,11 @@ describe '(Un)escaping strings', ->
     it "Should unescape #{character.name}", ->
       unescaped = slack.unescapeHtml(makeTestString(character.after))
       unescaped.should.eql makeTestString(character.before)
+
+  it 'Should return an empty string if input is a non-string', ->
+    for input in [undefined, null, false, {}, [], 123]
+      slack.escapeHtml(input).should.eql('')
+      slack.unescapeHtml(input).should.eql('')
 
 
 describe 'Getting the user from params', ->
