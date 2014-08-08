@@ -21,8 +21,8 @@ class Slack extends Adapter
   # robot.respond, robot.listen, etc.
   ###################################################################
   send: (envelope, strings...) ->
+    channel = envelope.reply_to || envelope.user?.reply_to || @channelMapping[envelope.room] || envelope.user?.room || envelope.room
     @log "Sending message"
-    channel = envelope.reply_to || @channelMapping[envelope.room] || envelope.room
 
     strings.forEach (str) =>
       str = @escapeHtml str
