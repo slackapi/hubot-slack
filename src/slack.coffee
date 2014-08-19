@@ -50,6 +50,7 @@ class Slack extends Adapter
     @log "Sending custom message"
 
     channel = message.reply_to || @channelMapping[message.room] || message.room
+    icon_emoji = message.icon_emoji ? null
 
     attachment =
       text     : @escapeHtml data.text
@@ -58,7 +59,8 @@ class Slack extends Adapter
       color    : data.color
       fields   : data.fields
     args = JSON.stringify
-      username    : @robot.name
+      username    : message.username || @robot.name
+      icon_emoji  : icon_emoji
       channel     : channel
       attachments : [attachment]
       link_names  : @options.link_names if @options?.link_names?
