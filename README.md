@@ -106,3 +106,13 @@ with a JSON-formatted body including the following dictionary:
 - text
 - link_names (optionally)
 
+#### Message to a specific room:
+
+Sometime, it's useful to send a message regardless of the channel's activity (like `robot.hear` or `robot.response`). Hubot has [`robot.messageRoom`](https://github.com/github/hubot/blob/v2.8.0/src/robot.coffee#L401-L409) available for this use case.
+
+Slack API uses channel ID's by default, which uses computer-friendly alphanumeric ID. To use the pretty names, prefix it with a hash.
+
+```coffeescript
+robot.respond /hello$/i, (msg) ->
+  robot.messageRoom '#general', 'hello there'
+```
