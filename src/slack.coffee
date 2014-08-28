@@ -90,6 +90,10 @@ class SlackBot extends Adapter
 
       @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
 
+      # If this is a DM, pretend it was addressed to us
+      if msg.getChannelType() == 'DM'
+        txt = "#{@robot.name} #{txt}"
+
       @receive new TextMessage user, txt, msg.ts
 
   send: (envelope, messages...) ->
