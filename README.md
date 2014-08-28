@@ -34,7 +34,7 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 - Add the [config variables](#adapter-configuration). For example:
 
         % heroku config:add HEROKU_URL=http://soothing-mists-4567.herokuapp.com
-        % heroku config:add HUBOT_SLACK_TOKEN=xoxp-1234-5678-91011-00e4dd
+        % heroku config:add HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd
 
 - Deploy and start the bot:
 
@@ -50,3 +50,12 @@ This adapter uses the following environment variables:
 #### HUBOT\_SLACK\_TOKEN
 
 This is the API token for the Slack user you would like to run Hubot under.
+
+## Copyright
+
+Copyright &copy; Tiny Speck, Inc. MIT License; see LICENSE for further details.
+
+## TODOs
+
+1. Respond to DMs without requiring `username: `
+1. On reconnect, optionally fetch and process missed messages
