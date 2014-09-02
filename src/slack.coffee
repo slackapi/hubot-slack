@@ -53,11 +53,12 @@ class Slack extends Adapter
     attachments = []
     for item in data
       attachments.push
-        text     : @escapeHtml item.text
-        fallback : @escapeHtml item.fallback
-        pretext  : @escapeHtml item.pretext
-        color    : item.color
-        fields   : item.fields
+        text      : @escapeHtml item.text
+        fallback  : @escapeHtml item.fallback
+        pretext   : @escapeHtml item.pretext
+        color     : item.color
+        fields    : item.fields
+        mrkdwn_in : item.mrkdwn_in
     args = JSON.stringify
       username    : @robot.name
       channel     : channel
