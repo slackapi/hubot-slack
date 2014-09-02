@@ -113,6 +113,9 @@ class Slack extends Adapter
       link_names: process.env.HUBOT_SLACK_LINK_NAMES or 0
 
   getMessageFromRequest: (req) ->
+    # Check the token
+    return if not req.param('token') or (req.param('token') isnt @options.token)
+
     # Parse the payload
     hubotMsg = req.param 'text'
     room = req.param 'channel_name'
@@ -158,18 +161,16 @@ class Slack extends Adapter
     self.robot.router.post "/hubot/slack-webhook", (req, res) ->
       self.log "Incoming message received"
 
-      if req.param 'token' is self.options.token
+      hubotMsg = self.getMessageFromRequest req
+      author = self.getAuthorFromRequest req
+      author = self.robot.brain.userForId author.id, author
+      author.reply_to = req.param 'channel_id'
+      author.room = req.param 'channel_name'
+      self.channelMapping[req.param 'channel_name'] = req.param 'channel_id'
 
-        hubotMsg = self.getMessageFromRequest req
-        author = self.getAuthorFromRequest req
-        author = self.robot.brain.userForId author.id, author
-        author.reply_to = req.param 'channel_id'
-        author.room = req.param 'channel_name'
-        self.channelMapping[req.param 'channel_name'] = req.param 'channel_id'
-
-        if hubotMsg and author
-          # Pass to the robot
-          self.receive new TextMessage(author, hubotMsg)
+      if hubotMsg and author
+        # Pass to the robot
+        self.receive new TextMessage(author, hubotMsg)
 
       # Just send back an empty reply, since our actual reply,
       # if any, will be async above

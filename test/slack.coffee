@@ -157,19 +157,26 @@ describe 'Parsing options', ->
 
 describe 'Parsing the request', ->
   it 'Should get the message', ->
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
     slack.parseOptions()
 
     requestText = 'The message from the request'
     req = stubs.request()
     req.data.text = requestText
+    req.data.token = process.env.HUBOT_SLACK_TOKEN
 
     slack.getMessageFromRequest(req).should.eql requestText
+    delete process.env.HUBOT_SLACK_TOKEN
 
   it 'Should return null if the message is missing', ->
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
     slack.parseOptions()
 
-    message = slack.getMessageFromRequest stubs.request()
+    req = stubs.request()
+    req.data.token = process.env.HUBOT_SLACK_TOKEN
+    message = slack.getMessageFromRequest req
     should.not.exist message
+    delete process.env.HUBOT_SLACK_TOKEN
 
   it 'Should get the author', ->
     req = stubs.request()
@@ -187,77 +194,105 @@ describe 'Parsing the request', ->
   it 'Should ignore blacklisted rooms', ->
     process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
     process.env.HUBOT_SLACK_CHANNELS = 'test'
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
     slack.parseOptions()
 
     requestText = 'The message from the request'
     req = stubs.request()
     req.data =
       channel_name: 'test'
+      token: process.env.HUBOT_SLACK_TOKEN
       text: requestText
 
     message = slack.getMessageFromRequest req
     should.not.exist message
     delete process.env.HUBOT_SLACK_CHANNELMODE
     delete process.env.HUBOT_SLACK_CHANNELS
+    delete process.env.HUBOT_SLACK_TOKEN
 
   it 'Should strip leading hashes from blacklisted room names', ->
     process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
     process.env.HUBOT_SLACK_CHANNELS = '#foo,#test'
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
     slack.parseOptions()
 
     requestText = 'The message from the request'
     req = stubs.request()
     req.data =
       channel_name: 'test'
+      token: process.env.HUBOT_SLACK_TOKEN
       text: requestText
 
     message = slack.getMessageFromRequest req
     should.not.exist message
     delete process.env.HUBOT_SLACK_CHANNELMODE
     delete process.env.HUBOT_SLACK_CHANNELS
+    delete process.env.HUBOT_SLACK_TOKEN
 
   it 'Should not ignore not blacklisted rooms', ->
     process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
     process.env.HUBOT_SLACK_CHANNELS = 'test'
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
     slack.parseOptions()
 
     requestText = 'The message from the request'
     req = stubs.request()
     req.data =
       channel_name: 'not-test'
+      token: process.env.HUBOT_SLACK_TOKEN
       text: requestText
 
     slack.getMessageFromRequest(req).should.eql requestText
     delete process.env.HUBOT_SLACK_CHANNELMODE
     delete process.env.HUBOT_SLACK_CHANNELS
+    delete process.env.HUBOT_SLACK_TOKEN
 
   it 'Should not ignore whitelisted rooms', ->
     process.env.HUBOT_SLACK_CHANNELMODE = 'whitelist'
     process.env.HUBOT_SLACK_CHANNELS = 'test'
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
     slack.parseOptions()
 
     requestText = 'The message from the request'
     req = stubs.request()
     req.data =
       channel_name: 'test'
+      token: process.env.HUBOT_SLACK_TOKEN
       text: requestText
 
     slack.getMessageFromRequest(req).should.eql requestText
     delete process.env.HUBOT_SLACK_CHANNELMODE
     delete process.env.HUBOT_SLACK_CHANNELS
+    delete process.env.HUBOT_SLACK_TOKEN
 
   it 'Should ignore not whitelisted rooms', ->
     process.env.HUBOT_SLACK_CHANNELMODE = 'whitelist'
     process.env.HUBOT_SLACK_CHANNELS = 'test'
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
     slack.parseOptions()
 
     requestText = 'The message from the request'
     req = stubs.request()
     req.data =
       channel_name: 'not-test'
+      token: 'token'
       text: requestText
 
     message = slack.getMessageFromRequest req
     should.not.exist message
     delete process.env.HUBOT_SLACK_CHANNELMODE
     delete process.env.HUBOT_SLACK_CHANNELS
+    delete process.env.HUBOT_SLACK_TOKEN
+
+  it 'Should fail if the token is incorrect', ->
+    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
+    slack.parseOptions()
+
+    requestText = 'The message from the request'
+    req = stubs.request()
+    req.data.text = requestText
+    req.data.token = 'secure token'
+
+    message = slack.getMessageFromRequest req
+    should.not.exist message
+    delete process.env.HUBOT_SLACK_TOKEN
