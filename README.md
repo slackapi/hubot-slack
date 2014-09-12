@@ -73,6 +73,10 @@ Optional. A comma-separated list of channels to either be blacklisted or whiteli
 
 Optional. By default, Slack will not linkify channel names (starting with a '#') and usernames (starting with an '@'). You can enable this behavior by setting HUBOT_SLACK_LINK_NAMES to 1. Otherwise, defaults to 0. See [Slack API : Message Formatting Docs](https://api.slack.com/docs/formatting) for more information.
 
+#### HUBOT\_SLACK\_UNFURL\_LINKS
+
+Optional. By default, Slack will not unfurl links. You can enable this behavior by setting HUBOT\_SLACK\_UNFURL\_LINKS to 1. Otherwise, defaults to 0.
+
 ## Under the Hood
 
 #### Receiving Messages:
