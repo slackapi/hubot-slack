@@ -57,7 +57,7 @@
     "mocha": "~1.13.0",
     "grunt-contrib-watch": "~0.5.3",
     "grunt-shell": "~0.5.0",
-    "slack-client": "~1.0.0"
+    "slack-client": "~1.1.0"
   },
   "main": "./src/slack",
   "engines": {
