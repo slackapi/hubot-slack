@@ -1,4 +1,4 @@
-{Robot, Adapter, TextMessage, EnterMessage, LeaveMessage} = require '../../hubot/node_modules/hubot'
+{Robot, Adapter, TextMessage, EnterMessage, LeaveMessage} = require 'hubot'
 
 SlackClient = require 'slack-client'
 Util = require 'util'
