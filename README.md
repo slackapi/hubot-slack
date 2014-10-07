@@ -81,7 +81,7 @@ The slack adapter adds a path to the robot's router that will accept POST reques
 
 `/hubot/slack-webhook`
 
-Source: [https://github.com/tinyspeck/hubot-slack/blob/2.1.0/src/slack.coffee#L149-L165](https://github.com/tinyspeck/hubot-slack/blob/2.1.0/src/slack.coffee#L149-L165)
+Source: [https://github.com/tinyspeck/hubot-slack/blob/2.2.0/src/slack.coffee#L161-L177](https://github.com/tinyspeck/hubot-slack/blob/2.2.0/src/slack.coffee#L161-L177)
 
 Expected parameters:
 
