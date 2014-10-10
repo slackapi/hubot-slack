@@ -27,10 +27,11 @@ class Slack extends Adapter
     strings.forEach (str) =>
       str = @escapeHtml str
       args = JSON.stringify
-        username   : @robot.name
-        channel    : channel
-        text       : str
-        link_names : @options.link_names if @options?.link_names?
+        username     : @robot.name
+        channel      : channel
+        text         : str
+        link_names   : @options.link_names if @options?.link_names?
+        unfurl_links : @options.unfurl_links if @options?.unfurl_links?
 
       @post "/services/hooks/hubot", args
 
@@ -58,10 +59,11 @@ class Slack extends Adapter
       color    : data.color
       fields   : data.fields
     args = JSON.stringify
-      username    : @robot.name
-      channel     : channel
-      attachments : [attachment]
-      link_names  : @options.link_names if @options?.link_names?
+      username     : @robot.name
+      channel      : channel
+      attachments  : [attachment]
+      link_names   : @options.link_names if @options?.link_names?
+      unfurl_links : @options.unfurl_links if @options?.unfurl_links?
     @post "/services/hooks/hubot", args
   ###################################################################
   # HTML helpers.
@@ -108,9 +110,10 @@ class Slack extends Adapter
       name  : process.env.HUBOT_SLACK_BOTNAME or 'slackbot'
       mode  : process.env.HUBOT_SLACK_CHANNELMODE or 'blacklist'
       # Make sure channel settings don't include leading hashes
-      channels: (process.env.HUBOT_SLACK_CHANNELS?.split(',') or []).map (channel) ->
+      channels     : (process.env.HUBOT_SLACK_CHANNELS?.split(',') or []).map (channel) ->
         channel.replace /^#/, ''
-      link_names: process.env.HUBOT_SLACK_LINK_NAMES or 0
+      link_names   : process.env.HUBOT_SLACK_LINK_NAMES or 0
+      unfurl_links : process.env.HUBOT_SLACK_UNFURL_LINKS or 0
 
   getMessageFromRequest: (req) ->
     # Check the token
