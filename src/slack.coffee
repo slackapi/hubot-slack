@@ -57,6 +57,7 @@ class Slack extends Adapter
       pretext  : @escapeHtml data.pretext
       color    : data.color
       fields   : data.fields
+      mrkdwn_in: data.mrkdwn_in || []
     args = JSON.stringify
       username    : @robot.name
       channel     : channel
