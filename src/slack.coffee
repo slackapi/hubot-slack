@@ -60,7 +60,9 @@ class Slack extends Adapter
         fields    : item.fields
         mrkdwn_in : item.mrkdwn_in
     args = JSON.stringify
-      username    : @robot.name
+      username    : message.username || @robot.name
+      icon_url    : message.icon_url
+      icon_emoji  : message.icon_emoji
       channel     : channel
       attachments : attachments
       link_names  : @options.link_names if @options?.link_names?
