@@ -25,7 +25,7 @@ module.exports = (robot) ->
       value: "Field 2: Value"
       short: true
 
-    payload = 
+    payload =
       message: msg.message
       content:
         text: "Attachement Demo Text"
@@ -33,6 +33,30 @@ module.exports = (robot) ->
         pretext: "This is Pretext"
         color: "#FF0000"
         fields: fields
-        
+
+    robot.emit 'slack-attachment', payload
+```
+
+You are able to pass multiple attachments by setting the `content` to an array of "attachment" objects.
+
+```coffeescript
+# ...
+
+    payload =
+      message: msg.message
+      content: [
+        text: "Attachement Demo Text"
+        fallback: "Fallback Text"
+        pretext: "This is Pretext"
+        color: "#FF0000"
+        fields: fields
+      ,
+        text: "Attachement Demo Text 2"
+        fallback: "Fallback Text 2"
+        pretext: "This is another attachment"
+        color: "#00FF00"
+        fields: fields
+      ]
+
     robot.emit 'slack-attachment', payload
 ```
