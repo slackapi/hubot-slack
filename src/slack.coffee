@@ -26,6 +26,7 @@ class Slack extends Adapter
 
     strings.forEach (str) =>
       str = @escapeHtml str
+      str += " " if str is "0" ### HACK - fix slack bug - bots cant msg.send "0" ###
       args = JSON.stringify
         username   : @robot.name
         channel    : channel
