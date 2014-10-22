@@ -17,7 +17,7 @@ This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://
 
 #### Testing your bot locally
 
-- `./bin/hubot --adapter slack`
+- `HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd ./bin/hubot --adapter slack`
 
 #### Deploying to Heroku
 
@@ -43,6 +43,24 @@ This is a modified set of instructions based on the [instructions on the Hubot w
         % heroku ps:scale web=1
 
 - Profit!
+
+## Upgrading from earlier versions of Hubot
+
+Version 3 of the hubot-slack adapter requires different server support to
+previous versions. If you have an existing "hubot" integration set up you'll
+need to upgrade:
+
+- Go to https://my.slack.com/services/new/hubot and create a new hubot
+  integration
+- Run `npm install git+ssh://git@github.com:slackhq/hubot-slack.git --save`
+  to update your code.
+- Test your bot locally using:
+  `HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd ./bin/hubot --adapter slack`
+- Update your production startup scripts to pass the new `HUBOT_SLACK_TOKEN`.
+  You can remove the other `HUBOT_SLACK_*` environment variables if you want.
+- Deploy your new hubot to production.
+- Once you're happy it works, remove the old hubot integration from
+  https://my.slack.com/services
 
 ## Adapter configuration
 
