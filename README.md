@@ -53,7 +53,7 @@ This is the API token for the Slack user you would like to run Hubot under.
 
 ## Copyright
 
-Copyright &copy; Tiny Speck, Inc. MIT License; see LICENSE for further details.
+Copyright &copy; Slack Technologies, Inc. MIT License; see LICENSE for further details.
 
 ## TODOs
 
