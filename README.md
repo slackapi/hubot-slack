@@ -1,6 +1,7 @@
 # hubot-slack
 
-This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).  
+This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).
+
 [![Build Status](https://travis-ci.org/tinyspeck/hubot-slack.png)](https://travis-ci.org/tinyspeck/hubot-slack)
 
 ## Getting Started
@@ -16,13 +17,13 @@ This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://
 
 #### Testing your bot locally
 
-- `./bin/hubot`
+- `./bin/hubot --adapter slack`
 
 #### Deploying to Heroku
 
 This is a modified set of instructions based on the [instructions on the Hubot wiki](https://github.com/github/hubot/blob/master/docs/deploying/heroku.md).
 
-- Make sure `hubot-slack` is in your `package.json` dependencies
+- Follow the instructions above to create a hubot locally
 - Edit your `Procfile` and change it to use the `slack` adapter:
 
         web: bin/hubot --adapter slack
@@ -33,7 +34,7 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 - Activate the Hubot service on your ["Team Services"](http://my.slack.com/services/new/hubot) page inside Slack.
 - Add the [config variables](#adapter-configuration). For example:
 
-        % heroku config:add HEROKU_URL=http://soothing-mists-4567.herokuapp.com
+        % heroku config:add HEROKU_URL=http://my-company-slackbot.herokuapp.com
         % heroku config:add HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd
 
 - Deploy and start the bot:
@@ -47,15 +48,8 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 
 This adapter uses the following environment variables:
 
-#### HUBOT\_SLACK\_TOKEN
-
-This is the API token for the Slack user you would like to run Hubot under.
+ - `HUBOT_SLACK_TOKEN` - this is the API token for the Slack user you would like to run Hubot under.
 
 ## Copyright
 
 Copyright &copy; Slack Technologies, Inc. MIT License; see LICENSE for further details.
-
-## TODOs
-
-1. Respond to DMs without requiring `username: `
-1. On reconnect, optionally fetch and process missed messages
