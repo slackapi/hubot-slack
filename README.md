@@ -53,7 +53,7 @@ need to upgrade:
 
 - Go to https://my.slack.com/services/new/hubot and create a new hubot
   integration
-- Run `npm install git+ssh://git@github.com:slackhq/hubot-slack.git --save`
+- Run `npm install hubot-slack --save`
   to update your code.
 - Test your bot locally using:
   `HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd ./bin/hubot --adapter slack`
