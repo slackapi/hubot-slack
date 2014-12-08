@@ -43,11 +43,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/tinyspeck/hubot-slack.git"
+    "url": "http://github.com/slackhq/hubot-slack.git"
   },
   "bugs": {
-    "url": "https://github.com/tinyspeck/hubot-slack/issues",
-    "email": "help@tinyspeck.com"
+    "url": "https://github.com/slackhq/hubot-slack/issues",
+    "email": "feedback@tinyspeck.com"
   },
   "devDependencies": {
     "coffee-script": "~1.7.1",
