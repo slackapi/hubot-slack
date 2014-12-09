@@ -107,7 +107,26 @@ class SlackBot extends Adapter
     for msg in messages
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
-      channel.send msg
+      # If message is greater than 4000 chars, split it into multiple msessages
+      if msg.length > 4000
+        submessages = []
+
+        while msg.length > 0
+          # Split message at last line break, if it exists
+          chunk = msg.substring(0, 4000)
+          breakIndex = if chunk.lastIndexOf('\n') isnt -1 then chunk.lastIndexOf('\n') else 4000
+
+          submessages.push msg.substring(0, breakIndex)
+
+          # Skip char if split on line break
+          breakIndex++ if breakIndex isnt 4000
+
+          msg = msg.substring(breakIndex, msg.length)
+
+        channel.send m for m in submessages
+
+      else
+        channel.send msg
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
