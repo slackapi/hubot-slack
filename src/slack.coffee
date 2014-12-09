@@ -116,7 +116,7 @@ class SlackBot extends Adapter
       # TODO: Don't prefix username if replying in DM
       @send envelope, "#{envelope.user.name}: #{msg}"
 
-  topic: (params, strings...) ->
+  topic: (envelope, strings...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
     channel.setTopic strings.join "\n"
 
