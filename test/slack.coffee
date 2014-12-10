@@ -12,15 +12,23 @@ should = require 'should'
 stubs = null
 beforeEach ->
   stubs =
+    # Slack client
+    channel:
+      send: (msg) -> msg
+    client:
+      getChannelGroupOrDMByName: () ->
+        stubs.channel
     # Hubot.Robot instance
     robot:
       logger:
         info: ->
+        debug: ->
 
 # Generate a new slack instance for each test.
 slackbot = null
 beforeEach ->
   slackbot = new SlackBot stubs.robot
+  slackbot.client = stubs.client
 
 
 ###################################################################
@@ -38,3 +46,33 @@ describe 'Login', ->
       name: 'bot'
     slackbot.loggedIn(user, team)
     slackbot.robot.name.should.equal 'bot'
+
+describe 'Send Messages', ->
+  it 'Should send multiple messages', ->
+    sentMessages = slackbot.send {room: 'room-name'}, 'one', 'two', 'three'
+    sentMessages.length.should.equal 3
+
+  it 'Should split long messages', ->
+    lines = 'Hello, Slackbot\nHow are you?\n'
+    # Make a very long message
+    msg = lines
+    len = 10000
+    msg += lines while msg.length < len
+
+    sentMessages = slackbot.send {room: 'room-name'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.length.should.equal Math.ceil(len / SlackBot.MAX_MESSAGE_LENGTH)
+
+  it 'Should try to split on word breaks', ->
+    msg = 'Foo bar baz'
+    slackbot.constructor.MAX_MESSAGE_LENGTH = 10
+    sentMessages = slackbot.send {room: 'room-name'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.length.should.equal 2
+
+  it 'Should split into max length chunks if there are no breaks', ->
+    msg = 'Foobar'
+    slackbot.constructor.MAX_MESSAGE_LENGTH = 3
+    sentMessages = slackbot.send {room: 'room-name'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.eql ['Foo', 'bar']
