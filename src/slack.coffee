@@ -117,17 +117,22 @@ class SlackBot extends Adapter
         submessages = []
 
         while msg.length > 0
-          # Split message at last line break, if it exists
-          chunk = msg.substring(0, MAX_MESSAGE_LENGTH)
-          breakIndex = chunk.lastIndexOf('\n')
-          breakIndex = MAX_MESSAGE_LENGTH if breakIndex is -1
+          if msg.length <= MAX_MESSAGE_LENGTH
+            submessages.push msg
+            msg = ''
 
-          submessages.push msg.substring(0, breakIndex)
+          else
+            # Split message at last line break, if it exists
+            chunk = msg.substring(0, MAX_MESSAGE_LENGTH)
+            breakIndex = chunk.lastIndexOf('\n')
+            breakIndex = MAX_MESSAGE_LENGTH if breakIndex is -1
 
-          # Skip char if split on line break
-          breakIndex++ if breakIndex isnt MAX_MESSAGE_LENGTH
+            submessages.push msg.substring(0, breakIndex)
 
-          msg = msg.substring(breakIndex, msg.length)
+            # Skip char if split on line break
+            breakIndex++ if breakIndex isnt MAX_MESSAGE_LENGTH
+
+            msg = msg.substring(breakIndex, msg.length)
 
         channel.send m for m in submessages
 
