@@ -3,9 +3,9 @@
 SlackClient = require 'slack-client'
 Util = require 'util'
 
-MAX_MESSAGE_LENGTH = 4000
-
 class SlackBot extends Adapter
+  @MAX_MESSAGE_LENGTH: 4000
+
   constructor: (robot) ->
     @robot = robot
 
@@ -109,7 +109,7 @@ class SlackBot extends Adapter
     for msg in messages
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
-      if msg.length <= MAX_MESSAGE_LENGTH
+      if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
         channel.send msg
 
       # If message is greater than MAX_MESSAGE_LENGTH, split it into multiple messages
@@ -117,20 +117,20 @@ class SlackBot extends Adapter
         submessages = []
 
         while msg.length > 0
-          if msg.length <= MAX_MESSAGE_LENGTH
+          if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
             submessages.push msg
             msg = ''
 
           else
             # Split message at last line break, if it exists
-            chunk = msg.substring(0, MAX_MESSAGE_LENGTH)
+            chunk = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
             breakIndex = chunk.lastIndexOf('\n')
-            breakIndex = MAX_MESSAGE_LENGTH if breakIndex is -1
+            breakIndex = SlackBot.MAX_MESSAGE_LENGTH if breakIndex is -1
 
             submessages.push msg.substring(0, breakIndex)
 
             # Skip char if split on line break
-            breakIndex++ if breakIndex isnt MAX_MESSAGE_LENGTH
+            breakIndex++ if breakIndex isnt SlackBot.MAX_MESSAGE_LENGTH
 
             msg = msg.substring(breakIndex, msg.length)
 
