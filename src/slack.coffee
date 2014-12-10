@@ -42,6 +42,9 @@ class SlackBot extends Adapter
   loggedIn: (self, team) =>
     @robot.logger.info "Logged in as #{self.name} of #{team.name}, but not yet connected"
 
+    # store a copy of our own user data
+    @self = self
+
     # Provide our name to Hubot
     @robot.name = self.name
 
@@ -76,14 +79,13 @@ class SlackBot extends Adapter
     # Ignore message subtypes that don't have a top level user property
     return if not msg.user
 
-    channel = @client.getChannelGroupOrDMByID msg.channel
-    slackUser = @client.getUserByID msg.user
-
     # Ignore our own messages
-    return if slackUser.name == @robot.name
+    return if msg.user == @self.id
+
+    channel = @client.getChannelGroupOrDMByID msg.channel
 
     # Process the user into a full hubot user
-    user = @robot.brain.userForId slackUser.id
+    user = @robot.brain.userForId msg.user
     user.room = channel.name
 
     # Test for enter/leave messages
