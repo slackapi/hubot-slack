@@ -11,7 +11,7 @@ class SlackBot extends Adapter
 
   run: ->
     # Take our options from the environment, and set otherwise suitable defaults
-    options = 
+    options =
       token: process.env.HUBOT_SLACK_TOKEN
       autoReconnect: true
       autoMark: true
