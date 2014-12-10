@@ -67,13 +67,13 @@ class SlackBot extends Adapter
     return if not msg.user
 
     channel = @client.getChannelGroupOrDMByID msg.channel
-    user = @client.getUserByID msg.user
+    slackUser = @client.getUserByID msg.user
 
     # Ignore our own messages
-    return if user.name == @robot.name
+    return if slackUser.name == @robot.name
 
     # Process the user into a full hubot user
-    user = @robot.brain.userForId user.name
+    user = @robot.brain.userForId slackUser.id, {name: slackUser.name, email_address: slackUser.profile.email}
     user.room = channel.name
 
     # Test for enter/leave messages
