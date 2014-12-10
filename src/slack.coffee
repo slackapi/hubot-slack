@@ -123,13 +123,21 @@ class SlackBot extends Adapter
 
           else
             # Split message at last line break, if it exists
-            chunk = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
-            breakIndex = chunk.lastIndexOf('\n')
-            breakIndex = SlackBot.MAX_MESSAGE_LENGTH if breakIndex is -1
+            maxSizeChunk = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
+
+            lastLineBreak = maxSizeChunk.lastIndexOf('\n')
+            lastWordBreak = maxSizeChunk.match(/\W\w+$/)?.index
+
+            breakIndex = if lastLineBreak > -1
+              lastLineBreak
+            else if lastWordBreak
+              lastWordBreak
+            else
+              SlackBot.MAX_MESSAGE_LENGTH
 
             submessages.push msg.substring(0, breakIndex)
 
-            # Skip char if split on line break
+            # Skip char if split on line or word break
             breakIndex++ if breakIndex isnt SlackBot.MAX_MESSAGE_LENGTH
 
             msg = msg.substring(breakIndex, msg.length)
