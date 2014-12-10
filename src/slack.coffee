@@ -37,6 +37,8 @@ class SlackBot extends Adapter
 
   error: (error) =>
     @robot.logger.error "Received error #{error.toString()}"
+    @robot.logger.error error.stack
+    process.exit 1
 
   loggedIn: (self, team) =>
     @robot.logger.info "Logged in as #{self.name} of #{team.name}, but not yet connected"
