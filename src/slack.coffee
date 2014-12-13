@@ -50,7 +50,7 @@ class SlackBot extends Adapter
       if user.is_bot and user.name == self.name
         @botUserID = id
         break
-    @robot.logger.info "Bot's Slack user ID is #{@botUserID}"
+    @robot.logger.debug "Bot's Slack user ID is #{@botUserID}"
 
     # Provide our name to Hubot
     @robot.name = self.name
@@ -112,7 +112,7 @@ class SlackBot extends Adapter
       if msg.getChannelType() == 'DM'
         txt = "#{@robot.name} #{txt}"
       # Or, if we were @-mentioned
-      else if matches = txt.match(/<@(.+)>:\s?(.*)/)
+      else if matches = txt.match(/<@([^>]+)>:\s?(.*)/)
         [userID, someText] = matches[1..2]
         if @botUserID and (userID == @botUserID)
           txt = "#{@robot.name} #{someText}"
