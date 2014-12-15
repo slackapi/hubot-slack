@@ -63,11 +63,13 @@ need to upgrade:
 - Once you're happy it works, remove the old hubot integration from
   https://my.slack.com/services
 
-## Adapter configuration
+## Configuration
 
 This adapter uses the following environment variables:
 
  - `HUBOT_SLACK_TOKEN` - this is the API token for the Slack user you would like to run Hubot under.
+
+To add or remove your bot from specific channels or private groups, you can use the /kick and /invite slash commands that are built into Slack.
 
 ## Copyright
 
