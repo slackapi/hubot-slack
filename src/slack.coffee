@@ -52,8 +52,13 @@ class SlackBot extends Adapter
       @userChange user
 
   userChange: (user) =>
+    newUser = {name: user.name, email_address: user.profile.email}
+    if user.id of @robot.brain.data.users
+      for key, value of @robot.brain.data.users[user.id]
+        unless key of newUser
+          newUser[key] = value
     delete @robot.brain.data.users[user.id]
-    @robot.brain.userForId user.id, {name: user.name, email_address: user.profile.email}
+    @robot.brain.userForId user.id, newUser
 
   open: =>
     @robot.logger.info 'Slack client now connected'
