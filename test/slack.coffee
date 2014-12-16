@@ -14,10 +14,13 @@ beforeEach ->
   stubs =
     # Slack client
     channel:
+      name: 'general'
       send: (msg) -> msg
     client:
       getUserByID: (id) ->
         {name: 'name', email_address: 'email@example.com'}
+      getChannelByID: (id) ->
+        stubs.channel
       getChannelGroupOrDMByName: () ->
         stubs.channel
     # Hubot.Robot instance
@@ -50,7 +53,6 @@ describe 'Login', ->
     slackbot.robot.name.should.equal 'bot'
 
 describe 'Removing message formatting', ->
-
   it 'Should do nothing if there are no user links', ->
     foo = slackbot.removeFormatting 'foo'
     foo.should.equal 'foo'
@@ -63,9 +65,29 @@ describe 'Removing message formatting', ->
     foo = slackbot.removeFormatting 'foo <@U123|label> bar'
     foo.should.equal 'foo label bar'
 
+  it 'Should change <#C1234> links to #general', ->
+    foo = slackbot.removeFormatting 'foo <#C123> bar'
+    foo.should.equal 'foo #general bar'
+
+  it 'Should change <#C1234|label> links to label', ->
+    foo = slackbot.removeFormatting 'foo <#C123|label> bar'
+    foo.should.equal 'foo label bar'
+
+  it 'Should change <!everyone> links to @everyone', ->
+    foo = slackbot.removeFormatting 'foo <!everyone> bar'
+    foo.should.equal 'foo @everyone bar'
+
+  it 'Should change <!channel> links to @channel', ->
+    foo = slackbot.removeFormatting 'foo <!channel> bar'
+    foo.should.equal 'foo @channel bar'
+
+  it 'Should change <!group> links to @group', ->
+    foo = slackbot.removeFormatting 'foo <!group> bar'
+    foo.should.equal 'foo @group bar'
+
   it 'Should change multiple links at once', ->
-    foo = slackbot.removeFormatting 'foo <@U123|label> bar <@U123>'
-    foo.should.equal 'foo label bar @name'
+    foo = slackbot.removeFormatting 'foo <@U123|label> bar <#C123> <!channel>'
+    foo.should.equal 'foo label bar #general @channel'
 
 describe 'Send Messages', ->
   it 'Should send multiple messages', ->
