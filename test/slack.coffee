@@ -85,9 +85,25 @@ describe 'Removing message formatting', ->
     foo = slackbot.removeFormatting 'foo <!group> bar'
     foo.should.equal 'foo @group bar'
 
+  it 'Should remove formatting around <http> links', ->
+    foo = slackbot.removeFormatting 'foo <http://www.example.com> bar'
+    foo.should.equal 'foo http://www.example.com bar'
+
+  it 'Should remove formatting around <https> links', ->
+    foo = slackbot.removeFormatting 'foo <https://www.example.com> bar'
+    foo.should.equal 'foo https://www.example.com bar'
+
+  it 'Should remove formatting around <mailto> links', ->
+    foo = slackbot.removeFormatting 'foo <mailto:name@example.com> bar'
+    foo.should.equal 'foo mailto:name@example.com bar'
+
+  it 'Should remove formatting around <https> links with a label', ->
+    foo = slackbot.removeFormatting 'foo <https://www.example.com|label> bar'
+    foo.should.equal 'foo label https://www.example.com bar'
+
   it 'Should change multiple links at once', ->
-    foo = slackbot.removeFormatting 'foo <@U123|label> bar <#C123> <!channel>'
-    foo.should.equal 'foo label bar #general @channel'
+    foo = slackbot.removeFormatting 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
+    foo.should.equal 'foo label bar #general @channel label https://www.example.com'
 
 describe 'Send Messages', ->
   it 'Should send multiple messages', ->

@@ -125,8 +125,8 @@ class SlackBot extends Adapter
       @receive new TextMessage user, txt, msg.ts
 
   removeFormatting: (txt) ->
-    #https://api.slack.com/docs/formatting
-    txt.replace /\<([\@\#\!])(\w+)(?:\|([^>]+))?\>/g, (m, type, id, label) =>
+    # https://api.slack.com/docs/formatting
+    txt = txt.replace /\<([\@\#\!])(\w+)(?:\|([^>]+))?\>/g, (m, type, id, label) =>
 
       if label then return label
 
@@ -143,6 +143,12 @@ class SlackBot extends Adapter
           if id in ['channel','group','everyone']
             return "@#{id}"
       "#{type}#{id}"
+    txt = txt.replace /<([^>\|]+)(?:\|([^>]+))?\>/g, (m, link, label) =>
+      if label
+        "#{label} #{link}"
+      else
+        link
+    txt
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
