@@ -8,6 +8,7 @@ class SlackBot extends Adapter
 
   constructor: (robot) ->
     @robot = robot
+    @botUserID = null
 
   run: ->
     # Take our options from the environment, and set otherwise suitable defaults
@@ -43,6 +44,13 @@ class SlackBot extends Adapter
 
   loggedIn: (self, team) =>
     @robot.logger.info "Logged in as #{self.name} of #{team.name}, but not yet connected"
+
+    # Go through the list of known users and find the name that matches ours
+    for id, user of @client.users
+      if user.is_bot and user.name == self.name
+        @botUserID = id
+        break
+    @robot.logger.debug "Bot's Slack user ID is #{@botUserID}"
 
     # Provide our name to Hubot
     @robot.name = self.name
@@ -103,6 +111,11 @@ class SlackBot extends Adapter
       # If this is a DM, pretend it was addressed to us
       if msg.getChannelType() == 'DM'
         txt = "#{@robot.name} #{txt}"
+      # Or, if we were @-mentioned
+      else if matches = txt.match(/<@([^>]+)>:\s?(.*)/)
+        [userID, someText] = matches[1..2]
+        if @botUserID and (userID == @botUserID)
+          txt = "#{@robot.name} #{someText}"
 
       @receive new TextMessage user, txt, msg.ts
 
