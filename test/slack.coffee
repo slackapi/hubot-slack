@@ -16,13 +16,12 @@ beforeEach ->
     channel:
       send: (msg) -> msg
     client:
+      getUserByID: (id) ->
+        {name: 'name', email_address: 'email@example.com'}
       getChannelGroupOrDMByName: () ->
         stubs.channel
     # Hubot.Robot instance
     robot:
-      brain:
-        userForId: ->
-          {name: 'name', email_address: 'email@example.com'}
       logger:
         info: ->
         debug: ->
@@ -50,7 +49,7 @@ describe 'Login', ->
     slackbot.loggedIn(user, team)
     slackbot.robot.name.should.equal 'bot'
 
-describe 'message formatting', ->
+describe 'Removing message formatting', ->
 
   it 'Should do nothing if there are no user links', ->
     foo = slackbot.removeFormatting 'foo'

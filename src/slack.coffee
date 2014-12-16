@@ -127,7 +127,7 @@ class SlackBot extends Adapter
     txt.replace /\<(@\w+)(?:\|([^>]+))?\>/g, (m, link, label) =>
       if label
         return label
-      u = @robot.brain.userForId link[1..]
+      u = @client.getUserByID link[1..]
       if u
         return "@#{u.name}"
       link
