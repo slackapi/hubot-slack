@@ -31,6 +31,7 @@ class SlackBot extends Adapter
     @client.on 'open', @.open
     @client.on 'close', @.close
     @client.on 'message', @.message
+    @client.on 'userChange', @.userChange
 
     # Start logging in
     @client.login()
@@ -44,8 +45,23 @@ class SlackBot extends Adapter
   loggedIn: (self, team) =>
     @robot.logger.info "Logged in as #{self.name} of #{team.name}, but not yet connected"
 
+    # store a copy of our own user data
+    @self = self
+
     # Provide our name to Hubot
     @robot.name = self.name
+
+    for id, user of @client.users
+      @userChange user
+
+  userChange: (user) =>
+    newUser = {name: user.name, email_address: user.profile.email}
+    if user.id of @robot.brain.data.users
+      for key, value of @robot.brain.data.users[user.id]
+        unless key of newUser
+          newUser[key] = value
+    delete @robot.brain.data.users[user.id]
+    @robot.brain.userForId user.id, newUser
 
   open: =>
     @robot.logger.info 'Slack client now connected'
@@ -71,14 +87,13 @@ class SlackBot extends Adapter
     # Ignore message subtypes that don't have a top level user property
     return if not msg.user
 
-    channel = @client.getChannelGroupOrDMByID msg.channel
-    slackUser = @client.getUserByID msg.user
-
     # Ignore our own messages
-    return if slackUser.name == @robot.name
+    return if msg.user == @self.id
+
+    channel = @client.getChannelGroupOrDMByID msg.channel
 
     # Process the user into a full hubot user
-    user = @robot.brain.userForId slackUser.id, {name: slackUser.name, email_address: slackUser.profile.email}
+    user = @robot.brain.userForId msg.user
     user.room = channel.name
 
     # Test for enter/leave messages
