@@ -113,6 +113,8 @@ class SlackBot extends Adapter
       # Build message text to respond to, including all attachments
       txt = msg.getBody()
 
+      txt = @removeFormatting txt
+
       @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
 
       # If this is a DM, pretend it was addressed to us
@@ -120,6 +122,15 @@ class SlackBot extends Adapter
         txt = "#{@robot.name} #{txt}"
 
       @receive new TextMessage user, txt, msg.ts
+
+  removeFormatting: (txt) ->
+    txt.replace /\<(@\w+)(?:\|([^>]+))?\>/g, (m, link, label) =>
+      if label
+        return label
+      u = @robot.brain.userForId link[1..]
+      if u
+        return "@#{u.name}"
+      link
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room

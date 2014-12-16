@@ -20,6 +20,9 @@ beforeEach ->
         stubs.channel
     # Hubot.Robot instance
     robot:
+      brain:
+        userForId: ->
+          {name: 'name', email_address: 'email@example.com'}
       logger:
         info: ->
         debug: ->
@@ -46,6 +49,24 @@ describe 'Login', ->
       name: 'bot'
     slackbot.loggedIn(user, team)
     slackbot.robot.name.should.equal 'bot'
+
+describe 'message formatting', ->
+
+  it 'Should do nothing if there are no user links', ->
+    foo = slackbot.removeFormatting 'foo'
+    foo.should.equal 'foo'
+
+  it 'Should change <@U1234> links to @name', ->
+    foo = slackbot.removeFormatting 'foo <@U123> bar'
+    foo.should.equal 'foo @name bar'
+
+  it 'Should change <@U1234|label> links to label', ->
+    foo = slackbot.removeFormatting 'foo <@U123|label> bar'
+    foo.should.equal 'foo label bar'
+
+  it 'Should change multiple links at once', ->
+    foo = slackbot.removeFormatting 'foo <@U123|label> bar <@U123>'
+    foo.should.equal 'foo label bar @name'
 
 describe 'Send Messages', ->
   it 'Should send multiple messages', ->
