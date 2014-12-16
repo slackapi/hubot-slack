@@ -76,6 +76,7 @@ class SlackBot extends Adapter
     @client.removeListener 'open', @.open
     @client.removeListener 'close', @.close
     @client.removeListener 'message', @.message
+    process.exit 0
 
   message: (msg) =>
     return if msg.hidden
