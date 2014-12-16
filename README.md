@@ -71,6 +71,8 @@ This adapter uses the following environment variables:
 
 To add or remove your bot from specific channels or private groups, you can use the /kick and /invite slash commands that are built into Slack.
 
+If you're using the [hubot-auth](https://github.com/hubot-scripts/hubot-auth/) script, you can get the user IDs required for the `HUBOT_AUTH_ADMIN` setting by calling the [users.list API method](https://api.slack.com/methods/users.list/test).
+
 ## Copyright
 
 Copyright &copy; Slack Technologies, Inc. MIT License; see LICENSE for further details.
