@@ -126,8 +126,13 @@ class SlackBot extends Adapter
 
   removeFormatting: (txt) ->
     # https://api.slack.com/docs/formatting
-    txt = txt.replace /\<([\@\#\!])(\w+)(?:\|([^>]+))?\>/g, (m, type, id, label) =>
-
+    txt = txt.replace ///
+      <              # opening angle bracket
+      ([\@\#\!])     # link type
+      (\w+)          # id
+      (?:\|([^>]+))? # |label (optional)
+      >              # closing angle bracket
+    ///g, (m, type, id, label) =>
       if label then return label
 
       switch type
@@ -143,7 +148,13 @@ class SlackBot extends Adapter
           if id in ['channel','group','everyone']
             return "@#{id}"
       "#{type}#{id}"
-    txt = txt.replace /<([^>\|]+)(?:\|([^>]+))?\>/g, (m, link, label) =>
+
+    txt = txt.replace ///
+      <              # opening angle bracket
+      ([^>\|]+)      # link
+      (?:\|([^>]+))? # label
+      >              # closing angle bracket
+    ///g, (m, link, label) =>
       if label
         "#{label} #{link}"
       else
