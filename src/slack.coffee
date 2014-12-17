@@ -165,6 +165,7 @@ class SlackBot extends Adapter
       (?:\|([^>]+))? # label
       >              # closing angle bracket
     ///g, (m, link, label) =>
+      link = link.replace /^mailto:/, ''
       if label
         "#{label} #{link}"
       else
