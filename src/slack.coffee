@@ -32,6 +32,7 @@ class SlackBot extends Adapter
     @client.on 'close', @.close
     @client.on 'message', @.message
     @client.on 'userChange', @.userChange
+    @robot.brain.on 'loaded', @.brainLoaded
 
     # Start logging in
     @client.login()
@@ -53,6 +54,15 @@ class SlackBot extends Adapter
 
     for id, user of @client.users
       @userChange user
+
+  brainLoaded: =>
+    # once the brain has loaded, reload all the users from the client
+    for id, user of @client.users
+      @userChange user
+
+    # also wipe out any broken users stored under usernames instead of ids
+    for id, user of @robot.brain.data.users
+      if id is user.name then delete @robot.brain.data.users[user.id]
 
   userChange: (user) =>
     newUser = {name: user.name, email_address: user.profile.email}
