@@ -60,7 +60,7 @@ need to upgrade:
 - Update your production startup scripts to pass the new `HUBOT_SLACK_TOKEN`.
   You can remove the other `HUBOT_SLACK_*` environment variables if you want.
 - Deploy your new hubot to production.
-- Once you're happy it works, disable the old hubot integration from
+- Once you're happy it works, disable the old hubot integration via
   https://my.slack.com/services
 
 ## Configuration
