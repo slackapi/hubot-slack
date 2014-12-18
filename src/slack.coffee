@@ -170,6 +170,9 @@ class SlackBot extends Adapter
             "#{label} (#{link})"
           else
             link
+    text = text.replace /&lt;/g, '<'
+    text = text.replace /&gt;/g, '>'
+    text = text.replace /&amp;/g, '&'
     text
 
   send: (envelope, messages...) ->

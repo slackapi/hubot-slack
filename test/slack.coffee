@@ -57,6 +57,10 @@ describe 'Removing message formatting', ->
     foo = slackbot.removeFormatting 'foo'
     foo.should.equal 'foo'
 
+  it 'Should decode entities', ->
+    foo = slackbot.removeFormatting 'foo &gt; &amp; &lt; &gt;&amp;&lt;'
+    foo.should.equal 'foo > & < >&<'
+
   it 'Should change <@U1234> links to @name', ->
     foo = slackbot.removeFormatting 'foo <@U123> bar'
     foo.should.equal 'foo @name bar'
@@ -104,6 +108,10 @@ describe 'Removing message formatting', ->
   it 'Should remove formatting around <https> links with a substring label', ->
     foo = slackbot.removeFormatting 'foo <https://www.example.com|example.com> bar'
     foo.should.equal 'foo https://www.example.com bar'
+
+  it 'Should remove formatting around <https> links with a label containing entitles', ->
+    foo = slackbot.removeFormatting 'foo <https://www.example.com|label &gt; &amp; &lt;> bar'
+    foo.should.equal 'foo label > & < (https://www.example.com) bar'
 
   it 'Should remove formatting around <mailto> links', ->
     foo = slackbot.removeFormatting 'foo <mailto:name@example.com> bar'
