@@ -134,43 +134,43 @@ class SlackBot extends Adapter
 
       @receive new TextMessage user, txt, msg.ts
 
-  removeFormatting: (txt) ->
+  removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting
-    txt = txt.replace ///
+    text = text.replace ///
       <              # opening angle bracket
-      ([\@\#\!])     # link type
-      (\w+)          # id
-      (?:\|([^>]+))? # |label (optional)
+      ([@#!])?       # link type
+      ([^>|]+)       # link
+      (?:\|          # start of |label (optional)
+        ([^>]+)      # label
+      )?             # end of label
       >              # closing angle bracket
-    ///g, (m, type, id, label) =>
-      if label then return label
+    ///g, (m, type, link, label) =>
 
       switch type
+
         when '@'
-          user = @client.getUserByID id
+          if label then return label
+          user = @client.getUserByID link
           if user
             return "@#{user.name}"
+
         when '#'
-          channel = @client.getChannelByID id
+          if label then return label
+          channel = @client.getChannelByID link
           if channel
             return "\##{channel.name}"
-        when '!'
-          if id in ['channel','group','everyone']
-            return "@#{id}"
-      "#{type}#{id}"
 
-    txt = txt.replace ///
-      <              # opening angle bracket
-      ([^>\|]+)      # link
-      (?:\|([^>]+))? # label
-      >              # closing angle bracket
-    ///g, (m, link, label) =>
-      link = link.replace /^mailto:/, ''
-      if label
-        "#{label} #{link}"
-      else
-        link
-    txt
+        when '!'
+          if link in ['channel','group','everyone']
+            return "@#{link}"
+
+        else
+          link = link.replace /^mailto:/, ''
+          if label and -1 == link.indexOf label
+            "#{label} (#{link})"
+          else
+            link
+    text
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
