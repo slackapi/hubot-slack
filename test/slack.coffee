@@ -4,7 +4,7 @@
 should = require 'should'
 
 # Import our hero. Noop logging so that we don't clutter the test output
-{SlackBot} = require '../src/slack'
+{SlackBot} = require '../index'
 
 # Stub a few interfaces to grease the skids for tests. These are intentionally
 # as minimal as possible and only provide enough to make the tests possible.
