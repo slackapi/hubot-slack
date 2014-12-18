@@ -29,7 +29,7 @@ class SlackBot extends Adapter
     @client.on 'error', @.error
     @client.on 'loggedIn', @.loggedIn
     @client.on 'open', @.open
-    @client.on 'close', @.close
+    @client.on 'close', @.clientClose
     @client.on 'message', @.message
     @client.on 'userChange', @.userChange
     @robot.brain.on 'loaded', @.brainLoaded
@@ -79,12 +79,12 @@ class SlackBot extends Adapter
     # Tell Hubot we're connected so it can load scripts
     @emit "connected"
 
-  close: =>
+  clientClose: =>
     @robot.logger.info 'Slack client closed'
     @client.removeListener 'error', @.error
     @client.removeListener 'loggedIn', @.loggedIn
     @client.removeListener 'open', @.open
-    @client.removeListener 'close', @.close
+    @client.removeListener 'close', @.clientClose
     @client.removeListener 'message', @.message
     process.exit 0
 
