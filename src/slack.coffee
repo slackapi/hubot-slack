@@ -122,55 +122,56 @@ class SlackBot extends Adapter
 
     else
       # Build message text to respond to, including all attachments
-      txt = msg.getBody()
+      rawText = msg.getBody()
+      text = @removeFormatting rawText
 
-      txt = @removeFormatting txt
-
-      @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
+      @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
 
       # If this is a DM, pretend it was addressed to us
       if msg.getChannelType() == 'DM'
-        txt = "#{@robot.name} #{txt}"
+        text = "#{@robot.name} #{text}"
 
-      @receive new TextMessage user, txt, msg.ts
+      @receive new SlackTextMessage user, text, rawText, msg.ts
 
-  removeFormatting: (txt) ->
+  removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting
-    txt = txt.replace ///
-      <              # opening angle bracket
-      ([\@\#\!])     # link type
-      (\w+)          # id
-      (?:\|([^>]+))? # |label (optional)
-      >              # closing angle bracket
-    ///g, (m, type, id, label) =>
-      if label then return label
+    text = text.replace ///
+      <         # opening angle bracket
+      ([@#!])?  # link type (optional)
+      ([^>|]*)  # link
+      (?:\|     # start of |label (optional)
+        ([^>]*) # label
+      )?        # end of |label
+      >         # closing angle bracket
+    ///g, (match, type, link, label) =>
+      return label if label
 
       switch type
         when '@'
-          user = @client.getUserByID id
-          if user
-            return "@#{user.name}"
+          user = @client.getUserByID link
+          return "@#{user.name}" if user
         when '#'
-          channel = @client.getChannelByID id
-          if channel
-            return "\##{channel.name}"
+          channel = @client.getChannelByID link
+          return "##{channel.name}" if channel
         when '!'
-          if id in ['channel','group','everyone']
-            return "@#{id}"
-      "#{type}#{id}"
-
-    txt = txt.replace ///
-      <              # opening angle bracket
-      ([^>\|]+)      # link
-      (?:\|([^>]+))? # label
-      >              # closing angle bracket
-    ///g, (m, link, label) =>
-      link = link.replace /^mailto:/, ''
-      if label
-        "#{label} #{link}"
-      else
-        link
-    txt
+          return "@#{link}" if link in ['channel','group','everyone']
+        else
+          # not a special link at all, this is just a regular link
+          link = link.replace /^mailto:/, ''
+          return link
+      # we'll get here if we have a #@! link that wasn't already handled
+      # (e.g. an unknown !command or a @/# link with a bad id)
+      "#{type}#{link}"
+    # remove entities as well
+    # we could use the 'entities' package, but slack only uses &lt, &gt, and &amp.
+    text.replace /&(lt|gt|amp);/g, (match, name) ->
+      switch name
+        when 'lt'
+          "<"
+        when 'gt'
+          ">"
+        when 'amp'
+          "&"
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
@@ -224,8 +225,13 @@ class SlackBot extends Adapter
     channel = @client.getChannelGroupOrDMByName envelope.room
     channel.setTopic strings.join "\n"
 
-exports.use = (robot) ->
-  new SlackBot robot
+class SlackTextMessage extends TextMessage
+  constructor: (@user, @text, @rawText, @id) ->
+    super @user, @text, @id
 
-# Export class for unit tests
-exports.SlackBot = SlackBot
+module.exports = {
+  SlackBot
+  SlackTextMessage
+  use: (robot) ->
+    new SlackBot robot
+}
