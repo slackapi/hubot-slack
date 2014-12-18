@@ -9,6 +9,10 @@ class SlackRawListener extends Listener
   # matcher  - A Function that determines if this listener should trigger the
   #            callback. The matcher takes a SlackRawMessage.
   # callback - A Function that is triggered if the incoming message matches.
+  #
+  # To use this listener in your own script, you can say
+  #
+  #     robot.listeners.push new SlackRawListener(robot, matcher, callback)
   constructor: (@robot, @matcher, @callback) ->
 
   # Public: Invokes super only for instances of SlackRawMessage
@@ -27,6 +31,10 @@ class SlackBotListener extends Listener
   # regex    - A Regex that determines if this listener should trigger the
   #            callback.
   # callback - A Function that is triggered if the incoming message matches.
+  #
+  # To use this listener in your own script, you can say
+  #
+  #     robot.listeners.push new SlackBotListener(robot, regex, callback)
   constructor: (@robot, @regex, @callback) ->
     @matcher = (message) =>
       if message instanceof SlackBotMessage
