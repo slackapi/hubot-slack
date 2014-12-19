@@ -108,15 +108,15 @@ class SlackBot extends Adapter
         user.name = msg.username if msg.username?
       user.room = channel.name if channel
 
-      if msg.text? or msg.attachments
-        text = @removeFormatting msg.getBody()
+      rawText = msg.getBody()
+      text = @removeFormatting rawText
 
       if msg.subtype is 'bot_message'
         @robot.logger.debug "Received bot message: '#{text}' in channel: #{channel?.name}, from: #{user?.name}"
-        @receive new SlackBotMessage user, text, msg
+        @receive new SlackBotMessage user, text, rawText, msg
       else
         @robot.logger.debug "Received raw message (subtype: #{msg.subtype})"
-        @receive new SlackRawMessage user, text, msg
+        @receive new SlackRawMessage user, text, rawText, msg
       return
 
     # Process the user into a full hubot user
@@ -147,7 +147,7 @@ class SlackBot extends Adapter
       if msg.getChannelType() == 'DM'
         text = "#{@robot.name} #{text}"
 
-      @receive new SlackTextMessage user, text, rawText, msg.ts
+      @receive new SlackTextMessage user, text, rawText, msg
 
   removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting
