@@ -24,19 +24,19 @@ describe 'Removing message formatting', ->
     foo = @slackbot.removeFormatting 'foo &gt; &amp; &lt; &gt;&amp;&lt;'
     foo.should.equal 'foo > & < >&<'
 
-  it 'Should change <@U1234> links to @name', ->
+  it 'Should change <@U123> links to @name', ->
     foo = @slackbot.removeFormatting 'foo <@U123> bar'
     foo.should.equal 'foo @name bar'
 
-  it 'Should change <@U1234|label> links to label', ->
+  it 'Should change <@U123|label> links to label', ->
     foo = @slackbot.removeFormatting 'foo <@U123|label> bar'
     foo.should.equal 'foo label bar'
 
-  it 'Should change <#C1234> links to #general', ->
+  it 'Should change <#C123> links to #general', ->
     foo = @slackbot.removeFormatting 'foo <#C123> bar'
     foo.should.equal 'foo #general bar'
 
-  it 'Should change <#C1234|label> links to label', ->
+  it 'Should change <#C123|label> links to label', ->
     foo = @slackbot.removeFormatting 'foo <#C123|label> bar'
     foo.should.equal 'foo label bar'
 
@@ -72,7 +72,7 @@ describe 'Removing message formatting', ->
     foo = @slackbot.removeFormatting 'foo <https://www.example.com|example.com> bar'
     foo.should.equal 'foo https://www.example.com bar'
 
-  it 'Should remove formatting around <https> links with a label containing entitles', ->
+  it 'Should remove formatting around <https> links with a label containing entities', ->
     foo = @slackbot.removeFormatting 'foo <https://www.example.com|label &gt; &amp; &lt;> bar'
     foo.should.equal 'foo label > & < (https://www.example.com) bar'
 
