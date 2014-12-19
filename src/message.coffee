@@ -22,13 +22,11 @@ class SlackRawMessage extends Message
   # - text: If present, this is the parsed text. See `rawText`.
   # - rawText: If `text` is present, `rawText` contains the unparsed text.
   constructor: (user, @text, msg) ->
-    for k of (msg or {})
-      if k[0] == "_"
-        # ignore properties starting with _
-      else if k is 'text'
-        @rawText = msg[k]
-      else
-        @[k] = msg[k]
+    for own k, v of (msg or {})
+      switch
+        when k[0] is '_' then # ignore properties starting with _
+        when k is 'text' then @rawText = v
+        else @[k] = v
     super user
 
 class SlackBotMessage extends SlackRawMessage
