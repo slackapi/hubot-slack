@@ -132,3 +132,38 @@ describe 'Receiving a Slack message', ->
     @stubs.robot.received.should.have.length 1
     msg = @stubs.robot.received[0]
     msg.should.be.an.instanceOf SlackRawMessage
+
+  describe 'should handle SlackRawMessage inheritance properly when Hubot', ->
+    # this is a bit of a wacky one
+    # We need to muck with the require() machinery
+    # To that end, we're going to save off the modules we need to tweak, so we can
+    # remove the cache and reload from disk
+    beforeEach ->
+      mods = (require.resolve name for name in ['hubot', '../src/message'])
+      @saved = []
+      # ensure the modules are loaded
+      require path for path in mods # ensure the modules are loaded
+      @saved = (require.cache[path] for path in mods) # grab the modules
+      delete require.cache[path] for path in mods # remove the modules from the require cache
+
+    afterEach ->
+      # restore the saved modules
+      for mod in @saved
+        require.cache[mod.filename] = mod
+      delete @saved
+
+    it 'does not export Message', ->
+      delete require('hubot').Message # remove hubot.Message if it exists
+      {SlackRawMessage: rawMessage} = require '../src/message'
+      rawMessage::constructor.__super__.constructor.name.should.equal 'Message'
+
+    it 'does export Message', ->
+      if not require('hubot').Message
+        # create a placeholder class to use here
+        # We're not actually running any code from Message during the evaluation
+        # of src/message.coffee so we don't need the real class.
+        # note: using JavaScript escape because CoffeeScript doesn't allow shadowing otherwise
+        `function Message() {}`
+        require('hubot').Message = Message
+      {SlackRawMessage: rawMessage} = require '../src/message'
+      rawMessage::constructor.__super__.constructor.name.should.equal 'Message'

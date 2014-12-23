@@ -1,4 +1,10 @@
-{TextMessage} = require 'hubot'
+{Message, TextMessage} = require 'hubot'
+
+# Hubot only started exporting Message in 2.11.0. Previous version do not export
+# this class. In order to remain compatible with older versions, we can pull the
+# Message class from TextMessage superclass.
+if not Message
+  Message = TextMessage.__super__.constructor
 
 class SlackTextMessage extends TextMessage
   # Represents a TextMessage created from the Slack adapter
@@ -10,9 +16,6 @@ class SlackTextMessage extends TextMessage
   constructor: (@user, @text, @rawText, @rawMessage) ->
     super @user, @text, @rawMessage.ts
 
-# For some reason Hubot doesn't export Message, but that's what we want to extend.
-# As a workaround, let's grab TextMessage's superclass
-Message = TextMessage.__super__.constructor
 class SlackRawMessage extends Message
   # Represents Slack messages that are not suitable to treat as text messages.
   # These are hidden messages, or messages that have no text / attachments.
