@@ -1,4 +1,6 @@
-{Robot, Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
+{Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
+{SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './message'
+{SlackRawListener, SlackBotListener} = require './listener'
 
 SlackClient = require 'slack-client'
 Util = require 'util'
@@ -89,19 +91,33 @@ class SlackBot extends Adapter
     process.exit 0
 
   message: (msg) =>
-    return if msg.hidden
-    return if not msg.text and not msg.attachments
-
-    # Ignore bot messages (TODO: make this support an option?)
-    return if msg.subtype is 'bot_message'
-
-    # Ignore message subtypes that don't have a top level user property
-    return if not msg.user
-
     # Ignore our own messages
     return if msg.user == @self.id
 
-    channel = @client.getChannelGroupOrDMByID msg.channel
+    channel = @client.getChannelGroupOrDMByID msg.channel if msg.channel
+
+    if msg.hidden or (not msg.text and not msg.attachments) or msg.subtype is 'bot_message' or not msg.user or not channel
+      # use a raw message, so scripts that care can still see these things
+
+      if msg.user
+        user = @robot.brain.userForId msg.user
+      else
+        # We need to fake a user because, at the very least, CatchAllMessage
+        # expects it to be there.
+        user = {}
+        user.name = msg.username if msg.username?
+      user.room = channel.name if channel
+
+      rawText = msg.getBody()
+      text = @removeFormatting rawText
+
+      if msg.subtype is 'bot_message'
+        @robot.logger.debug "Received bot message: '#{text}' in channel: #{channel?.name}, from: #{user?.name}"
+        @receive new SlackBotMessage user, text, rawText, msg
+      else
+        @robot.logger.debug "Received raw message (subtype: #{msg.subtype})"
+        @receive new SlackRawMessage user, text, rawText, msg
+      return
 
     # Process the user into a full hubot user
     user = @robot.brain.userForId msg.user
@@ -122,17 +138,16 @@ class SlackBot extends Adapter
 
     else
       # Build message text to respond to, including all attachments
-      txt = msg.getBody()
+      rawText = msg.getBody()
+      text = @removeFormatting rawText
 
-      txt = @removeFormatting txt
-
-      @robot.logger.debug "Received message: '#{txt}' in channel: #{channel.name}, from: #{user.name}"
+      @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
 
       # If this is a DM, pretend it was addressed to us
       if msg.getChannelType() == 'DM'
-        txt = "#{@robot.name} #{txt}"
+        text = "#{@robot.name} #{text}"
 
-      @receive new TextMessage user, txt, msg.ts
+      @receive new SlackTextMessage user, text, rawText, msg
 
   removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting
@@ -227,8 +242,4 @@ class SlackBot extends Adapter
     channel = @client.getChannelGroupOrDMByName envelope.room
     channel.setTopic strings.join "\n"
 
-exports.use = (robot) ->
-  new SlackBot robot
-
-# Export class for unit tests
-exports.SlackBot = SlackBot
+module.exports = SlackBot
