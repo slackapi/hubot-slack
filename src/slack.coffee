@@ -232,11 +232,10 @@ class SlackBot extends Adapter
         channel.send m for m in submessages
 
   reply: (envelope, messages...) ->
-    @robot.logger.debug "Sending reply"
+    @robot.logger.debug "Sending direct reply"
 
-    for msg in messages
-      # TODO: Don't prefix username if replying in DM
-      @send envelope, "#{envelope.user.name}: #{msg}"
+    user = @client.getDMByName envelope.user.name
+    user.send msg for msg in messages
 
   topic: (envelope, strings...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
