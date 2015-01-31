@@ -40,7 +40,7 @@ class SlackBot extends Adapter
     @client.login()
 
   error: (error) =>
-    @robot.logger.error "Received error #{error.toString()}"
+    @robot.logger.error "Received error #{JSON.stringify error}"
     @robot.logger.error error.stack
     @robot.logger.error "Exiting in 1 second"
     setTimeout process.exit.bind(process, 1), 1000
