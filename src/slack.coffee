@@ -7,6 +7,7 @@ Util = require 'util'
 
 class SlackBot extends Adapter
   @MAX_MESSAGE_LENGTH: 4000
+  @LAST_MESSAGE_TIMESTAMP_KEY = 'SlackLastMessageTimestamp'
 
   constructor: (robot) ->
     @robot = robot
@@ -91,6 +92,12 @@ class SlackBot extends Adapter
     process.exit 0
 
   message: (msg) =>
+    # Ignore messages we've already seen
+    lastMessageTimestamp = @robot.brain.get SlackBot.LAST_MESSAGE_TIMESTAMP_KEY
+    lastMessageTimestamp ?= -Infinity
+    return if msg.ts <= lastMessageTimestamp
+    @robot.brain.set SlackBot.LAST_MESSAGE_TIMESTAMP_KEY, msg.ts
+
     # Ignore our own messages
     return if msg.user == @self.id
 
