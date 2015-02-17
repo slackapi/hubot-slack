@@ -93,6 +93,10 @@ describe 'Send Messages', ->
     sentMessages = @slackbot.send {room: 'general'}, 'one', 'two', 'three'
     sentMessages.length.should.equal 3
 
+  it 'Should not send empty messages', ->
+    sentMessages = @slackbot.send {room: 'general'}, 'Hello', '', '', 'world!'
+    sentMessages.length.should.equal 2
+
   it 'Should split long messages', ->
     lines = 'Hello, Slackbot\nHow are you?\n'
     # Make a very long message

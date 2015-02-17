@@ -7,6 +7,7 @@ Util = require 'util'
 
 class SlackBot extends Adapter
   @MAX_MESSAGE_LENGTH: 4000
+  @MIN_MESSAGE_LENGTH: 1
 
   constructor: (robot) ->
     @robot = robot
@@ -194,7 +195,7 @@ class SlackBot extends Adapter
     channel = @client.getChannelGroupOrDMByName envelope.room
 
     for msg in messages
-      continue if msg.length is 0
+      continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
