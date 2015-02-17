@@ -194,6 +194,8 @@ class SlackBot extends Adapter
     channel = @client.getChannelGroupOrDMByName envelope.room
 
     for msg in messages
+      continue if msg.length is 0
+
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
