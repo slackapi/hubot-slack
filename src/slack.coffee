@@ -192,7 +192,7 @@ class SlackBot extends Adapter
     text
 
   send: (envelope, messages...) ->
-    channel = @client.getChannelGroupOrDMByName envelope.room
+    channel = @client.getChannelGroupOrDMByName envelope.room.replace(/^#/,'')
 
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
@@ -242,7 +242,7 @@ class SlackBot extends Adapter
       @send envelope, "#{envelope.user.name}: #{msg}"
 
   topic: (envelope, strings...) ->
-    channel = @client.getChannelGroupOrDMByName envelope.room
+    channel = @client.getChannelGroupOrDMByName envelope.room.replace(/^#/,'')
     channel.setTopic strings.join "\n"
 
 module.exports = SlackBot
