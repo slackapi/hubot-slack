@@ -37,6 +37,9 @@ class SlackBot extends Adapter
     @client.on 'userChange', @.userChange
     @robot.brain.on 'loaded', @.brainLoaded
 
+    @robot.on 'slack-attachment', @.customMessage
+    @robot.on 'slack.attachment', @.customMessage
+
     # Start logging in
     @client.login()
 
@@ -245,4 +248,33 @@ class SlackBot extends Adapter
     channel = @client.getChannelGroupOrDMByName envelope.room
     channel.setTopic strings.join "\n"
 
+  customMessage: (data) =>
+
+    channelName = if data.channel
+      data.channel
+    else if data.message.envelope
+      data.message.envelope.room
+    else data.message.room
+
+    channel = @client.getChannelGroupOrDMByName channelName
+    return unless channel
+
+    msg = {}
+    msg.attachments = data.attachments || data.content
+    msg.attachments = [msg.attachments] unless Array.isArray msg.attachments
+
+    msg.text = data.text
+
+    if data.username && data.username != robot.name
+      msg.as_user = false
+      if data.icon_url?
+        msg.icon_url = data.icon_url
+      else if data.icon_emoji?
+        msg.icon_emoji = data.icon_emoji
+    else
+      msg.as_user = true
+
+    channel.postMessage msg
+
+# Export class for unit tests
 module.exports = SlackBot
