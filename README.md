@@ -31,7 +31,7 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 
 - Install [heroku toolbelt](https://toolbelt.heroku.com/) if you haven't already.
 - `heroku create my-company-slackbot`
-- `heroku addons:add redistogo:nano`
+- `heroku addons:add redistogo:nano -app my-company-slackbot`
 - Activate the Hubot service on your ["Team Services"](http://my.slack.com/services/new/hubot) page inside Slack.
 - Add the [config variables](#adapter-configuration). For example:
 
