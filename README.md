@@ -35,7 +35,7 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 - Activate the Hubot service on your ["Team Services"](http://my.slack.com/services/new/hubot) page inside Slack.
 - Add the [config variables](#adapter-configuration). For example:
 
-        % heroku config:add HEROKU_URL=http://my-company-slackbot.herokuapp.com
+        % heroku config:add HEROKU_URL=https://my-company-slackbot.herokuapp.com
         % heroku config:add HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd
 
 - Deploy and start the bot:
