@@ -121,3 +121,13 @@ describe 'Send Messages', ->
     sentMessages = @slackbot.send {room: 'general'}, msg
     sentMessage = sentMessages.pop()
     sentMessage.should.eql ['Foo', 'bar']
+
+  it 'Should open a DM channel if needed', ->
+    msg = 'Test'
+    @slackbot.send {room: 'name'}, msg
+    @stubs._msg.should.eql 'Test'
+
+  it 'Should use an existing DM channel if possible', ->
+    msg = 'Test'
+    @slackbot.send {room: 'user2'}, msg
+    @stubs._dmmsg.should.eql 'Test'
