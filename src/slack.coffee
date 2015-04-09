@@ -20,7 +20,7 @@ class SlackBot extends Adapter
       autoMark: true
 
     return @robot.logger.error "No services token provided to Hubot" unless options.token
-    return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (options.token.substring(0, 5) == 'xoxb-')
+    return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
 
     @options = options
 
