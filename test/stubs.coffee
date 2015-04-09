@@ -31,13 +31,35 @@ beforeEach ->
     getUserByID: (id) =>
       for user in @stubs.client.users
         return user if user.id is id
+    getUserByName: (name) =>
+      for user in @stubs.client.users
+        return user if user.name is name
     getChannelByID: (id) =>
       @stubs.channel if @stubs.channel.id == id
     getChannelGroupOrDMByID: (id) =>
       @stubs.channel if @stubs.channel.id == id
     getChannelGroupOrDMByName: (name) =>
-      @stubs.channel if @stubs.channel.name == name
+      return @stubs.channel if @stubs.channel.name == name
+      for dm in @stubs.client.dms
+        return dm if dm.name is name
+    openDM: (user_id, callback) =>
+      user = @stubs.client.getUserByID user_id
+      @stubs.client.dms.push {
+        name: user.name,
+        id: 'D1234',
+        send: (msg) =>
+          @stubs._msg = if @stubs._msg then @stubs._msg + msg else msg
+        }
+      callback?()
     users: [@stubs.user, @stubs.self]
+    dms: [
+      {
+        name: 'user2',
+        id: 'D5432',
+        send: (msg) =>
+          @stubs._dmmsg = if @stubs._dmmsg then @stubs._dmmsg + msg else msg
+      }
+    ]
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter

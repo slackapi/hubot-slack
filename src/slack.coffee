@@ -199,6 +199,12 @@ class SlackBot extends Adapter
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
 
+    if not channel and @client.getUserByName(envelope.room)
+      user_id = @client.getUserByName(envelope.room).id
+      @client.openDM user_id, =>
+        this.send envelope, messages...
+      return
+
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
 
