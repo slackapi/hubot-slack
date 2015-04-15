@@ -88,13 +88,8 @@ class SlackBot extends Adapter
     @emit "connected"
 
   clientClose: =>
-    @robot.logger.info 'Slack client closed'
-    @client.removeListener 'error', @.error
-    @client.removeListener 'loggedIn', @.loggedIn
-    @client.removeListener 'open', @.open
-    @client.removeListener 'close', @.clientClose
-    @client.removeListener 'message', @.message
-    process.exit 0
+    # Don't actually do anything since we may reconnect in the future
+    @robot.logger.info 'Slack client closed, waiting for reconnect'
 
   message: (msg) =>
     # Ignore our own messages
