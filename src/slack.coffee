@@ -44,10 +44,15 @@ class SlackBot extends Adapter
     @client.login()
 
   error: (error) =>
-    return @robot.logger.warning "Received rate limiting error #{JSON.stringify error}" if error.code == -1
 
-    @robot.logger.error "Received error #{JSON.stringify error}"
-    @robot.logger.error error.stack
+    return @robot.logger.warning "Received rate limiting error #{JSON.stringify error}" if error and error.code == -1
+
+    if error
+      @robot.logger.error "Received error #{JSON.stringify error}"
+      @robot.logger.error error.stack if error.stack
+    else
+      @robot.logger.error "Websocket error"
+
     @robot.logger.error "Exiting in 1 second"
     setTimeout process.exit.bind(process, 1), 1000
 
