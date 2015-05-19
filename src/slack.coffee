@@ -193,6 +193,8 @@ class SlackBot extends Adapter
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
+    # Had scoping issue and only got it to work with this
+    client = @client
 
     if not channel and @client.getUserByName(envelope.room)
       user_id = @client.getUserByName(envelope.room).id
@@ -202,6 +204,14 @@ class SlackBot extends Adapter
 
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
+
+      # Replace @username with <@UXXXXX> for mentioning users
+      msg = msg.replace /(?:^@| @)([A-z]+)/gm, (match, p1) ->
+        try 
+          user_id = client.getUserByName(p1).id
+          match = ' <@' + user_id + '>'
+        catch
+          match = match
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
