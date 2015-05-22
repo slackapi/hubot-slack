@@ -193,7 +193,6 @@ class SlackBot extends Adapter
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
-    # Had scoping issue and only got it to work with this
 
     if not channel and @client.getUserByName(envelope.room)
       user_id = @client.getUserByName(envelope.room).id
