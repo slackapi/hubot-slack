@@ -203,6 +203,14 @@ class SlackBot extends Adapter
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
 
+      # Replace @username with <@UXXXXX> for mentioning users
+      msg = msg.replace /(?:^@| @)([A-z]+)/gm, (match, p1) =>
+        try
+          user_id = @client.getUserByName(p1).id
+          match = ' <@' + user_id + '>'
+        catch
+          match = match
+
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
