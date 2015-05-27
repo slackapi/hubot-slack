@@ -203,12 +203,14 @@ class SlackBot extends Adapter
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
 
-      # Replace @username with <@UXXXXX> for mentioning users
+      # Replace @username with <@UXXXXX> for mentioning users and channels
       msg = msg.replace /(?:^@| @)([A-z]+)/gm, (match, p1) =>
-        try 
-          user_id = @client.getUserByName(p1).id
-          match = ' <@' + user_id + '>'
-        catch
+        user = @client.getUserByName(p1)
+        if user
+          match = " <@#{user.id}>"
+        else if p1 is 'channel' or 'everyone' or 'group'
+          match = " <!#{p1}>"
+        else
           match = match
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
