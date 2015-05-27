@@ -145,10 +145,10 @@ describe 'Send Messages', ->
     sentMessage.should.equal 'foo <!everyone>: <@U123>: bar'
 
   it 'Should not replace @name with <@U123> for mention when there is a typo', ->
-    msg = 'foo @nae: bar'
+    msg = 'foo @naame: bar'
     sentMessages = @slackbot.send {room: 'general'}, msg
     sentMessage = sentMessages.pop()
-    sentMessage.should.equal 'foo @nae: bar'
+    sentMessage.should.equal 'foo @naame: bar'
 
   it 'Should try to split on word breaks', ->
     msg = 'Foo bar baz'

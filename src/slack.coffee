@@ -205,13 +205,10 @@ class SlackBot extends Adapter
 
       # Replace @username with <@UXXXXX> for mentioning users and channels
       msg = msg.replace /(?:^| )@([\w]+)/gm, (match, p1) =>
-        console.log "Match: #{match}"
-        console.log "P1: #{p1}"
         user = @client.getUserByName p1
-        console.log "User: #{user}"
         if user
           match = match.replace /@[\w]+/, "<@#{user.id}>"
-        else if p1 is 'channel' or 'everyone' or 'group'
+        else if (p1 is 'channel' or p1 is 'everyone' or p1 is 'group')
           match = match.replace /@[\w]+/, "<!#{p1}>"
         else
           match = match
