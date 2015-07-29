@@ -16,7 +16,7 @@ class SlackBot extends Adapter
     # Take our options from the environment, and set otherwise suitable defaults
     options =
       token: process.env.HUBOT_SLACK_TOKEN
-      autoReconnect: true
+      autoReconnect: false
       autoMark: true
 
     return @robot.logger.error "No services token provided to Hubot" unless options.token
@@ -88,8 +88,14 @@ class SlackBot extends Adapter
     @emit "connected"
 
   clientClose: =>
-    # Don't actually do anything since we may reconnect in the future
-    @robot.logger.info 'Slack client closed, waiting for reconnect'
+    @robot.logger.info 'Slack client connection was closed, exiting hubot process'
+    @client.removeListener 'error', @.error
+    @client.removeListener 'loggedIn', @.loggedIn
+    @client.removeListener 'open', @.open
+    @client.removeListener 'close', @.clientClose
+    @client.removeListener 'message', @.message
+    @client.removeListener 'userChange', @.userChange
+    process.exit 1
 
   message: (msg) =>
     # Ignore our own messages
