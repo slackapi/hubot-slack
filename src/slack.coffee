@@ -115,6 +115,20 @@ class SlackBot extends Adapter
       if msg.subtype is 'bot_message'
         @robot.logger.debug "Received bot message: '#{text}' in channel: #{channel?.name}, from: #{user?.name}"
         @receive new SlackBotMessage user, text, rawText, msg
+
+      else if msg.subtype is 'message_changed'
+        rawText = msg.getBody()
+
+        # The content of the edited message
+        editedMessage = msg.message
+
+        text = editedMessage.text
+        user = @robot.brain.userForId editedMessage.user
+
+        @robot.logger.debug "Edited message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
+
+        @receive new SlackTextMessage user, text, rawText, msg
+
       else
         @robot.logger.debug "Received raw message (subtype: #{msg.subtype})"
         @receive new SlackRawMessage user, text, rawText, msg
