@@ -177,7 +177,7 @@ class SlackBot extends Adapter
             return "\##{channel.name}"
 
         when '!'
-          if link in ['channel','group','everyone']
+          if link in ['channel','group','everyone','here']
             return "@#{link}"
 
         else
