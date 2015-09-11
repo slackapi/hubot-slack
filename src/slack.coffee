@@ -79,9 +79,9 @@ class SlackBot extends Adapter
       email_address: user.profile.email
       slack: {}
     for key, value of user
-      # _client is the slack-client instance and contains references to the all the data types (users, channels) plus things like the token, s
+      # user contains an of the SlackClient, which and contains references to the all the data types (users, channels) plus things like the token, s
       # so, don't bother storing it
-      continue if key is '_client'
+      continue if value instanceof SlackClient
       newUser.slack[key] = value
 
     if user.id of @robot.brain.data.users
