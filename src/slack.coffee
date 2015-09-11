@@ -73,7 +73,17 @@ class SlackBot extends Adapter
       if id is user.name then delete @robot.brain.data.users[user.id]
 
   userChange: (user) =>
-    newUser = {name: user.name, real_name: user.real_name, email_address: user.profile.email}
+    newUser =
+      name: user.name
+      real_name: user.real_name
+      email_address: user.profile.email
+      slack: {}
+    for key, value of user
+      # _client is the slack-client instance and contains references to the all the data types (users, channels) plus things like the token, s
+      # so, don't bother storing it
+      continue if key is '_client'
+      newUser.slack[key] = value
+
     if user.id of @robot.brain.data.users
       for key, value of @robot.brain.data.users[user.id]
         unless key of newUser
