@@ -76,7 +76,7 @@ class SlackBot extends Adapter
     newUser =
       name: user.name
       real_name: user.real_name
-      email_address: user.profile.email
+      email_address: user.profile?.email
       slack: {}
     for key, value of user
       # user contains an of the SlackClient, which and contains references to the all the data types (users, channels) plus things like the token, s
