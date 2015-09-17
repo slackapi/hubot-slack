@@ -73,6 +73,7 @@ class SlackBot extends Adapter
       if id is user.name then delete @robot.brain.data.users[user.id]
 
   userChange: (user) =>
+    @robot.logger.info "user changed: #{Util.inspect(user)}
     newUser =
       name: user.name
       real_name: user.real_name
@@ -85,6 +86,7 @@ class SlackBot extends Adapter
       newUser.slack[key] = value
 
     if user.id of @robot.brain.data.users
+
       for key, value of @robot.brain.data.users[user.id]
         unless key of newUser
           newUser[key] = value
