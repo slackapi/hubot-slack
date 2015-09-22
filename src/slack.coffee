@@ -73,7 +73,6 @@ class SlackBot extends Adapter
       if id is user.name then delete @robot.brain.data.users[user.id]
 
   userChange: (user) =>
-    @robot.logger.info "user changed: #{Util.inspect(user)}"
     newUser =
       name: user.name
       real_name: user.real_name
@@ -84,6 +83,7 @@ class SlackBot extends Adapter
       # so, don't bother storing it
       continue if value instanceof SlackClient
       newUser.slack[key] = value
+    @robot.logger.info "user changed: #{Util.inspect(newUser)}"
 
     if user.id of @robot.brain.data.users
 
