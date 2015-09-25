@@ -84,7 +84,6 @@ class SlackBot extends Adapter
       # so, don't bother storing it
       continue if value instanceof SlackClient
       newUser.slack[key] = value
-    @robot.logger.info "user changed: #{Util.inspect(newUser)}"
 
     if user.id of @robot.brain.data.users
 
