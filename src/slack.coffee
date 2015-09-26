@@ -1,6 +1,7 @@
 {Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
 {SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './message'
 {SlackRawListener, SlackBotListener} = require './listener'
+SlackResponse = require './response'
 
 SlackClient = require 'slack-client'
 Util = require 'util'
@@ -11,6 +12,7 @@ class SlackBot extends Adapter
 
   constructor: (robot) ->
     @robot = robot
+    @robot.Response = SlackResponse
 
   run: ->
     # Take our options from the environment, and set otherwise suitable defaults
