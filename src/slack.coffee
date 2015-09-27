@@ -242,10 +242,7 @@ class SlackBot extends Adapter
             msg = msg.substring(breakIndex, msg.length)
 
         for m in submessages
-          if msg.length >= 700 || msg.split(/\n/).length > 5
-            @customMessage channel: envelope.room, content: {text: msg}
-          else
-            channel.send msg
+          @customMessage channel: envelope.room, content: {text: m}
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
