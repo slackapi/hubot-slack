@@ -206,7 +206,10 @@ class SlackBot extends Adapter
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
-        channel.send msg
+        if msg.length >= 700 || msg.split(/\n/).length > 5
+          @customMessage channel: envelope.room, content: {text: msg}
+        else
+          channel.send msg
 
       # If message is greater than MAX_MESSAGE_LENGTH, split it into multiple messages
       else
@@ -238,7 +241,11 @@ class SlackBot extends Adapter
 
             msg = msg.substring(breakIndex, msg.length)
 
-        channel.send m for m in submessages
+        for m in submessages
+          if msg.length >= 700 || msg.split(/\n/).length > 5
+            @customMessage channel: envelope.room, content: {text: msg}
+          else
+            channel.send msg
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
