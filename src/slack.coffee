@@ -79,8 +79,8 @@ class SlackBot extends Adapter
       email_address: user.profile.email
       slack: {}
     for key, value of user
-      # user contains an of the SlackClient, which and contains references to the all the data types (users, channels) plus things like the token, s
-      # so, don't bother storing it
+      # don't store the SlackClient, because it'd cause a circular reference
+      # (it contains users and channels), and because it has sensitive information like the token
       continue if value instanceof SlackClient
       newUser.slack[key] = value
 
