@@ -205,37 +205,12 @@ class SlackBot extends Adapter
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
-      attachments = []
+      if msg.length > SlackBot.MAX_MESSAGE_LENGTH
+        @robot.logger.warning "Tried to send #{msg.length} character message, which is bigger than Slack's #{SlackBot.MAX_MESSAGE_LENGTH} maximum: truncating it"
 
-      while msg.length > 0
-        if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
-          attachments.push {text: msg, mrkdwn_in: ['text']}
-          break
+        msg = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
 
-        # Split message at last line break, if it exists
-        maxSizeChunk = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
-
-        lastLineBreak = maxSizeChunk.lastIndexOf('\n')
-        lastWordBreak = maxSizeChunk.match(/\W\w+$/)?.index
-
-        breakIndex = if lastLineBreak > -1
-          lastLineBreak
-        else if lastWordBreak
-          lastWordBreak
-        else
-          SlackBot.MAX_MESSAGE_LENGTH
-
-         attachments.push {text: msg.substring(0, breakIndex), mrkdwn_in: ['text']}
-
-         # Skip char if split on line or word break
-         breakIndex++ if breakIndex isnt SlackBot.MAX_MESSAGE_LENGTH
-
-         msg = msg.substring(breakIndex, msg.length)
-
-      if attachments.length > 1
-        @robot.logger.warning "Tried to send #{msg.length} character message, which is bigger than Slack's #{SlackBot.MAX_MESSAGE_LENGTH} maximum: splitting it up into #{attachments.length} attachments"
-
-      @customMessage channel: envelope.room, attachments: attachments
+      @customMessage channel: envelope.room, attachments: {text: msg, mrkdwn_in: ['text']}
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
