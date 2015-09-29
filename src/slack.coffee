@@ -6,7 +6,7 @@ SlackClient = require 'slack-client'
 Util = require 'util'
 
 class SlackBot extends Adapter
-  @MAX_MESSAGE_LENGTH: 4000
+  @MAX_MESSAGE_LENGTH: 8000
   @MIN_MESSAGE_LENGTH: 1
 
   constructor: (robot) ->
@@ -205,40 +205,37 @@ class SlackBot extends Adapter
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
-      if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
-        channel.send msg
+      attachments = []
 
-      # If message is greater than MAX_MESSAGE_LENGTH, split it into multiple messages
-      else
-        submessages = []
+      while msg.length > 0
+        if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
+          attachments.push {text: msg, mrkdwn_in: ['text']}
+          break
 
-        while msg.length > 0
-          if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
-            submessages.push msg
-            msg = ''
+        # Split message at last line break, if it exists
+        maxSizeChunk = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
 
-          else
-            # Split message at last line break, if it exists
-            maxSizeChunk = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
+        lastLineBreak = maxSizeChunk.lastIndexOf('\n')
+        lastWordBreak = maxSizeChunk.match(/\W\w+$/)?.index
 
-            lastLineBreak = maxSizeChunk.lastIndexOf('\n')
-            lastWordBreak = maxSizeChunk.match(/\W\w+$/)?.index
+        breakIndex = if lastLineBreak > -1
+          lastLineBreak
+        else if lastWordBreak
+          lastWordBreak
+        else
+          SlackBot.MAX_MESSAGE_LENGTH
 
-            breakIndex = if lastLineBreak > -1
-              lastLineBreak
-            else if lastWordBreak
-              lastWordBreak
-            else
-              SlackBot.MAX_MESSAGE_LENGTH
+         attachments.push {text: msg.substring(0, breakIndex), mrkdwn_in: ['text']}
 
-            submessages.push msg.substring(0, breakIndex)
+         # Skip char if split on line or word break
+         breakIndex++ if breakIndex isnt SlackBot.MAX_MESSAGE_LENGTH
 
-            # Skip char if split on line or word break
-            breakIndex++ if breakIndex isnt SlackBot.MAX_MESSAGE_LENGTH
+         msg = msg.substring(breakIndex, msg.length)
 
-            msg = msg.substring(breakIndex, msg.length)
+      if attachments.length > 1
+        @robot.logger.warning "Tried to send #{msg.length} character message, which is bigger than Slack's #{SlackBot.MAX_MESSAGE_LENGTH} maximum: splitting it up into #{attachments.length} attachments"
 
-        channel.send m for m in submessages
+      @customMessage channel: envelope.room, attachments: attachments
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
