@@ -24,7 +24,7 @@
     "url": "http://github.com/slackhq/hubot-slack.git"
   },
   "bugs": {
-    "url": "https://github.com/slackhq/hubot-slack/issues",
+    "url": "https://github.com/slackhq/hubot-slack/issues"
   },
   "dependencies": {
     "slack-client": "~1.4.0"
