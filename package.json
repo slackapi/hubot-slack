@@ -25,7 +25,6 @@
   },
   "bugs": {
     "url": "https://github.com/slackhq/hubot-slack/issues",
-    "email": "feedback@tinyspeck.com"
   },
   "dependencies": {
     "slack-client": "~1.4.0"
