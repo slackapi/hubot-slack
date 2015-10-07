@@ -13,12 +13,7 @@
     "slack"
   ],
   "author": "Slack Technologies, Inc.",
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://opensource.org/licenses/mit-license.php"
-    }
-  ],
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "http://github.com/slackhq/hubot-slack.git"
