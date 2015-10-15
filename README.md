@@ -25,9 +25,6 @@ This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://
 This is a modified set of instructions based on the [instructions on the Hubot wiki](https://github.com/github/hubot/blob/master/docs/deploying/heroku.md).
 
 - Follow the instructions above to create a hubot locally
-- Edit your `Procfile` and change it to use the `slack` adapter:
-
-        web: bin/hubot --adapter slack
 
 - Install [heroku toolbelt](https://toolbelt.heroku.com/) if you haven't already.
 - `heroku create my-company-slackbot`
