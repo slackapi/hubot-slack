@@ -204,6 +204,16 @@ class SlackBot extends Adapter
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
 
+      # Replace @username with <@UXXXXX> for mentioning users and channels
+      msg = msg.replace /(?:^| )@([\w]+)/gm, (match, p1) =>
+        user = @client.getUserByName p1
+        if user
+          match = match.replace /@[\w]+/, "<@#{user.id}>"
+        else if (p1 is 'channel' or p1 is 'everyone' or p1 is 'group')
+          match = match.replace /@[\w]+/, "<!#{p1}>"
+        else
+          match = match
+
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
@@ -246,7 +256,7 @@ class SlackBot extends Adapter
 
     for msg in messages
       # TODO: Don't prefix username if replying in DM
-      @send envelope, "#{envelope.user.name}: #{msg}"
+      @send envelope, "@#{envelope.user.name}: #{msg}"
 
   topic: (envelope, strings...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
