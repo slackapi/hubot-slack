@@ -52,6 +52,10 @@ describe 'Removing message formatting', ->
     foo = @slackbot.removeFormatting 'foo <!group> bar'
     foo.should.equal 'foo @group bar'
 
+  it 'Should change <!here> links to @here', ->
+    foo = @slackbot.removeFormatting 'foo <!here> bar'
+    foo.should.equal 'foo @here bar'
+
   it 'Should remove formatting around <http> links', ->
     foo = @slackbot.removeFormatting 'foo <http://www.example.com> bar'
     foo.should.equal 'foo http://www.example.com bar'
