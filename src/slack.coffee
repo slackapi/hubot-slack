@@ -71,7 +71,17 @@ class SlackBot extends Adapter
 
   userChange: (user) =>
     return unless user?.id?
-    newUser = {name: user.name, real_name: user.real_name, email_address: user.profile.email}
+    newUser =
+      name: user.name
+      real_name: user.real_name
+      email_address: user.profile.email
+      slack: {}
+    for key, value of user
+      # don't store the SlackClient, because it'd cause a circular reference
+      # (it contains users and channels), and because it has sensitive information like the token
+      continue if value instanceof SlackClient
+      newUser.slack[key] = value
+
     if user.id of @robot.brain.data.users
       for key, value of @robot.brain.data.users[user.id]
         unless key of newUser
