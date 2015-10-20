@@ -191,9 +191,7 @@ class SlackBot extends Adapter
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
-    console.log('channel (by name):', channel)
     channel = @client.getChannelGroupOrDMByID(envelope.room) unless channel
-    console.log('channel (by id):', channel)
 
     if not channel and @client.getUserByName(envelope.room)
       user_id = @client.getUserByName(envelope.room).id
