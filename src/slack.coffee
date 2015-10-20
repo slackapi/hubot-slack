@@ -261,6 +261,7 @@ class SlackBot extends Adapter
     else data.message.room
 
     channel = @client.getChannelGroupOrDMByName channelName
+    channel = @client.getChannelGroupOrDMByID(channelName) unless channel
     return unless channel
 
     msg = {}
