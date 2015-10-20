@@ -212,14 +212,19 @@ class SlackBot extends Adapter
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
 
-      @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
-
       if msg.length > SlackBot.MAX_MESSAGE_LENGTH
         @robot.logger.warning "Tried to send #{msg.length} character message, which is bigger than Slack's #{SlackBot.MAX_MESSAGE_LENGTH} maximum: truncating it"
 
         msg = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
 
-      @customMessage channel: envelope.room, attachments: {text: msg, mrkdwn_in: ['text']}
+      attachment = if msg.match(/^https?:\/\/\S+(?:jpg|png|gif)$/)
+        @robot.logger.debug "Sending to #{envelope.room} as image: #{msg}"
+        {image_url: msg, fallback: msg}
+      else
+        @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
+        {text: msg, mrkdwn_in: ['text']}
+
+      @customMessage channel: envelope.room, attachments: attachment
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
