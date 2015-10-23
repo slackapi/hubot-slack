@@ -8,6 +8,7 @@ Util = require 'util'
 class SlackBot extends Adapter
   @MAX_MESSAGE_LENGTH: 4000
   @MIN_MESSAGE_LENGTH: 1
+  @RESERVED_KEYWORDS: ['channel','group','everyone','here']
 
   constructor: (robot) ->
     @robot = robot
@@ -185,7 +186,7 @@ class SlackBot extends Adapter
             return "\##{channel.name}"
 
         when '!'
-          if link in ['channel','group','everyone','here']
+          if link in SlackBot.RESERVED_KEYWORDS
             return "@#{link}"
 
         else
@@ -210,6 +211,16 @@ class SlackBot extends Adapter
 
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
+
+      # Replace @username with <@UXXXXX> for mentioning users and channels
+      msg = msg.replace /(?:^| )@([\w]+)/gm, (match, p1) =>
+        user = @client.getUserByName p1
+        if user
+          match = match.replace /@[\w]+/, "<@#{user.id}>"
+        else if p1 in SlackBot.RESERVED_KEYWORDS
+          match = match.replace /@[\w]+/, "<!#{p1}>"
+        else
+          match = match
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 

@@ -77,6 +77,9 @@ beforeEach ->
 
 # Generate a new slack instance for each test.
 beforeEach ->
+  # FIXME: this is dirty
+  SlackBot.MAX_MESSAGE_LENGTH = 4000
+
   @slackbot = new SlackBot @stubs.robot
   @slackbot.client = @stubs.client
   @slackbot.loggedIn @stubs.self, @stubs.team

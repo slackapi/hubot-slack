@@ -135,3 +135,45 @@ describe 'Send Messages', ->
     msg = 'Test'
     @slackbot.send {room: 'user2'}, msg
     @stubs._dmmsg.should.eql 'Test'
+
+  it 'Should replace @name with <@U123> for mention', ->
+    msg = 'foo @name: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U123>: bar'
+
+  it 'Should replace @name with <@U123> for mention (first word)', ->
+    msg = '@name: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal '<@U123>: bar'
+
+  it 'Should replace @name with <@U123> for mention (without colons)', ->
+    msg = 'foo @name bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U123> bar'
+
+  it 'Should replace @channel with <!channel> for mention', ->
+    msg = 'foo @channel: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <!channel>: bar'
+
+  it 'Should replace multiple mentions with <!XXXX>', ->
+    msg = 'foo @everyone: @channel: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <!everyone>: <!channel>: bar'
+
+  it 'Should replace multiple mentions with <!XXXX>/<@UXXXX>', ->
+    msg = 'foo @everyone: @name: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <!everyone>: <@U123>: bar'
+
+  it 'Should not replace @name with <@U123> for mention when there is a typo', ->
+    msg = 'foo @naame: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo @naame: bar'
