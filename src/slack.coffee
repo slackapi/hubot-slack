@@ -202,6 +202,7 @@ class SlackBot extends Adapter
 
   send: (envelope, messages...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
+    channel = @client.getChannelGroupOrDMByID(envelope.room) unless channel
 
     if not channel and @client.getUserByName(envelope.room)
       user_id = @client.getUserByName(envelope.room).id
@@ -279,6 +280,7 @@ class SlackBot extends Adapter
     else data.message.room
 
     channel = @client.getChannelGroupOrDMByName channelName
+    channel = @client.getChannelGroupOrDMByID(channelName) unless channel
     return unless channel
 
     msg = {}
