@@ -168,6 +168,7 @@ class SlackBot extends Adapter
       (?:\|          # start of |label (optional)
         ([^>]+)      # label
       )?             # end of label
+      [‘“]*          # formatted single and double quote
       >              # closing angle bracket
     ///g, (m, type, link, label) =>
 
@@ -198,6 +199,8 @@ class SlackBot extends Adapter
     text = text.replace /&lt;/g, '<'
     text = text.replace /&gt;/g, '>'
     text = text.replace /&amp;/g, '&'
+    text = text.replace /‘/g, '\''
+    text = text.replace /“/g, '"'
     text
 
   send: (envelope, messages...) ->

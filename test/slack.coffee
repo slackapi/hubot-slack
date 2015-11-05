@@ -92,6 +92,18 @@ describe 'Removing message formatting', ->
     foo = @slackbot.removeFormatting 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
     foo.should.equal 'foo label bar #general @channel label (https://www.example.com)'
 
+  it 'Should change formatted single quotes to normal', ->
+    foo = @slackbot.removeFormatting '‘bar‘'
+    foo.should.equal '\'bar\''
+
+  it 'Should change formatted double quotes to normal', ->
+    foo = @slackbot.removeFormatting '“bar“'
+    foo.should.equal '"bar"'
+
+  it 'Should change formatted quotes to normal with other items in the text', ->
+    foo = @slackbot.removeFormatting 'foo <@U123|label> bar <#C123> “bar“ <!channel> <https://www.example.com|label>'
+    foo.should.equal 'foo label bar #general "bar" @channel label (https://www.example.com)'
+
 describe 'Send Messages', ->
   it 'Should send multiple messages', ->
     sentMessages = @slackbot.send {room: 'general'}, 'one', 'two', 'three'
