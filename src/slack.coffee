@@ -19,6 +19,7 @@ class SlackBot extends Adapter
       token: process.env.HUBOT_SLACK_TOKEN
       autoReconnect: true
       autoMark: true
+      replaceQuotes: process.env.HUBOT_SLACK_QUOTES or false
 
     return @robot.logger.error "No services token provided to Hubot" unless options.token
     return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
@@ -159,19 +160,32 @@ class SlackBot extends Adapter
 
       @receive new SlackTextMessage user, text, rawText, msg
 
-  removeFormatting: (text) ->
+  getReplacePattern: ->
     # https://api.slack.com/docs/formatting
-    text = text.replace ///
-      <              # opening angle bracket
-      ([@#!])?       # link type
-      ([^>|]+)       # link
-      (?:\|          # start of |label (optional)
-        ([^>]+)      # label
-      )?             # end of label
-      [‘“]*          # formatted single and double quote
-      >              # closing angle bracket
-    ///g, (m, type, link, label) =>
+    if @options?.replaceQuotes
+      ///
+        <              # opening angle bracket
+        ([@#!])?       # link type
+        ([^>|]+)       # link
+        (?:\|          # start of |label (optional)
+          ([^>]+)      # label
+        )?             # end of label
+        [‘“]*          # formatted single and double quote
+        >              # closing angle bracket
+      ///g
+    else
+      ///
+        <              # opening angle bracket
+        ([@#!])?       # link type
+        ([^>|]+)       # link
+        (?:\|          # start of |label (optional)
+          ([^>]+)      # label
+        )?             # end of label
+        >              # closing angle bracket
+      ///g
 
+  removeFormatting: (text) ->
+    text = text.replace @getReplacePattern(), (m, type, link, label) =>
       switch type
 
         when '@'
@@ -199,8 +213,9 @@ class SlackBot extends Adapter
     text = text.replace /&lt;/g, '<'
     text = text.replace /&gt;/g, '>'
     text = text.replace /&amp;/g, '&'
-    text = text.replace /‘/g, '\''
-    text = text.replace /“/g, '"'
+    if @options?.replaceQuotes
+      text = text.replace /‘/g, '\''
+      text = text.replace /“/g, '"'
     text
 
   send: (envelope, messages...) ->
