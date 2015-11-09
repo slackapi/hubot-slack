@@ -13,11 +13,14 @@ class SlackBot extends Adapter
     @robot = robot
 
   run: ->
+    exit_process_on_disconnect = !!process.env.HUBOT_SLACK_EXIT_ON_DISCONNECT
+
     # Take our options from the environment, and set otherwise suitable defaults
     options =
       token: process.env.HUBOT_SLACK_TOKEN
-      autoReconnect: false
+      autoReconnect: !exit_process_on_disconnect
       autoMark: true
+      exitOnDisconnect: exit_process_on_disconnect
 
     return @robot.logger.error "No services token provided to Hubot" unless options.token
     return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
@@ -88,14 +91,17 @@ class SlackBot extends Adapter
     @emit "connected"
 
   clientClose: =>
-    @robot.logger.info 'Slack client connection was closed, exiting hubot process'
-    @client.removeListener 'error', @.error
-    @client.removeListener 'loggedIn', @.loggedIn
-    @client.removeListener 'open', @.open
-    @client.removeListener 'close', @.clientClose
-    @client.removeListener 'message', @.message
-    @client.removeListener 'userChange', @.userChange
-    process.exit 1
+    if @options.exitOnDisconnect
+      @robot.logger.info 'Slack client connection was closed, exiting hubot process'
+      @client.removeListener 'error', @.error
+      @client.removeListener 'loggedIn', @.loggedIn
+      @client.removeListener 'open', @.open
+      @client.removeListener 'close', @.clientClose
+      @client.removeListener 'message', @.message
+      @client.removeListener 'userChange', @.userChange
+      process.exit 1
+    else
+      @robot.logger.info 'Slack client closed, waiting for reconnect'
 
   message: (msg) =>
     # Ignore our own messages
