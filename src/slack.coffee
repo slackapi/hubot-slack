@@ -293,7 +293,6 @@ class SlackBot extends Adapter
 
     channel = @client.getChannelGroupOrDMByName channelName
     channel = @client.getChannelGroupOrDMByID(channelName) unless channel
-    return unless channel
 
     msg = {}
     msg.attachments = data.attachments || data.content
@@ -310,6 +309,14 @@ class SlackBot extends Adapter
         msg.icon_emoji = data.icon_emoji
     else
       msg.as_user = true
+
+    if not channel and @client.getUserByName(channelName)
+      user_id = @client.getUserByName(channelName).id
+      @client.openDM user_id, =>
+        channel = @client.getChannelGroupOrDMByName channelName
+        channel = @client.getChannelGroupOrDMByID(channelName) unless channel
+        channel.postMessage msg
+      return
 
     channel.postMessage msg
 
