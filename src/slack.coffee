@@ -39,6 +39,7 @@ class SlackBot extends Adapter
     @client.on 'close', @.clientClose
     @client.on 'message', @.message
     @client.on 'userChange', @.userChange
+    @client.on 'raw_message', @.rawMessage
     @robot.brain.on 'loaded', @.brainLoaded
 
     @robot.on 'slack-attachment', @.customMessage
@@ -108,6 +109,7 @@ class SlackBot extends Adapter
       @client.removeListener 'close', @.clientClose
       @client.removeListener 'message', @.message
       @client.removeListener 'userChange', @.userChange
+      @client.removeListener 'raw_message', @.rawMessage
       process.exit 1
     else
       @robot.logger.info 'Slack client closed, waiting for reconnect'
@@ -170,6 +172,17 @@ class SlackBot extends Adapter
         text = "#{@robot.name} #{text}"
 
       @receive new SlackTextMessage user, text, rawText, msg
+
+  rawMessage: (msg) =>
+    # We can switch the various msg.types that SlackRawMessage doesn't handle for us here, such as channel_create and reaction.
+    switch msg.type
+      when "channel_created"
+        if msg.type == "channel_created"
+          user = @robot.brain.userForId msg.channel.creator
+          # populate event data
+          newChannel = message: msg, user: user
+          @robot.emit 'channelCreated', newChannel
+      # Additional msg.types to be added.
 
   removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting
