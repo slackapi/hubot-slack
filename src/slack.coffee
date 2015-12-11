@@ -213,7 +213,7 @@ class SlackBot extends Adapter
         {image_url: msg, fallback: msg}
       else
         @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
-        {text: msg, mrkdwn_in: ['text']}
+        {text: msg, mrkdwn_in: ['text'], fallback: msg}
 
       @customMessage channel: envelope.room, attachments: attachment
 
