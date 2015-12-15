@@ -148,15 +148,15 @@ class SlackBot extends Adapter
     # Test for enter/leave messages
     if msg.subtype is 'channel_join' or msg.subtype is 'group_join'
       @robot.logger.debug "#{user.name} has joined #{channel.name}"
-      @receive new EnterMessage user
+      message = new EnterMessage user
 
     else if msg.subtype is 'channel_leave' or msg.subtype is 'group_leave'
       @robot.logger.debug "#{user.name} has left #{channel.name}"
-      @receive new LeaveMessage user
+      message = new LeaveMessage user
 
     else if msg.subtype is 'channel_topic' or msg.subtype is 'group_topic'
       @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{msg.topic}"
-      @receive new TopicMessage user, msg.topic, msg.ts
+      message = new TopicMessage user, msg.topic, msg.ts
 
     else
       # Build message text to respond to, including all attachments
@@ -169,7 +169,12 @@ class SlackBot extends Adapter
       if msg.getChannelType() == 'DM'
         text = "#{@robot.name} #{text}"
 
-      @receive new SlackTextMessage user, text, rawText, msg
+      message =  new SlackTextMessage user, text, rawText, msg
+
+    channelType = msg.rawMessage.getChannelType()
+    message.private = if channelType is "Channel" then false else true
+
+    @receive message
 
   removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting
