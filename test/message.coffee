@@ -133,6 +133,35 @@ describe 'Receiving a Slack message', ->
     msg = @stubs.robot.received[0]
     msg.should.be.an.instanceOf SlackRawMessage
 
+  it 'should produce a SlackTextMessage for reaction_added events', ->
+    userId = @stubs.user.id
+    channelId = @stubs.channel.id
+    @slackbot.reactionAdded new ClientMessage {
+      type: 'reaction_added'
+      user: userId
+      name: 'evergreen_tree'
+      item: {
+        type: 'message'
+        channel: channelId
+        message: {
+          text: 'Hello, world!'
+          reactions: [
+            {
+              name: 'evergreen_tree'
+              count: 1
+              users: [ userId ]
+            }
+          ]
+        }
+      }
+      event_ts: '1234'
+    }
+    @stubs.robot.received.should.have.length 1
+    msg = @stubs.robot.received[0]
+    msg.should.be.an.instanceOf SlackTextMessage
+    msg.user.id.should.equal userId
+    msg.rawMessage.name.should.equal 'evergreen_tree'
+
   describe 'should handle SlackRawMessage inheritance properly when Hubot', ->
     # this is a bit of a wacky one
     # We need to muck with the require() machinery
