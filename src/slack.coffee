@@ -217,7 +217,7 @@ class SlackBot extends Adapter
 
         msg = msg.substring(0, SlackBot.MAX_MESSAGE_LENGTH)
 
-      attachment = if msg.match(/^https?:\/\/\S+(?:jpg|png|gif)$/)
+      attachment = if msg.match(/^https?:\/\/\S+(?:jpg|png|gif)$/) and !msg.match(/files.slack.com/)
         @robot.logger.debug "Sending to #{envelope.room} as image: #{msg}"
         {image_url: msg, fallback: msg}
       else
