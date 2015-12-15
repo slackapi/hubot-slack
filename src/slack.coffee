@@ -38,6 +38,7 @@ class SlackBot extends Adapter
     @client.on 'open', @.open
     @client.on 'close', @.clientClose
     @client.on 'message', @.message
+    @client.on 'reaction_added', @.reactionAdded
     @client.on 'userChange', @.userChange
     @robot.brain.on 'loaded', @.brainLoaded
 
@@ -107,6 +108,7 @@ class SlackBot extends Adapter
       @client.removeListener 'open', @.open
       @client.removeListener 'close', @.clientClose
       @client.removeListener 'message', @.message
+      @client.removeListener 'reaction_added', @.reactionAdded
       @client.removeListener 'userChange', @.userChange
       process.exit 1
     else
@@ -170,6 +172,12 @@ class SlackBot extends Adapter
         text = "#{@robot.name} #{text}"
 
       @receive new SlackTextMessage user, text, rawText, msg
+
+  reactionAdded: (msg) =>
+    user = @robot.brain.userForId msg.user
+    rawText = msg.item.message.text
+    text = @removeFormatting rawText
+    @receive new SlackTextMessage user, text, rawText, msg
 
   removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting

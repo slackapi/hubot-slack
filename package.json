@@ -22,7 +22,7 @@
     "url": "https://github.com/slackhq/hubot-slack/issues"
   },
   "dependencies": {
-    "slack-client": "~1.4.0"
+    "slack-client": "18f/node-slack-client#1.5.0-handle-reaction-added"
   },
   "devDependencies": {
     "coffee-script": "~1.7.1",
