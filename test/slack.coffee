@@ -1,298 +1,179 @@
-###################################################################
-# Setup the tests
-###################################################################
+{SlackBot} = require '../index'
+
 should = require 'should'
 
-# Import our hero. Noop logging so that we don't clutter the test output
-{Slack} = require '../src/slack'
-Slack::log = ->
-Slack::logError = ->
-
-# Stub a few interfaces to grease the skids for tests. These are intentionally
-# as minimal as possible and only provide enough to make the tests possible.
-# Stubs are recreated before each test.
-stubs = null
-beforeEach ->
-  stubs =
-    # Hubot.Robot instance
-    robot:
-      name: 'Kitt'
-
-    # Express request object
-    request: ->
-      data: {}
-      param: (key) ->
-        @data[key]
-
-
-# Generate a new slack instance for each test.
-slack = null
-beforeEach ->
-  slack = new Slack stubs.robot
-
-
-###################################################################
-# Start the tests
-###################################################################
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
-    slack.robot.name.should.eql stubs.robot.name
+    @slackbot.robot.should.eql @stubs.robot
 
+describe 'Login', ->
+  it 'Should set the robot name', ->
+    team =
+      name: 'Test Team'
+    user =
+      name: 'bot'
+    @slackbot.loggedIn(user, team)
+    @slackbot.robot.name.should.equal 'bot'
 
-describe '(Un)escaping strings', ->
-  # Generate strings with multiple replacement characters
-  makeTestString = (character) ->
-    "Hello #{character} world and #{character} again"
+describe 'Removing message formatting', ->
+  it 'Should do nothing if there are no user links', ->
+    foo = @slackbot.removeFormatting 'foo'
+    foo.should.equal 'foo'
 
-  escapeChars = [
-    {before: '&', after: '&amp;', name: 'ampersands'}
-    {before: '>', after: '&gt;', name: 'greater than signs'}
-    {before: '<', after: '&lt;', name: 'less than signs'}
-  ]
+  it 'Should decode entities', ->
+    foo = @slackbot.removeFormatting 'foo &gt; &amp; &lt; &gt;&amp;&lt;'
+    foo.should.equal 'foo > & < >&<'
 
-  for character in escapeChars
-    it "Should escape #{character.name}", ->
-      escaped = slack.escapeHtml(makeTestString(character.before))
-      escaped.should.eql makeTestString(character.after)
+  it 'Should change <@U123> links to @name', ->
+    foo = @slackbot.removeFormatting 'foo <@U123> bar'
+    foo.should.equal 'foo @name bar'
 
-    it "Should unescape #{character.name}", ->
-      unescaped = slack.unescapeHtml(makeTestString(character.after))
-      unescaped.should.eql makeTestString(character.before)
+  it 'Should change <@U123|label> links to label', ->
+    foo = @slackbot.removeFormatting 'foo <@U123|label> bar'
+    foo.should.equal 'foo label bar'
 
-  it 'Should return an empty string if input is a non-string', ->
-    for input in [undefined, null, false, {}, [], 123]
-      slack.escapeHtml(input).should.eql('')
-      slack.unescapeHtml(input).should.eql('')
+  it 'Should change <#C123> links to #general', ->
+    foo = @slackbot.removeFormatting 'foo <#C123> bar'
+    foo.should.equal 'foo #general bar'
 
+  it 'Should change <#C123|label> links to label', ->
+    foo = @slackbot.removeFormatting 'foo <#C123|label> bar'
+    foo.should.equal 'foo label bar'
 
-describe 'Getting the user from params', ->
-  it 'Should support old Hubot syntax', ->
-    # Old syntax does not have a `user` property
-    oldParams =
-      reply_to: 'Your friend'
+  it 'Should change <!everyone> links to @everyone', ->
+    foo = @slackbot.removeFormatting 'foo <!everyone> bar'
+    foo.should.equal 'foo @everyone bar'
 
-    slack.userFromParams(oldParams).should.have.property 'reply_to', 'Your friend'
+  it 'Should change <!channel> links to @channel', ->
+    foo = @slackbot.removeFormatting 'foo <!channel> bar'
+    foo.should.equal 'foo @channel bar'
 
-  it 'Should support new Hubot syntax', ->
-    params =
-      user:
-        reply_to: 'Your new friend'
+  it 'Should change <!group> links to @group', ->
+    foo = @slackbot.removeFormatting 'foo <!group> bar'
+    foo.should.equal 'foo @group bar'
 
-    slack.userFromParams(params).should.have.property 'reply_to', 'Your new friend'
+  it 'Should change <!here> links to @here', ->
+    foo = @slackbot.removeFormatting 'foo <!here> bar'
+    foo.should.equal 'foo @here bar'
 
-  it 'Should fall back to room value for reply_to', ->
-    roomParams =
-      room: 'The real reply to'
+  it 'Should remove formatting around <http> links', ->
+    foo = @slackbot.removeFormatting 'foo <http://www.example.com> bar'
+    foo.should.equal 'foo http://www.example.com bar'
 
-    slack.userFromParams(roomParams).should.have.property 'reply_to', 'The real reply to'
+  it 'Should remove formatting around <https> links', ->
+    foo = @slackbot.removeFormatting 'foo <https://www.example.com> bar'
+    foo.should.equal 'foo https://www.example.com bar'
 
+  it 'Should remove formatting around <skype> links', ->
+    foo = @slackbot.removeFormatting 'foo <skype:echo123?call> bar'
+    foo.should.equal 'foo skype:echo123?call bar'
 
-describe 'Sending a message', ->
-  it 'Should JSON-ify args', ->
-    # Shim the post() methd to grab its args value
-    slack.post = (path, args) ->
-      (-> JSON.parse args).should.not.throw()
+  it 'Should remove formatting around <https> links with a label', ->
+    foo = @slackbot.removeFormatting 'foo <https://www.example.com|label> bar'
+    foo.should.equal 'foo label (https://www.example.com) bar'
 
-    params =
-      reply_to: 'A fake room'
+  it 'Should remove formatting around <https> links with a substring label', ->
+    foo = @slackbot.removeFormatting 'foo <https://www.example.com|example.com> bar'
+    foo.should.equal 'foo https://www.example.com bar'
 
-    args = slack.send params, 'Hello, fake world'
+  it 'Should remove formatting around <https> links with a label containing entities', ->
+    foo = @slackbot.removeFormatting 'foo <https://www.example.com|label &gt; &amp; &lt;> bar'
+    foo.should.equal 'foo label > & < (https://www.example.com) bar'
 
-describe 'Parsing options', ->
-  it 'Should default to the name "slackbot"', ->
-    slack.parseOptions()
+  it 'Should remove formatting around <mailto> links', ->
+    foo = @slackbot.removeFormatting 'foo <mailto:name@example.com> bar'
+    foo.should.equal 'foo name@example.com bar'
 
-    slack.options.name.should.equal 'slackbot'
+  it 'Should remove formatting around <mailto> links with an email label', ->
+    foo = @slackbot.removeFormatting 'foo <mailto:name@example.com|name@example.com> bar'
+    foo.should.equal 'foo name@example.com bar'
 
-  it 'Should default to the "blacklist" channel mode', ->
-    slack.parseOptions()
+  it 'Should change multiple links at once', ->
+    foo = @slackbot.removeFormatting 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
+    foo.should.equal 'foo label bar #general @channel label (https://www.example.com)'
 
-    slack.options.mode.should.equal 'blacklist'
+describe 'Send Messages', ->
+  it 'Should send multiple messages', ->
+    sentMessages = @slackbot.send {room: 'general'}, 'one', 'two', 'three'
+    sentMessages.length.should.equal 3
 
-  it 'Should default to [] for channel list', ->
-    slack.parseOptions()
+  it 'Should not send empty messages', ->
+    sentMessages = @slackbot.send {room: 'general'}, 'Hello', '', '', 'world!'
+    sentMessages.length.should.equal 2
 
-    slack.options.channels.should.be.instanceof(Array).and.have.lengthOf(0);
+  it 'Should split long messages', ->
+    lines = 'Hello, Slackbot\nHow are you?\n'
+    # Make a very long message
+    msg = lines
+    len = 10000
+    msg += lines while msg.length < len
 
-  it 'Should default to null for missing environment variables', ->
-    slack.parseOptions()
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.length.should.equal Math.ceil(len / SlackBot.MAX_MESSAGE_LENGTH)
 
-    should.not.exist slack.options.token
-    should.not.exist slack.options.team
+  it 'Should try to split on word breaks', ->
+    msg = 'Foo bar baz'
+    @slackbot.constructor.MAX_MESSAGE_LENGTH = 10
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.length.should.equal 2
 
-  it 'Should use HUBOT_SLACK_TOKEN environment variable', ->
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
+  it 'Should split into max length chunks if there are no breaks', ->
+    msg = 'Foobar'
+    @slackbot.constructor.MAX_MESSAGE_LENGTH = 3
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.eql ['Foo', 'bar']
 
-    slack.options.token.should.eql 'insecure token'
-    delete process.env.HUBOT_SLACK_TOKEN
+  it 'Should open a DM channel if needed', ->
+    msg = 'Test'
+    @slackbot.send {room: 'name'}, msg
+    @stubs._msg.should.eql 'Test'
 
-  it 'Should use HUBOT_SLACK_TEAM environment variable', ->
-    process.env.HUBOT_SLACK_TEAM = 'fake team'
-    slack.parseOptions()
+  it 'Should use an existing DM channel if possible', ->
+    msg = 'Test'
+    @slackbot.send {room: 'user2'}, msg
+    @stubs._dmmsg.should.eql 'Test'
 
-    slack.options.team.should.eql 'fake team'
-    delete process.env.HUBOT_SLACK_TEAM
+  it 'Should replace @name with <@U123> for mention', ->
+    msg = 'foo @name: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U123>: bar'
 
-  it 'Should use HUBOT_SLACK_BOTNAME environment variable', ->
-    process.env.HUBOT_SLACK_BOTNAME = 'Lonely Bot'
-    slack.parseOptions()
+  it 'Should replace @name with <@U123> for mention (first word)', ->
+    msg = '@name: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal '<@U123>: bar'
 
-    slack.options.name.should.eql 'Lonely Bot'
-    delete process.env.HUBOT_SLACK_BOTNAME
+  it 'Should replace @name with <@U123> for mention (without colons)', ->
+    msg = 'foo @name bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U123> bar'
 
-  it 'Should use HUBOT_SLACK_CHANNELMODE environment variable', ->
-    process.env.HUBOT_SLACK_CHANNELMODE = 'a channel mode'
-    slack.parseOptions()
+  it 'Should replace @channel with <!channel> for mention', ->
+    msg = 'foo @channel: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <!channel>: bar'
 
-    slack.options.mode.should.eql 'a channel mode'
-    delete process.env.HUBOT_SLACK_CHANNELMODE
+  it 'Should replace multiple mentions with <!XXXX>', ->
+    msg = 'foo @everyone: @channel: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <!everyone>: <!channel>: bar'
 
-  it 'Should use HUBOT_SLACK_CHANNELS environment variable', ->
-    process.env.HUBOT_SLACK_CHANNELS = 'a,list,of,channels'
-    slack.parseOptions()
+  it 'Should replace multiple mentions with <!XXXX>/<@UXXXX>', ->
+    msg = 'foo @everyone: @name: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <!everyone>: <@U123>: bar'
 
-    slack.options.channels.should.eql ['a', 'list', 'of', 'channels']
-    delete process.env.HUBOT_SLACK_CHANNELS
-
-describe 'Parsing the request', ->
-  it 'Should get the message', ->
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    requestText = 'The message from the request'
-    req = stubs.request()
-    req.data.text = requestText
-    req.data.token = process.env.HUBOT_SLACK_TOKEN
-
-    slack.getMessageFromRequest(req).should.eql requestText
-    delete process.env.HUBOT_SLACK_TOKEN
-
-  it 'Should return null if the message is missing', ->
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    req = stubs.request()
-    req.data.token = process.env.HUBOT_SLACK_TOKEN
-    message = slack.getMessageFromRequest req
-    should.not.exist message
-    delete process.env.HUBOT_SLACK_TOKEN
-
-  it 'Should get the author', ->
-    req = stubs.request()
-    req.data =
-      user_id: 37
-      user_name: 'Luke'
-      channel_id: 760
-      channel_name: 'Home'
-
-    author = slack.getAuthorFromRequest req
-    author.should.include
-      id: 37
-      name: 'Luke'
-
-  it 'Should ignore blacklisted rooms', ->
-    process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
-    process.env.HUBOT_SLACK_CHANNELS = 'test'
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    requestText = 'The message from the request'
-    req = stubs.request()
-    req.data =
-      channel_name: 'test'
-      token: process.env.HUBOT_SLACK_TOKEN
-      text: requestText
-
-    message = slack.getMessageFromRequest req
-    should.not.exist message
-    delete process.env.HUBOT_SLACK_CHANNELMODE
-    delete process.env.HUBOT_SLACK_CHANNELS
-    delete process.env.HUBOT_SLACK_TOKEN
-
-  it 'Should strip leading hashes from blacklisted room names', ->
-    process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
-    process.env.HUBOT_SLACK_CHANNELS = '#foo,#test'
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    requestText = 'The message from the request'
-    req = stubs.request()
-    req.data =
-      channel_name: 'test'
-      token: process.env.HUBOT_SLACK_TOKEN
-      text: requestText
-
-    message = slack.getMessageFromRequest req
-    should.not.exist message
-    delete process.env.HUBOT_SLACK_CHANNELMODE
-    delete process.env.HUBOT_SLACK_CHANNELS
-    delete process.env.HUBOT_SLACK_TOKEN
-
-  it 'Should not ignore not blacklisted rooms', ->
-    process.env.HUBOT_SLACK_CHANNELMODE = 'blacklist'
-    process.env.HUBOT_SLACK_CHANNELS = 'test'
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    requestText = 'The message from the request'
-    req = stubs.request()
-    req.data =
-      channel_name: 'not-test'
-      token: process.env.HUBOT_SLACK_TOKEN
-      text: requestText
-
-    slack.getMessageFromRequest(req).should.eql requestText
-    delete process.env.HUBOT_SLACK_CHANNELMODE
-    delete process.env.HUBOT_SLACK_CHANNELS
-    delete process.env.HUBOT_SLACK_TOKEN
-
-  it 'Should not ignore whitelisted rooms', ->
-    process.env.HUBOT_SLACK_CHANNELMODE = 'whitelist'
-    process.env.HUBOT_SLACK_CHANNELS = 'test'
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    requestText = 'The message from the request'
-    req = stubs.request()
-    req.data =
-      channel_name: 'test'
-      token: process.env.HUBOT_SLACK_TOKEN
-      text: requestText
-
-    slack.getMessageFromRequest(req).should.eql requestText
-    delete process.env.HUBOT_SLACK_CHANNELMODE
-    delete process.env.HUBOT_SLACK_CHANNELS
-    delete process.env.HUBOT_SLACK_TOKEN
-
-  it 'Should ignore not whitelisted rooms', ->
-    process.env.HUBOT_SLACK_CHANNELMODE = 'whitelist'
-    process.env.HUBOT_SLACK_CHANNELS = 'test'
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    requestText = 'The message from the request'
-    req = stubs.request()
-    req.data =
-      channel_name: 'not-test'
-      token: 'token'
-      text: requestText
-
-    message = slack.getMessageFromRequest req
-    should.not.exist message
-    delete process.env.HUBOT_SLACK_CHANNELMODE
-    delete process.env.HUBOT_SLACK_CHANNELS
-    delete process.env.HUBOT_SLACK_TOKEN
-
-  it 'Should fail if the token is incorrect', ->
-    process.env.HUBOT_SLACK_TOKEN = 'insecure token'
-    slack.parseOptions()
-
-    requestText = 'The message from the request'
-    req = stubs.request()
-    req.data.text = requestText
-    req.data.token = 'secure token'
-
-    message = slack.getMessageFromRequest req
-    should.not.exist message
-    delete process.env.HUBOT_SLACK_TOKEN
+  it 'Should not replace @name with <@U123> for mention when there is a typo', ->
+    msg = 'foo @naame: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo @naame: bar'
