@@ -1,118 +1,76 @@
 # hubot-slack
 
-This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).  
-[![Build Status](https://travis-ci.org/tinyspeck/hubot-slack.png)](https://travis-ci.org/tinyspeck/hubot-slack)
+This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).
+
+[![Build Status](https://travis-ci.org/slackhq/hubot-slack.png)](https://travis-ci.org/slackhq/hubot-slack)
 
 ## Getting Started
 
 #### Creating a new bot
 
-- `npm install -g hubot coffee-script`
-- `hubot --create [path_name]`
-- `cd [path_name]`
+- `npm install -g hubot coffee-script yo generator-hubot`
+- `mkdir -p /path/to/hubot`
+- `cd /path/to/hubot`
+- `yo hubot`
 - `npm install hubot-slack --save`
 - Initialize git and make your initial commit
 - Check out the [hubot docs](https://github.com/github/hubot/tree/master/docs) for further guidance on how to build your bot
 
 #### Testing your bot locally
 
-- `./bin/hubot`
+- `HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd ./bin/hubot --adapter slack`
 
 #### Deploying to Heroku
 
 This is a modified set of instructions based on the [instructions on the Hubot wiki](https://github.com/github/hubot/blob/master/docs/deploying/heroku.md).
 
-- Make sure `hubot-slack` is in your `package.json` dependencies
-- Edit your `Procfile` and change it to use the `slack` adapter:
-
-        web: bin/hubot --adapter slack
+- Follow the instructions above to create a hubot locally
 
 - Install [heroku toolbelt](https://toolbelt.heroku.com/) if you haven't already.
 - `heroku create my-company-slackbot`
-- `heroku addons:add redistogo:nano`
+- `heroku addons:create rediscloud:30`
 - Activate the Hubot service on your ["Team Services"](http://my.slack.com/services/new/hubot) page inside Slack.
-- Add the [config variables](#adapter-configuration). For example:
+- Add the [config variables](#configuration). For example:
 
-        % heroku config:add HEROKU_URL=http://soothing-mists-4567.herokuapp.com
-        % heroku config:add HUBOT_SLACK_TOKEN=dqqQP9xlWXAq5ybyqKAU0axG
-        % heroku config:add HUBOT_SLACK_TEAM=myteam
-        % heroku config:add HUBOT_SLACK_BOTNAME=slack-hubot
+        % heroku config:add HEROKU_URL=https://my-company-slackbot.herokuapp.com
+        % heroku config:add HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd
 
-- Deploy and start the bot:
+- Deploy the bot:
 
         % git push heroku master
-        % heroku ps:scale web=1
 
 - Profit!
 
-## Adapter configuration
+## Upgrading from earlier versions of Hubot
+
+Version 3 of the hubot-slack adapter requires different server support to
+previous versions. If you have an existing "hubot" integration set up you'll
+need to upgrade:
+
+- Go to https://my.slack.com/services/new/hubot and create a new hubot
+  integration
+- Run `npm install hubot-slack --save`
+  to update your code.
+- Test your bot locally using:
+  `HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd ./bin/hubot --adapter slack`
+- Update your production startup scripts to pass the new `HUBOT_SLACK_TOKEN`.
+  You can remove the other `HUBOT_SLACK_*` environment variables if you want.
+- Deploy your new hubot to production.
+- Once you're happy it works, disable the old hubot integration from
+  https://my.slack.com/services
+
+## Configuration
 
 This adapter uses the following environment variables:
 
-#### HUBOT\_SLACK\_TOKEN
+ - `HUBOT_SLACK_TOKEN` - this is the API token for the Slack user you would like to run Hubot under.
 
-This is the service token you are given when you add Hubot to your Team Services.
+To add or remove your bot from specific channels or private groups, you can use the /kick and /invite slash commands that are built into Slack.
 
-#### HUBOT\_SLACK\_TEAM
+If you have scripts that send notifications to specific channels, use the channel name ie. `HUBOT_TWITTER_MENTION_ROOM="#general"` Keep in mind that your bot needs to be joined to your specific channels by the /invite slash command.
 
-This is your team's Slack subdomain. For example, if your team is `https://myteam.slack.com/`, you would enter `myteam` here.
+If you're using the [hubot-auth](https://github.com/hubot-scripts/hubot-auth/) script, you can get the user IDs required for the `HUBOT_AUTH_ADMIN` setting by calling the [users.list API method](https://api.slack.com/methods/users.list/test).
 
-#### HUBOT\_SLACK\_BOTNAME
+## Copyright
 
-Optional. What your Hubot is called on Slack. If you entered `slack-hubot` here, you would address your bot like `slack-hubot: help`. Otherwise, defaults to `slackbot`.
-
-#### HUBOT\_SLACK\_CHANNELMODE
-
-Optional. If you entered `blacklist`, Hubot will not post in the rooms specified by HUBOT_SLACK_CHANNELS, or alternately *only* in those rooms if `whitelist` is specified instead. Defaults to `blacklist`.
-
-#### HUBOT\_SLACK\_CHANNELS
-
-Optional. A comma-separated list of channels to either be blacklisted or whitelisted, depending on the value of HUBOT_SLACK_CHANNELMODE.
-
-#### HUBOT\_SLACK\_LINK\_NAMES
-
-Optional. By default, Slack will not linkify channel names (starting with a '#') and usernames (starting with an '@'). You can enable this behavior by setting HUBOT_SLACK_LINK_NAMES to 1. Otherwise, defaults to 0. See [Slack API : Message Formatting Docs](https://api.slack.com/docs/formatting) for more information.
-
-## Under the Hood
-
-#### Receiving Messages:
-
-The slack adapter adds a path to the robot's router that will accept POST requests to:
-
-`/hubot/slack-webhook`
-
-Source: [https://github.com/tinyspeck/hubot-slack/blob/2.2.0/src/slack.coffee#L161-L177](https://github.com/tinyspeck/hubot-slack/blob/2.2.0/src/slack.coffee#L161-L177)
-
-Expected parameters:
-
-- text
-- user_id
-- user_name
-- channel_id
-- channel_name
-
-If there is a message and it can deduce an author from those paramters, it'll create a new [TextMessage](https://github.com/github/hubot/blob/v2.7.2/src/message.coffee#L14) object and have the robot receive it, from there proceeding down the regular hubot path.
-
-#### Sending Messages
-
-When a script calls `send()` or `reply()` this adapter makes a POST request to your team's specific URL webhook:
-
-`https://<your_team_name>.slack.com/services/hooks/hubot`
-
-with a JSON-formatted body including the following dictionary:
-
-- username
-- channel
-- text
-- link_names (optionally)
-
-#### Message to a specific room:
-
-Sometime, it's useful to send a message regardless of the channel's activity (like `robot.hear` or `robot.response`). Hubot has [`robot.messageRoom`](https://github.com/github/hubot/blob/v2.8.0/src/robot.coffee#L401-L409) available for this use case.
-
-Slack API uses channel ID's by default, which uses computer-friendly alphanumeric ID. To use the pretty names, prefix it with a hash.
-
-```coffeescript
-robot.respond /hello$/i, (msg) ->
-  robot.messageRoom '#general', 'hello there'
-```
+Copyright &copy; Slack Technologies, Inc. MIT License; see LICENSE for further details.

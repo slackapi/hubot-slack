@@ -1,9 +1,43 @@
 {
   "name": "hubot-slack",
-  "version": "2.2.0",
-  "author": {
-    "name": "Tiny Speck",
-    "url": "https://www.tinyspeck.com/"
+  "version": "3.4.2",
+  "description": "A Slack adapter for hubot",
+  "main": "./index",
+  "scripts": {
+    "test": "mocha --compilers coffee:coffee-script/register --reporter spec"
+  },
+  "keywords": [
+    "hubot",
+    "tinyspeck",
+    "adapter",
+    "slack"
+  ],
+  "author": "Slack Technologies, Inc.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/slackhq/hubot-slack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/slackhq/hubot-slack/issues"
+  },
+  "dependencies": {
+    "slack-client": "~1.4.0"
+  },
+  "devDependencies": {
+    "coffee-script": "~1.7.1",
+    "grunt": "~0.4.1",
+    "grunt-cli": "^0.1.13",
+    "grunt-release": "~0.6.0",
+    "should": "~2.0.2",
+    "mocha": "~1.13.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-shell": "~0.5.0",
+    "hubot": "~2.11"
+  },
+  "engines": {
+    "node": ">=0.4.7",
+    "npm": ">= 1.1.x"
   },
   "contributors": [
     {
@@ -27,43 +61,5 @@
       "name": "Eric Lindvall",
       "email": "eric@papertrailapp.com"
     }
-  ],
-  "keywords": [
-    "hubot",
-    "tinyspeck",
-    "adapter",
-    "slack"
-  ],
-  "description": "A Slack adapter for hubot",
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://opensource.org/licenses/mit-license.php"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/tinyspeck/hubot-slack.git"
-  },
-  "bugs": {
-    "url": "https://github.com/tinyspeck/hubot-slack/issues",
-    "email": "help@tinyspeck.com"
-  },
-  "devDependencies": {
-    "coffee-script": "~1.7.1",
-    "grunt": "~0.4.1",
-    "grunt-release": "~0.6.0",
-    "should": "~2.0.2",
-    "mocha": "~1.13.0",
-    "hubot": "~2.6.4",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-shell": "~0.5.0"
-  },
-  "main": "./src/slack",
-  "engines": {
-    "node": ">=0.4.7"
-  },
-  "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register --reporter spec"
-  }
+  ]
 }
