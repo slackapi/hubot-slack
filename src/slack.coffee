@@ -118,6 +118,9 @@ class SlackBot extends Adapter
 
     channel = @client.getChannelGroupOrDMByID msg.channel if msg.channel
 
+    # send typing feedback
+    @client._send({ type: "typing", channel: msg.channel });
+
     if msg.hidden or (not msg.text and not msg.attachments) or msg.subtype is 'bot_message' or not msg.user or not channel
       # use a raw message, so scripts that care can still see these things
 
