@@ -311,6 +311,9 @@ class SlackBot extends Adapter
     else
       msg.as_user = true
 
+    # linkify channel and user names
+    msg.link_names = 1
+
     channel.postMessage msg
 
 # Export class for unit tests
