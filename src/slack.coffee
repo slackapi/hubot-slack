@@ -43,6 +43,7 @@ class SlackBot extends Adapter
 
     @robot.on 'slack-attachment', @.customMessage
     @robot.on 'slack.attachment', @.customMessage
+    @robot.on 'slack.customMessage', @.customMessage
 
     # Start logging in
     @client.login()
@@ -284,7 +285,6 @@ class SlackBot extends Adapter
     channel.setTopic strings.join "\n"
 
   customMessage: (data) =>
-
     channelName = if data.channel
       data.channel
     else if data.message.envelope
@@ -293,11 +293,15 @@ class SlackBot extends Adapter
 
     channel = @client.getChannelGroupOrDMByName channelName
     channel = @client.getChannelGroupOrDMByID(channelName) unless channel
-    return unless channel
+    unless channel
+      @robot.logger.warning "Could not find channel: #{channelName}"
+      return
 
     msg = {}
-    msg.attachments = data.attachments || data.content
-    msg.attachments = [msg.attachments] unless Array.isArray msg.attachments
+
+    attachments = data.attachments || data.content
+    if attachments
+      msg.attachments = if Array.isArray attachments then attachments else [attachments]
 
     msg.text = data.text
 
@@ -313,6 +317,8 @@ class SlackBot extends Adapter
 
     # linkify channel and user names
     msg.link_names = 1
+
+    @robot.logger.debug "Posting to channel #{channelName}: #{Util.inspect msg}"
 
     channel.postMessage msg
 
