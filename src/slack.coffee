@@ -219,7 +219,9 @@ class SlackBot extends Adapter
 
       # Bots cannot display images from files.slack.com in images, as all
       # images will be accessed anonymously.
-      attachment = if msg.match(/^https?:\/\/\S+\.(?:jpg|jpe|jpeg|png|gif|bmp|dib)/) and !msg.match(/https:\/\/files\.slack\.com/)
+      attachment = if (msg.match(/^https?:\/\/\S+\.(?:jpg|jpe|jpeg|png|gif|bmp|dib)/) or
+                   msg.match(/^https?:\/\/images.duckduckgo.com\//)) and
+                   !msg.match(/https:\/\/files\.slack\.com/)
         @robot.logger.debug "Sending to #{envelope.room} as image: #{msg}"
         {image_url: msg, fallback: msg}
       else
