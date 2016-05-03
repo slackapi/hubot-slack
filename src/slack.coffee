@@ -19,6 +19,7 @@ class SlackBot extends Adapter
     # Take our options from the environment, and set otherwise suitable defaults
     options =
       token: process.env.HUBOT_SLACK_TOKEN
+      botsToListenTo: process.env.HUBOT_SLACK_BOTS_TO_LISTEN_TO.split /[,\s]+/
       autoReconnect: !exitProcessOnDisconnect
       autoMark: true
       exitOnDisconnect: exitProcessOnDisconnect
@@ -39,6 +40,8 @@ class SlackBot extends Adapter
     @client.on 'close', @.clientClose
     @client.on 'message', @.message
     @client.on 'userChange', @.userChange
+    @client.on 'botChanged', @.userChange
+    @client.on 'botAdded', @.userChange
     @robot.brain.on 'loaded', @.brainLoaded
 
     @robot.on 'slack-attachment', @.customMessage
@@ -64,9 +67,16 @@ class SlackBot extends Adapter
     for id, user of @client.users
       @userChange user
 
+    for id, user of @client.bots
+      @userChange user
+
   brainLoaded: =>
     # once the brain has loaded, reload all the users from the client
     for id, user of @client.users
+      @userChange user
+
+    # once the brain has loaded, reload all the bots from the client
+    for id, user of @client.bots
       @userChange user
 
     # also wipe out any broken users stored under usernames instead of ids
@@ -108,6 +118,8 @@ class SlackBot extends Adapter
       @client.removeListener 'close', @.clientClose
       @client.removeListener 'message', @.message
       @client.removeListener 'userChange', @.userChange
+      @client.removeListener 'botAdded', @.userChange
+      @client.removeListener 'botChanged', @.userChange
       process.exit 1
     else
       @robot.logger.info 'Slack client closed, waiting for reconnect'
@@ -117,8 +129,9 @@ class SlackBot extends Adapter
     return if msg.user == @self.id
 
     channel = @client.getChannelGroupOrDMByID msg.channel if msg.channel
+    allowed_bot = msg.bot_id and (msg.bot_id in @options.botsToListenTo)
 
-    if msg.hidden or (not msg.text and not msg.attachments) or msg.subtype is 'bot_message' or not msg.user or not channel
+    if msg.hidden or (not msg.text and not msg.attachments) or (msg.subtype is 'bot_message' and not allowed_bot) or (not msg.user and not allowed_bot) or not channel
       # use a raw message, so scripts that care can still see these things
 
       if msg.user
@@ -142,7 +155,10 @@ class SlackBot extends Adapter
       return
 
     # Process the user into a full hubot user
-    user = @robot.brain.userForId msg.user
+    if msg.user
+      user = @robot.brain.userForId msg.user
+    else if msg.bot_id
+      user = @robot.brain.userForId msg.bot_id
     user.room = channel.name
 
     # Test for enter/leave messages

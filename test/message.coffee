@@ -94,6 +94,43 @@ describe 'Receiving a Slack message', ->
     msg.text.should.equal "Hello world\nattachment"
     msg.rawMessage.should.equal rawMsg
 
+  it 'should produce a SlackBotMessage when the subtype is bot_message and bot id missing from whitelist', ->
+    @slackbot.options =
+      botsToListenTo: ['B987']
+    @slackbot.message rawMsg = @makeMessage {
+      subtype: 'bot_message'
+      bot_id: 'B123'
+      username: 'bot'
+      text: 'Hello world'
+      attachments: [{
+        fallback: 'attachment'
+      }]
+    }
+    @stubs.robot.received.should.have.length 1
+    msg = @stubs.robot.received[0]
+    msg.should.be.an.instanceOf SlackBotMessage
+    msg.text.should.equal "Hello world\nattachment"
+    msg.rawMessage.should.equal rawMsg
+
+
+  it 'should produce a SlackTextMessage when the subtype is bot_message from whitelisted bot', ->
+    @slackbot.options =
+      botsToListenTo: ['B123']
+    @slackbot.message rawMsg = @makeMessage {
+      subtype: 'bot_message'
+      bot_id: 'B123'
+      username: 'bot'
+      text: 'Hello world'
+      attachments: [{
+        fallback: 'attachment'
+      }]
+    }
+    @stubs.robot.received.should.have.length 1
+    msg = @stubs.robot.received[0]
+    msg.should.be.an.instanceOf SlackTextMessage
+    msg.text.should.equal "Hello world\nattachment"
+    msg.rawMessage.should.equal rawMsg
+
   it 'should produce a SlackRawMessage when the user is nil', ->
     @slackbot.message rawMsg = @makeMessage {
       text: 'Hello world'
