@@ -4,9 +4,8 @@
   "description": "A Slack adapter for hubot",
   "main": "./index",
   "scripts": {
-    "test": "npm run mocha",
-    "cover": "istanbul report text-summary lcov",
-    "coveralls": "npm run cover && istanbul-coveralls",
+    "test": "npm run mocha && istanbul report text-summary lcov",
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
     "mocha": "mocha --compilers coffee:coffee-script/register  --require coffee-coverage/register-istanbul --reporter spec test"
   },
   "keywords": [
@@ -30,6 +29,7 @@
   "devDependencies": {
     "coffee-coverage": "^1.0.1",
     "coffee-script": "~1.7.1",
+    "coveralls": "^2.11.9",
     "grunt": "~0.4.1",
     "grunt-cli": "^0.1.13",
     "grunt-contrib-watch": "~0.5.3",
