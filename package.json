@@ -4,7 +4,10 @@
   "description": "A Slack adapter for hubot",
   "main": "./index",
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register --reporter spec"
+    "test": "npm run mocha",
+    "cover": "istanbul report text-summary lcov",
+    "coveralls": "npm run cover && istanbul-coveralls",
+    "mocha": "mocha --compilers coffee:coffee-script/register  --require coffee-coverage/register-istanbul --reporter spec test"
   },
   "keywords": [
     "hubot",
@@ -25,15 +28,17 @@
     "slack-client": "~1.4.0"
   },
   "devDependencies": {
+    "coffee-coverage": "^1.0.1",
     "coffee-script": "~1.7.1",
     "grunt": "~0.4.1",
     "grunt-cli": "^0.1.13",
-    "grunt-release": "~0.6.0",
-    "should": "~2.0.2",
-    "mocha": "~1.13.0",
     "grunt-contrib-watch": "~0.5.3",
+    "grunt-release": "~0.6.0",
     "grunt-shell": "~0.5.0",
-    "hubot": "~2.11"
+    "hubot": "~2.11",
+    "istanbul": "^0.4.3",
+    "mocha": "~1.13.0",
+    "should": "~2.0.2"
   },
   "engines": {
     "node": ">=0.4.7",
