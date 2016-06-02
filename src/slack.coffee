@@ -280,6 +280,9 @@ class SlackBot extends Adapter
       # TODO: Don't prefix username if replying in DM
       @send envelope, "<@#{envelope.user.id}>: #{msg}"
 
+  emote: (envelope, strings...) ->
+    @send envelope, strings.map((str) -> "_#{str}_")...
+
   topic: (envelope, strings...) ->
     channel = @client.getChannelGroupOrDMByName envelope.room
     channel.setTopic strings.join "\n"
