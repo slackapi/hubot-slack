@@ -13,7 +13,7 @@ beforeEach ->
   @stubs.channel =
     name: 'general'
     id: 'C123'
-    send: (msg) -> msg
+    sendMessage: (msg) -> msg
   @stubs.user =
     name: 'name'
     id: 'U123'
@@ -28,38 +28,45 @@ beforeEach ->
     name: 'Example Team'
   # Slack client
   @stubs.client =
-    getUserByID: (id) =>
-      for user in @stubs.client.users
-        return user if user.id is id
-    getUserByName: (name) =>
-      for user in @stubs.client.users
-        return user if user.name is name
-    getChannelByID: (id) =>
-      @stubs.channel if @stubs.channel.id == id
-    getChannelGroupOrDMByID: (id) =>
-      @stubs.channel if @stubs.channel.id == id
-    getChannelGroupOrDMByName: (name) =>
-      return @stubs.channel if @stubs.channel.name == name
-      for dm in @stubs.client.dms
-        return dm if dm.name is name
-    openDM: (user_id, callback) =>
-      user = @stubs.client.getUserByID user_id
-      @stubs.client.dms.push {
-        name: user.name,
-        id: 'D1234',
-        send: (msg) =>
-          @stubs._msg = if @stubs._msg then @stubs._msg + msg else msg
+    sendMessage: (msg, env) => 
+      if /user/.test(env)
+        @stubs._dmmsg = msg
+      else
+      @stubs._msg = msg
+
+    dataStore:
+      getUserById: (id) =>
+        for user in @stubs.client.dataStore.users
+          return user if user.id is id
+      getUserByName: (name) =>
+        for user in @stubs.client.dataStore.users
+          return user if user.name is name
+      getChannelById: (id) =>
+        @stubs.channel if @stubs.channel.id == id
+      getChannelGroupOrDMById: (id) =>
+        @stubs.channel if @stubs.channel.id == id
+      getChannelGroupOrDMByName: (name) =>
+        return @stubs.channel if @stubs.channel.name == name
+        for dm in @stubs.client.dataStore.dms
+          return dm if dm.name is name
+      openDM: (user_id, callback) =>
+        user = @stubs.client.dataStore.getUserById user_id
+        @stubs.client.dataStore.dms.push {
+          name: user.name,
+          id: 'D1234',
+          sendMessage: (msg) =>
+            @stubs._msg = if @stubs._msg then @stubs._msg + msg else msg
+          }
+        callback?()
+      users: [@stubs.user, @stubs.self]
+      dms: [
+        {
+          name: 'user2',
+          id: 'D5432',
+          sendMessage: (msg) =>
+            @stubs._dmmsg = if @stubs._dmmsg then @stubs._dmmsg + msg else msg
         }
-      callback?()
-    users: [@stubs.user, @stubs.self]
-    dms: [
-      {
-        name: 'user2',
-        id: 'D5432',
-        send: (msg) =>
-          @stubs._dmmsg = if @stubs._dmmsg then @stubs._dmmsg + msg else msg
-      }
-    ]
+      ]
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter

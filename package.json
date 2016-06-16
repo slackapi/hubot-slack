@@ -1,6 +1,6 @@
 {
   "name": "hubot-slack",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "description": "A Slack adapter for hubot",
   "main": "./index",
   "scripts": {
@@ -24,7 +24,7 @@
     "url": "https://github.com/slackhq/hubot-slack/issues"
   },
   "dependencies": {
-    "slack-client": "~1.5"
+    "@slack/client": "^3.4.0"
   },
   "devDependencies": {
     "coffee-coverage": "^1.0.1",
@@ -65,6 +65,14 @@
     {
       "name": "Eric Lindvall",
       "email": "eric@papertrailapp.com"
+    },
+    {
+      "email": "don@slack-corp.com",
+      "name": "D.E. Goodman-Wilson"
+    },
+    {
+      "email": "jagan@slack-corp.com",
+      "name": "John Agan"
     }
   ]
 }

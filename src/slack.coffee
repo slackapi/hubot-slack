@@ -1,9 +1,7 @@
-{Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
+{Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage, TextMessage} = require 'hubot'
 {SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './message'
 {SlackRawListener, SlackBotListener} = require './listener'
-
-SlackClient = require 'slack-client'
-Util = require 'util'
+{RtmClient, MemoryDataStore} = require '@slack/client'
 
 class SlackBot extends Adapter
   @MAX_MESSAGE_LENGTH: 4000
@@ -17,33 +15,31 @@ class SlackBot extends Adapter
     exitProcessOnDisconnect = !!process.env.HUBOT_SLACK_EXIT_ON_DISCONNECT
 
     # Take our options from the environment, and set otherwise suitable defaults
-    options =
+    @options =
+      autoMark: true
+      logLevel: 'error'
+      dataStore: new MemoryDataStore()
       token: process.env.HUBOT_SLACK_TOKEN
       autoReconnect: !exitProcessOnDisconnect
-      autoMark: true
-      exitOnDisconnect: exitProcessOnDisconnect
-      proxyUrl: process.env.https_proxy
 
-    return @robot.logger.error "No services token provided to Hubot" unless options.token
-    return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
-
-    @options = options
+    return @robot.logger.error "No services token provided to Hubot" unless @options.token
+    return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
 
     # Create our slack client object
-    @client = new SlackClient options.token, options.autoReconnect, options.autoMark, options.proxyUrl
+    @client = new RtmClient @options.token, @options
 
     # Setup event handlers
     # TODO: Handle eventual events at (re-)connection time for unreads and provide a config for whether we want to process them
-    @client.on 'error', @.error
-    @client.on 'loggedIn', @.loggedIn
-    @client.on 'open', @.open
-    @client.on 'close', @.clientClose
-    @client.on 'message', @.message
-    @client.on 'userChange', @.userChange
-    @robot.brain.on 'loaded', @.brainLoaded
+    @client.on 'error', @error
+    @client.on 'loggedIn', @loggedIn
+    @client.on 'open', @open
+    @client.on 'close', @clientClose
+    @client.on 'message', @message
+    @client.on 'userChange', @userChange
+    @robot.brain.on 'loaded', @brainLoaded
 
-    @robot.on 'slack-attachment', @.customMessage
-    @robot.on 'slack.attachment', @.customMessage
+    @robot.on 'slack-attachment', @customMessage
+    @robot.on 'slack.attachment', @customMessage
 
     # Start logging in
     @client.login()
@@ -62,12 +58,12 @@ class SlackBot extends Adapter
     # Provide our name to Hubot
     @robot.name = self.name
 
-    for id, user of @client.users
+    for id, user of @client.dataStore.users
       @userChange user
 
   brainLoaded: =>
     # once the brain has loaded, reload all the users from the client
-    for id, user of @client.users
+    for id, user of @client.dataStore.users
       @userChange user
 
     # also wipe out any broken users stored under usernames instead of ids
@@ -82,9 +78,9 @@ class SlackBot extends Adapter
       email_address: user.profile.email
       slack: {}
     for key, value of user
-      # don't store the SlackClient, because it'd cause a circular reference
+      # don't store the RtmClient, because it'd cause a circular reference
       # (it contains users and channels), and because it has sensitive information like the token
-      continue if value instanceof SlackClient
+      continue if value instanceof RtmClient
       newUser.slack[key] = value
 
     if user.id of @robot.brain.data.users
@@ -103,23 +99,28 @@ class SlackBot extends Adapter
   clientClose: =>
     if @options.exitOnDisconnect
       @robot.logger.info 'Slack client connection was closed, exiting hubot process'
-      @client.removeListener 'error', @.error
-      @client.removeListener 'loggedIn', @.loggedIn
-      @client.removeListener 'open', @.open
-      @client.removeListener 'close', @.clientClose
-      @client.removeListener 'message', @.message
-      @client.removeListener 'userChange', @.userChange
+      @client.removeListener 'error', @error
+      @client.removeListener 'loggedIn', @loggedIn
+      @client.removeListener 'open', @open
+      @client.removeListener 'close', @clientClose
+      @client.removeListener 'message', @message
+      @client.removeListener 'userChange', @userChange
       process.exit 1
     else
       @robot.logger.info 'Slack client closed, waiting for reconnect'
 
   message: (msg) =>
     # Ignore our own messages
-    return if msg.user == @self.id
+    return if msg.user and msg.user == @id
 
-    channel = @client.getChannelGroupOrDMByID msg.channel if msg.channel
+    channel = @client.dataStore.getChannelGroupOrDMById msg.channel if msg.channel
+    user = @client.dataStore.getUserById msg.user if msg.user
+    user.room ?= msg.channel if channel and user
 
-    if msg.hidden or (not msg.text and not msg.attachments) or msg.subtype is 'bot_message' or not msg.user or not channel
+    rawText = msg.getBody()
+    text = @removeFormatting rawText
+
+    if msg.hidden or (not rawText and not msg.attachments) or msg.subtype is 'bot_message' or not msg.user or not channel
       # use a raw message, so scripts that care can still see these things
 
       if msg.user
@@ -131,8 +132,6 @@ class SlackBot extends Adapter
         user.name = msg.username if msg.username?
       user.room = channel.name if channel
 
-      rawText = msg.getBody()
-      text = @removeFormatting rawText
 
       if msg.subtype is 'bot_message'
         @robot.logger.debug "Received bot message: '#{text}' in channel: #{channel?.name}, from: #{user?.name}"
@@ -141,10 +140,6 @@ class SlackBot extends Adapter
         @robot.logger.debug "Received raw message (subtype: #{msg.subtype})"
         @receive new SlackRawMessage user, text, rawText, msg
       return
-
-    # Process the user into a full hubot user
-    user = @robot.brain.userForId msg.user
-    user.room = channel.name
 
     # Test for enter/leave messages
     if msg.subtype is 'channel_join' or msg.subtype is 'group_join'
@@ -160,14 +155,10 @@ class SlackBot extends Adapter
       @receive new TopicMessage user, msg.topic, msg.ts
 
     else
-      # Build message text to respond to, including all attachments
-      rawText = msg.getBody()
-      text = @removeFormatting rawText
-
-      @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
+      @robot.logger.debug "Received message: '#{text}' in channel: #{user.room}, from: #{user.name}"
 
       # If this is a DM, pretend it was addressed to us
-      if msg.getChannelType() == 'DM'
+      if msg.channel[0] == 'D'
         text = "#{@robot.name} #{text}"
 
       @receive new SlackTextMessage user, text, rawText, msg
@@ -188,13 +179,13 @@ class SlackBot extends Adapter
 
         when '@'
           if label then return label
-          user = @client.getUserByID link
+          user = @client.dataStore.getUserById link
           if user
             return "@#{user.name}"
 
         when '#'
           if label then return label
-          channel = @client.getChannelByID link
+          channel = @client.dataStore.getChannelById link
           if channel
             return "\##{channel.name}"
 
@@ -214,21 +205,12 @@ class SlackBot extends Adapter
     text
 
   send: (envelope, messages...) ->
-    channel = @client.getChannelGroupOrDMByName envelope.room
-    channel = @client.getChannelGroupOrDMByID(envelope.room) unless channel
-
-    if not channel and @client.getUserByName(envelope.room)
-      user_id = @client.getUserByName(envelope.room).id
-      @client.openDM user_id, =>
-        this.send envelope, messages...
-      return
-
     for msg in messages
       continue if msg.length < SlackBot.MIN_MESSAGE_LENGTH
 
       # Replace @username with <@UXXXXX> for mentioning users and channels
       msg = msg.replace /(?:^| )@([\w]+)/gm, (match, p1) =>
-        user = @client.getUserByName p1
+        user = @client.dataStore.getUserByName p1
         if user
           match = match.replace /@[\w]+/, "<@#{user.id}>"
         else if p1 in SlackBot.RESERVED_KEYWORDS
@@ -237,9 +219,9 @@ class SlackBot extends Adapter
           match = match
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
-
+      
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
-        channel.send msg
+        @client.sendMessage msg, envelope.room
 
       # If message is greater than MAX_MESSAGE_LENGTH, split it into multiple messages
       else
@@ -271,7 +253,7 @@ class SlackBot extends Adapter
 
             msg = msg.substring(breakIndex, msg.length)
 
-        channel.send m for m in submessages
+        @client.sendMessage(m, envelope.room) for m in submessages
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
@@ -281,7 +263,7 @@ class SlackBot extends Adapter
       @send envelope, "<@#{envelope.user.id}>: #{msg}"
 
   topic: (envelope, strings...) ->
-    channel = @client.getChannelGroupOrDMByName envelope.room
+    channel = @client.dataStore.getChannelGroupOrDMByName envelope.room
     channel.setTopic strings.join "\n"
 
   customMessage: (data) =>
@@ -292,8 +274,8 @@ class SlackBot extends Adapter
       data.message.envelope.room
     else data.message.room
 
-    channel = @client.getChannelGroupOrDMByName channelName
-    channel = @client.getChannelGroupOrDMByID(channelName) unless channel
+    channel = @client.dataStore.getChannelGroupOrDMByName channelName
+    channel = @client.dataStore.getChannelGroupOrDMById(channelName) unless channel
     return unless channel
 
     msg = {}
