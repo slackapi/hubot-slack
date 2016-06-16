@@ -53,19 +53,13 @@ beforeEach ->
         user = @stubs.client.dataStore.getUserById user_id
         @stubs.client.dataStore.dms.push {
           name: user.name,
-          id: 'D1234',
-          sendMessage: (msg) =>
-            @stubs._msg = if @stubs._msg then @stubs._msg + msg else msg
-          }
+          id: 'D1234'
+        }
         callback?()
       users: [@stubs.user, @stubs.self]
       dms: [
-        {
-          name: 'user2',
-          id: 'D5432',
-          sendMessage: (msg) =>
-            @stubs._dmmsg = if @stubs._dmmsg then @stubs._dmmsg + msg else msg
-        }
+        name: 'user2'
+        id: 'D5432'
       ]
   # Hubot.Robot instance
   @stubs.robot = do ->
