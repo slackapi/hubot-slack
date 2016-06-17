@@ -1,6 +1,6 @@
 {Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
 {SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './message'
-{SlackRawListener, SlackBotListener} = require './listener'
+# {SlackRawListener, SlackBotListener} = require './listener'
 {RtmClient, MemoryDataStore} = require '@slack/client'
 
 class SlackBot extends Adapter

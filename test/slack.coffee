@@ -2,6 +2,7 @@
 
 should = require 'should'
 
+
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
     @slackbot.robot.should.eql @stubs.robot
