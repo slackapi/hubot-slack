@@ -117,7 +117,7 @@ class SlackBot extends Adapter
     user = @client.dataStore.getUserById msg.user if msg.user
     user.room ?= msg.channel if channel and user
 
-    rawText = msg.getBody()
+    rawText = msg.text
     text = @removeFormatting rawText
 
     if msg.hidden or (not rawText and not msg.attachments) or msg.subtype is 'bot_message' or not msg.user or not channel
@@ -219,7 +219,7 @@ class SlackBot extends Adapter
           match = match
 
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
-      
+
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
         @client.sendMessage msg, envelope.room
 
