@@ -117,7 +117,7 @@ class SlackBot extends Adapter
     user = @client.dataStore.getUserById msg.user if msg.user
     user.room ?= msg.channel if channel and user
 
-    rawText = msg.text
+    rawText = @getBody msg
     text = @removeFormatting rawText
 
     if msg.hidden or (not rawText and not msg.attachments) or msg.subtype is 'bot_message' or not msg.user or not channel
@@ -162,6 +162,19 @@ class SlackBot extends Adapter
         text = "#{@robot.name} #{text}"
 
       @receive new SlackTextMessage user, text, rawText, msg
+
+  getBody: (message) ->
+    body = ""
+    if message.text
+      body += message.text
+    if message.attachments
+      if message.text
+        body += '\n'
+      for attachment in message.attachments
+        if attachment != message.attachments[0]
+          body += '\n'
+        body += attachment.fallback
+    body
 
   removeFormatting: (text) ->
     # https://api.slack.com/docs/formatting
