@@ -203,7 +203,7 @@ class SlackBot extends Adapter
           if label then return label
           channel = @client.dataStore.getChannelById link
           if channel
-            return "\##{channel.id}"
+            return "\##{channel.name}"
 
         when '!'
           if link in SlackBot.RESERVED_KEYWORDS
