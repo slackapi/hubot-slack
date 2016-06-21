@@ -1,31 +1,80 @@
 {
-  "name": "hubot-slack",
-  "version": "3.5.0",
-  "description": "A Slack adapter for hubot",
-  "main": "./index",
-  "scripts": {
-    "test": "npm run mocha && istanbul report text-summary lcov",
-    "coveralls": "cat ./coverage/lcov.info | coveralls",
-    "mocha": "mocha --compilers coffee:coffee-script/register  --require coffee-coverage/register-istanbul --reporter spec test"
-  },
-  "keywords": [
-    "hubot",
-    "tinyspeck",
-    "adapter",
-    "slack"
+  "_args": [
+    [
+      {
+        "name": "hubot-slack",
+        "raw": "hubot-slack@file:/Users/dgoodman/Documents/Projects/hubot-slack",
+        "rawSpec": "file:/Users/dgoodman/Documents/Projects/hubot-slack",
+        "scope": null,
+        "spec": "/Users/dgoodman/Documents/Projects/hubot-slack",
+        "type": "directory"
+      },
+      "/Users/dgoodman/Documents/Projects/don-hubot-test"
+    ]
   ],
-  "author": "Slack Technologies, Inc.",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/slackhq/hubot-slack.git"
+  "_from": "../hubot-slack",
+  "_id": "hubot-slack@3.5.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/hubot-slack",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "hubot-slack",
+    "raw": "hubot-slack@file:/Users/dgoodman/Documents/Projects/hubot-slack",
+    "rawSpec": "file:/Users/dgoodman/Documents/Projects/hubot-slack",
+    "scope": null,
+    "spec": "/Users/dgoodman/Documents/Projects/hubot-slack",
+    "type": "directory"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "file:../hubot-slack",
+  "_shasum": "50a829d88ca7930e6698b300adb4395ef3e609f6",
+  "_shrinkwrap": null,
+  "_spec": "hubot-slack@file:/Users/dgoodman/Documents/Projects/hubot-slack",
+  "_where": "/Users/dgoodman/Documents/Projects/don-hubot-test",
+  "author": {
+    "name": "Slack Technologies, Inc."
   },
   "bugs": {
     "url": "https://github.com/slackhq/hubot-slack/issues"
   },
+  "contributors": [
+    {
+      "email": "myles@tinyspeck.com",
+      "name": "Myles Grant"
+    },
+    {
+      "name": "Evan Solomon"
+    },
+    {
+      "name": "Jon Dalberg"
+    },
+    {
+      "name": "Patrick Connolly"
+    },
+    {
+      "email": "chayner@centresource.com",
+      "name": "Chip Hayner"
+    },
+    {
+      "email": "eric@papertrailapp.com",
+      "name": "Eric Lindvall"
+    },
+    {
+      "email": "don@slack-corp.com",
+      "name": "D.E. Goodman-Wilson"
+    },
+    {
+      "email": "jagan@slack-corp.com",
+      "name": "John Agan"
+    }
+  ],
   "dependencies": {
     "@slack/client": "^3.4.0"
   },
+  "description": "A Slack adapter for hubot",
   "devDependencies": {
     "coffee-coverage": "^1.0.1",
     "coffee-script": "~1.7.1",
@@ -44,35 +93,28 @@
     "node": ">=0.4.7",
     "npm": ">= 1.1.x"
   },
-  "contributors": [
-    {
-      "name": "Myles Grant",
-      "email": "myles@tinyspeck.com"
-    },
-    {
-      "name": "Evan Solomon"
-    },
-    {
-      "name": "Jon Dalberg"
-    },
-    {
-      "name": "Patrick Connolly"
-    },
-    {
-      "name": "Chip Hayner",
-      "email": "chayner@centresource.com"
-    },
-    {
-      "name": "Eric Lindvall",
-      "email": "eric@papertrailapp.com"
-    },
-    {
-      "email": "don@slack-corp.com",
-      "name": "D.E. Goodman-Wilson"
-    },
-    {
-      "email": "jagan@slack-corp.com",
-      "name": "John Agan"
-    }
-  ]
+  "gitHead": "cd61c608b2084759c51c95ed0777208a1e91c9e1",
+  "homepage": "https://github.com/slackhq/hubot-slack#readme",
+  "keywords": [
+    "hubot",
+    "tinyspeck",
+    "adapter",
+    "slack"
+  ],
+  "license": "MIT",
+  "main": "./index",
+  "name": "hubot-slack",
+  "optionalDependencies": {},
+  "readme": "# hubot-slack\n\nThis is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).\n\n[![Build Status](https://travis-ci.org/slackhq/hubot-slack.png)](https://travis-ci.org/slackhq/hubot-slack)\n[![Coverage Status](https://coveralls.io/repos/github/slackhq/hubot-slack/badge.svg?branch=master)](https://coveralls.io/github/slackhq/hubot-slack?branch=master)\n\n## Getting Started\n\n#### Creating a new bot\n\n- `npm install -g hubot coffee-script yo generator-hubot`\n- `mkdir -p /path/to/hubot`\n- `cd /path/to/hubot`\n- `yo hubot`\n- `npm install hubot-slack --save`\n- Initialize git and make your initial commit\n- Check out the [hubot docs](https://github.com/github/hubot/tree/master/docs) for further guidance on how to build your bot\n\n#### Testing your bot locally\n\n- `HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd ./bin/hubot --adapter slack`\n\n#### Deploying to Heroku\n\nThis is a modified set of instructions based on the [instructions on the Hubot wiki](https://github.com/github/hubot/blob/master/docs/deploying/heroku.md).\n\n- Follow the instructions above to create a hubot locally\n\n- Install [heroku toolbelt](https://toolbelt.heroku.com/) if you haven't already.\n- `heroku create my-company-slackbot`\n- `heroku addons:create rediscloud:30`\n- Activate the Hubot service on your [\"Team Services\"](http://my.slack.com/services/new/hubot) page inside Slack.\n- Add the [config variables](#configuration). For example:\n\n        % heroku config:add HEROKU_URL=https://my-company-slackbot.herokuapp.com\n        % heroku config:add HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd\n\n- Deploy the bot:\n\n        % git push heroku master\n\n- Profit!\n\n## Upgrading from earlier versions of Hubot\n\nVersion 3 of the hubot-slack adapter requires different server support to\nprevious versions. If you have an existing \"hubot\" integration set up you'll\nneed to upgrade:\n\n- Go to https://my.slack.com/services/new/hubot and create a new hubot\n  integration\n- Run `npm install hubot-slack --save`\n  to update your code.\n- Test your bot locally using:\n  `HUBOT_SLACK_TOKEN=xoxb-1234-5678-91011-00e4dd ./bin/hubot --adapter slack`\n- Update your production startup scripts to pass the new `HUBOT_SLACK_TOKEN`.\n  You can remove the other `HUBOT_SLACK_*` environment variables if you want.\n- Deploy your new hubot to production.\n- Once you're happy it works, disable the old hubot integration from\n  https://my.slack.com/services\n\n## Configuration\n\nThis adapter uses the following environment variables:\n\n - `HUBOT_SLACK_TOKEN` - this is the API token for the Slack user you would like to run Hubot under.\n\nTo add or remove your bot from specific channels or private groups, you can use the /kick and /invite slash commands that are built into Slack.\n\nIf you have scripts that send notifications to specific channels, use the channel name ie. `HUBOT_TWITTER_MENTION_ROOM=\"#general\"` Keep in mind that your bot needs to be joined to your specific channels by the /invite slash command.\n\nIf you're using the [hubot-auth](https://github.com/hubot-scripts/hubot-auth/) script, you can get the user IDs required for the `HUBOT_AUTH_ADMIN` setting by calling the [users.list API method](https://api.slack.com/methods/users.list/test).\n\n## Copyright\n\nCopyright &copy; Slack Technologies, Inc. MIT License; see LICENSE for further details.\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/slackhq/hubot-slack.git"
+  },
+  "scripts": {
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "mocha": "mocha --compilers coffee:coffee-script/register  --require coffee-coverage/register-istanbul --reporter spec test",
+    "test": "npm run mocha && istanbul report text-summary lcov"
+  },
+  "version": "3.5.0"
 }

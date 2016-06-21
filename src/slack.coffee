@@ -1,6 +1,6 @@
 {Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
 {SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './message'
-# {SlackRawListener, SlackBotListener} = require './listener'
+{SlackRawListener, SlackBotListener} = require './listener'
 {RtmClient, MemoryDataStore} = require '@slack/client'
 
 class SlackBot extends Adapter
@@ -115,7 +115,7 @@ class SlackBot extends Adapter
 
     channel = @client.dataStore.getChannelGroupOrDMById msg.channel if msg.channel
     user = @client.dataStore.getUserById msg.user if msg.user
-    user.room ?= msg.channel if channel and user
+    user.room ?= channel.id if channel and user
 
     rawText = @getBody msg
     text = @removeFormatting rawText
@@ -130,7 +130,7 @@ class SlackBot extends Adapter
         # expects it to be there.
         user = {}
         user.name = msg.username if msg.username?
-      user.room = channel.name if channel
+      user.room = channel.id if channel
 
 
       if msg.subtype is 'bot_message'
@@ -141,17 +141,20 @@ class SlackBot extends Adapter
         @receive new SlackRawMessage user, text, rawText, msg
       return
 
+    # Process the user into a full hubot user
+    user.room = channel.id if channel
+
     # Test for enter/leave messages
     if msg.subtype is 'channel_join' or msg.subtype is 'group_join'
-      @robot.logger.debug "#{user.name} has joined #{channel.name}"
+      @robot.logger.debug "#{user.name} has joined #{channel.id}"
       @receive new EnterMessage user
 
     else if msg.subtype is 'channel_leave' or msg.subtype is 'group_leave'
-      @robot.logger.debug "#{user.name} has left #{channel.name}"
+      @robot.logger.debug "#{user.name} has left #{channel.id}"
       @receive new LeaveMessage user
 
     else if msg.subtype is 'channel_topic' or msg.subtype is 'group_topic'
-      @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{msg.topic}"
+      @robot.logger.debug "#{user.name} set the topic in #{channel.id} to #{msg.topic}"
       @receive new TopicMessage user, msg.topic, msg.ts
 
     else
@@ -200,7 +203,7 @@ class SlackBot extends Adapter
           if label then return label
           channel = @client.dataStore.getChannelById link
           if channel
-            return "\##{channel.name}"
+            return "\##{channel.id}"
 
         when '!'
           if link in SlackBot.RESERVED_KEYWORDS
@@ -230,7 +233,6 @@ class SlackBot extends Adapter
           match = match.replace /@[\w]+/, "<!#{p1}>"
         else
           match = match
-
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
