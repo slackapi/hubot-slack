@@ -76,12 +76,12 @@ class SlackFormatter
     return if text is null # nothing to do
       
     if typeof text is 'string'
-      text.replace /(?:^| )@([\w]+)/gm, (match, username) =>
+      text.replace /(?:^| )@([\w\.-]+)/gm, (match, username) =>
         user = @dataStore.getUserByName(username)
         if user
-          match = match.replace /@[\w]+/, "<@#{user.id}>"
+          match = match.replace /@[\w\.-]+/, "<@#{user.id}>"
         else if username in MESSAGE_RESERVED_KEYWORDS
-          match = match.replace /@[\w]+/, "<!#{username}>"
+          match = match.replace /@[\w\.-]+/, "<!#{username}>"
         else
           match #do nothing if we don't revognize the name
 
