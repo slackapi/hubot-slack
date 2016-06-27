@@ -1,4 +1,4 @@
-{Listener} = require 'hubot'
+{Listener} = require './hubot'
 {SlackRawMessage, SlackBotMessage} = require './message'
 
 class SlackRawListener extends Listener
