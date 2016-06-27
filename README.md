@@ -12,8 +12,7 @@ This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://
 - `npm install -g hubot coffee-script yo generator-hubot`
 - `mkdir -p /path/to/hubot`
 - `cd /path/to/hubot`
-- `yo hubot`
-- `npm install hubot-slack --save`
+- `yo hubot` and enter 'slack' (no quotes) when [prompted for the adapter, or set everything with the option flags](https://hubot.github.com/docs/)
 - Initialize git and make your initial commit
 - Check out the [hubot docs](https://github.com/github/hubot/tree/master/docs) for further guidance on how to build your bot
 
