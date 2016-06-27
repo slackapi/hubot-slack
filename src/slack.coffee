@@ -1,7 +1,7 @@
 {Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
 {SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './message'
 {SlackRawListener, SlackBotListener} = require './listener'
-{RtmClient, MemoryDataStore} = require '@slack/client'
+{RtmClient, WebClient, MemoryDataStore} = require '@slack/client'
 
 class SlackBot extends Adapter
   @MAX_MESSAGE_LENGTH: 4000
@@ -25,8 +25,9 @@ class SlackBot extends Adapter
     return @robot.logger.error "No services token provided to Hubot" unless @options.token
     return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
 
-    # Create our slack client object
+    # Create our slack client objects
     @client = new RtmClient @options.token, @options
+    @webClient = new WebClient @options.token, @options # fallback for formatted messages
 
     # Setup event handlers
     # TODO: Handle eventual events at (re-)connection time for unreads and provide a config for whether we want to process them
@@ -236,7 +237,7 @@ class SlackBot extends Adapter
       @robot.logger.debug "Sending to #{envelope.room}: #{msg}"
 
       if msg.length <= SlackBot.MAX_MESSAGE_LENGTH
-        @client.sendMessage msg, envelope.room
+        @sendFormatted msg, envelope.room
 
       # If message is greater than MAX_MESSAGE_LENGTH, split it into multiple messages
       else
@@ -268,7 +269,15 @@ class SlackBot extends Adapter
 
             msg = msg.substring(breakIndex, msg.length)
 
-        @client.sendMessage(m, envelope.room) for m in submessages
+        @sendFormatted(m, envelope.room) for m in submessages
+
+  sendFormatted: (message, room) ->    
+    # RTM doesn't support formatted Urls, so we'll use the web client instead
+    if /<.+\|.+>/.test(message)
+      @webClient.chat.postMessage(room, message)
+    else
+      @client.sendMessage(message, room)
+
 
   reply: (envelope, messages...) ->
     @robot.logger.debug "Sending reply"
