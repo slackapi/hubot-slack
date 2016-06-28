@@ -166,9 +166,12 @@ class SlackBot extends Adapter
 
       @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
 
-      # If this is a DM, pretend it was addressed to us
+      # If this is a DM, pretend it was addressed to us (prepend the robot name).
+      # But do it only if the text does not already start with the name, or the alias.
       if msg.getChannelType() == 'DM'
-        text = "#{@robot.name} #{text}"
+        nameRegex = "@?#{@robot.name}"
+        prefixRegex = if @robot.alias then "(#{nameRegex}|#{@robot.alias})" else "#{nameRegex}"
+        text = "#{@robot.name} #{text}" unless text.match (new RegExp("^#{prefixRegex}", 'i'))
 
       @receive new SlackTextMessage user, text, rawText, msg
 
