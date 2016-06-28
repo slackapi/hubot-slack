@@ -66,6 +66,21 @@ describe 'Receiving a Slack message', ->
     msg.should.be.an.instanceOf SlackTextMessage
     msg.text.should.equal "Hello world\nattachment fallback\nsecond attachment fallback"
 
+  it 'should produce a SlackTextMessage in case of edited message', ->
+    @slackbot.message @makeMessage {
+      message: {
+        type: 'message',
+        user: @stubs.user.id,
+        text: 'Hello world',
+      },
+      subtype: 'message_changed',
+      hidden: true
+    }
+    @stubs.robot.received.should.have.length 1
+    msg = @stubs.robot.received[0]
+    msg.should.be.an.instanceOf SlackTextMessage
+    msg.text.should.equal "Hello world"
+
   it 'should save the raw message in the SlackTextMessage', ->
     @slackbot.message rawMsg = @makeMessage {
       subtype: 'file_share'
