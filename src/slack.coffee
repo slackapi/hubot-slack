@@ -9,6 +9,7 @@ class SlackBot extends Adapter
   @MAX_MESSAGE_LENGTH: 4000
   @MIN_MESSAGE_LENGTH: 1
   @RESERVED_KEYWORDS: ['channel','group','everyone','here']
+  firstTimeBrainLoaded = true
 
   constructor: (robot) ->
     @robot = robot
@@ -67,12 +68,14 @@ class SlackBot extends Adapter
 
   brainLoaded: =>
     # once the brain has loaded, reload all the users from the client
-    for id, user of @client.users
-      @userChange user
+    if firstTimeBrainLoaded
+        firstTimeBrainLoaded = false
+        for id, user of @client.users
+            @userChange user
 
-    # also wipe out any broken users stored under usernames instead of ids
-    for id, user of @robot.brain.data.users
-      if id is user.name then delete @robot.brain.data.users[user.id]
+        # also wipe out any broken users stored under usernames instead of ids
+        for id, user of @robot.brain.data.users
+            if id is user.name then delete @robot.brain.data.users[user.id]
 
   userChange: (user) =>
     return unless user?.id?
