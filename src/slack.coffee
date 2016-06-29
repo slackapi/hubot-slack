@@ -1,6 +1,7 @@
 {Robot, Adapter, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
 {SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './message'
 {SlackRawListener, SlackBotListener} = require './listener'
+SlackResponse = require './response'
 
 SlackClient = require 'slack-client'
 Util = require 'util'
@@ -12,6 +13,7 @@ class SlackBot extends Adapter
 
   constructor: (robot) ->
     @robot = robot
+    @robot.Response = SlackResponse
 
   run: ->
     exitProcessOnDisconnect = !!process.env.HUBOT_SLACK_EXIT_ON_DISCONNECT
