@@ -24,6 +24,16 @@ beforeEach ->
     id: 'U456'
     profile:
       email: 'self@example.com'
+  @stubs.obscureUser =
+    name: 'obscure.name!@#$%^&*():'
+    id: 'U789'
+    profile:
+      email: 'self@example.com'
+  @stubs.punctuationUser =
+    name: '!@#$%'
+    id: 'U999'
+    profile:
+      email: 'self@example.com'
   @stubs.team =
     name: 'Example Team'
   # Slack client
@@ -51,7 +61,7 @@ beforeEach ->
           @stubs._msg = if @stubs._msg then @stubs._msg + msg else msg
         }
       callback?()
-    users: [@stubs.user, @stubs.self]
+    users: [@stubs.user, @stubs.self, @stubs.obscureUser, @stubs.punctuationUser]
     dms: [
       {
         name: 'user2',

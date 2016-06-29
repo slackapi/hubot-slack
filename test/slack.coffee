@@ -142,6 +142,42 @@ describe 'Send Messages', ->
     sentMessage = sentMessages.pop()
     sentMessage.should.equal 'foo <@U123>: bar'
 
+  it 'Should replace @obscure.name!@#$%^&*(): with <@U789> for mention (without colons)', ->
+    msg = 'foo @obscure.name!@#$%^&*(): bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U789> bar'
+
+  it 'Should replace @obscure.name!@#$%^&*():: with <@U789>: for mention (trailing colon)', ->
+    msg = 'foo @obscure.name!@#$%^&*():: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U789>: bar'
+
+  it 'Should replace @obscure.name!@#$%^&*():. with <@U789>. for mention (trailing full-stop)', ->
+    msg = 'foo @obscure.name!@#$%^&*():. bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U789>. bar'
+
+  it 'Should not replace @obscure.name!@#$%^&*():JUNK with <@789> for mention when there is a trailing word character', ->
+    msg = 'foo @obscure.name!@#$%^&*():JUNK bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo @obscure.name!@#$%^&*():JUNK bar'
+    
+  it 'Should handle junk all non word @mentions', ->
+    msg = 'foo @<><>: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo @<><>: bar'
+    
+  it 'Should replace @!@#$%: with <@999>: for mention (Punctuation only username)', ->
+    msg = 'foo @!@#$%: bar'
+    sentMessages = @slackbot.send {room: 'general'}, msg
+    sentMessage = sentMessages.pop()
+    sentMessage.should.equal 'foo <@U999>: bar'
+
   it 'Should replace @name with <@U123> for mention (first word)', ->
     msg = '@name: bar'
     sentMessages = @slackbot.send {room: 'general'}, msg
