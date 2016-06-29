@@ -40,6 +40,8 @@ describe 'Receiving a Slack message', ->
     msg = @stubs.robot.received[0]
     msg.should.be.an.instanceOf SlackTextMessage
     msg.text.should.equal "Hello world"
+    msg.user.id.should.equal @stubs.user.id
+    msg.user.room.should.equal @stubs.channel.name
 
   it 'should parse the text in the SlackTextMessage', ->
     @slackbot.message @makeMessage {
@@ -49,6 +51,8 @@ describe 'Receiving a Slack message', ->
     @stubs.robot.received.should.have.length 1
     msg = @stubs.robot.received[0]
     msg.should.be.an.instanceOf SlackTextMessage
+    msg.user.id.should.equal @stubs.user.id
+    msg.user.room.should.equal @stubs.channel.name
     msg.text.should.equal "Foo @name bar http://slack.com"
     msg.rawText.should.equal "Foo <@U123> bar <http://slack.com>"
 
@@ -132,6 +136,25 @@ describe 'Receiving a Slack message', ->
     @stubs.robot.received.should.have.length 1
     msg = @stubs.robot.received[0]
     msg.should.be.an.instanceOf SlackRawMessage
+
+  it 'should produce a SlackTextMessage for reaction_added events', ->
+    @slackbot.reactionAdded new ClientMessage {
+      type: 'reaction_added',
+      user: @stubs.user.id,
+      item: {
+        type: 'message',
+        channel: @stubs.channel.id,
+        ts: '1360782804.083113'
+      },
+      reaction: 'thumbsup',
+      event_ts: '1360782804.083113'
+    }
+    @stubs.robot.received.should.have.length 1
+    msg = @stubs.robot.received[0]
+    msg.should.be.an.instanceOf SlackTextMessage
+    msg.user.id.should.equal @stubs.user.id
+    msg.user.room.should.equal @stubs.channel.name
+    msg.rawMessage.reaction.should.equal 'thumbsup'
 
   describe 'should handle SlackRawMessage inheritance properly when Hubot', ->
     # this is a bit of a wacky one
