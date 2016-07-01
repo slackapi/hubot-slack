@@ -16,10 +16,10 @@ class SlackBot extends Adapter
     return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
 
     # Setup client event handlers
+    @client.on 'open', @open
+    @client.on 'close', @close
+    @client.on 'error', @error
     @client.on 'message', @message
-    @client.on 'open', @clientOpen
-    @client.on 'close', @clientClose
-    @client.on 'close', @clientError
     @client.on 'authenticated', @authenticated
 
     # Start logging in
@@ -29,7 +29,7 @@ class SlackBot extends Adapter
   ###
   Slack client has opened the connection
   ###
-  clientOpen: =>
+  open: =>
     @robot.logger.info 'Slack client now connected'
 
     # Tell Hubot we're connected so it can load scripts
@@ -51,7 +51,7 @@ class SlackBot extends Adapter
   ###
   Slack client has closed the connection
   ###
-  clientClose: =>
+  close: =>
     if @options.autoReconnect
       @robot.logger.info 'Slack client closed, waiting for reconnect'
     else
@@ -63,7 +63,7 @@ class SlackBot extends Adapter
   ###
   Slack client received an error
   ###
-  clientError: (error) =>
+  error: (error) =>
     if error.code is -1
       return @robot.logger.warning "Received rate limiting error #{JSON.stringify error}"
 
