@@ -1,6 +1,6 @@
 # Setup stubs used by the other tests
 
-{SlackBot} = require '../index'
+SlackBot = require '../src/bot'
 {EventEmitter} = require 'events'
 # Use Hubot's brain in our stubs
 {Brain} = require 'hubot'
@@ -73,14 +73,10 @@ beforeEach ->
       @received.push msg
     # attach a real Brain to the robot
     robot.brain = new Brain robot
-    robot.Response = (robot, message, match) ->
+    robot.name = 'bot'
     robot
 
 # Generate a new slack instance for each test.
 beforeEach ->
-  # FIXME: this is dirty
-  SlackBot.MAX_MESSAGE_LENGTH = 4000
-
-  @slackbot = new SlackBot @stubs.robot
-  @slackbot.client = @stubs.client
-  @slackbot.loggedIn @stubs.self, @stubs.team
+  @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
+  @slackbot.run
