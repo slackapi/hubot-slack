@@ -1,4 +1,4 @@
-{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message} = require.main.require 'hubot'
+{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage} = require.main.require 'hubot'
 
 SlackClient = require './client'
 
@@ -105,9 +105,14 @@ class SlackBot extends Adapter
   message: (message) =>
     {text, user, channel, subtype, topic, bot} = message
 
+    subtype = subtype || 'message'
+
     # Hubot expects this format for TextMessage Listener
     bot.room = channel.id if bot
     user.room = channel.id if user
+    user = {
+      room: channel.id
+    } if !user && !bot
 
     # Direct messages
     if channel.id[0] is 'D'
@@ -117,6 +122,10 @@ class SlackBot extends Adapter
 
     # Send to Hubot based on message type
     switch subtype
+
+      when 'message'
+        @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
+        @receive new TextMessage(user, text, message.ts)
 
       when 'bot_message'
         @robot.logger.debug "#{bot.name} has joined #{channel.name}"
@@ -135,8 +144,9 @@ class SlackBot extends Adapter
         @receive new TopicMessage user, message.topic, message.ts
 
       else        
-        @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        @receive new TextMessage(user, text, message.ts)
+        @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, subtype: #{subtype}"
+        message.user = user
+        @receive new CatchAllMessage(message)
 
 
 
