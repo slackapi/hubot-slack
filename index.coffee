@@ -1,15 +1,4 @@
-SlackBot = require './src/slack'
-{SlackTextMessage, SlackRawMessage, SlackBotMessage} = require './src/message'
-{SlackRawListener, SlackBotListener} = require './src/listener'
-
-module.exports = exports = {
-  SlackBot
-  SlackTextMessage
-  SlackRawMessage
-  SlackBotMessage
-  SlackRawListener
-  SlackBotListener
-}
+SlackBot = require './src/bot'
 
 exports.use = (robot) ->
-  new SlackBot robot
+  new SlackBot robot, token: process.env.HUBOT_SLACK_TOKEN
