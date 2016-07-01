@@ -72,7 +72,7 @@ class SlackFormatter
   ### 
   Recursively replace @username with <@UXXXXX> for mentioning users and channels
   ###
-  usernames: (text) ->
+  mentions: (text) ->
     return if text is null # nothing to do
       
     if typeof text is 'string'
@@ -86,7 +86,7 @@ class SlackFormatter
     # object passed in, parse each property recursively
     else if typeof text is 'object'
       for key, value of text
-        text[key] = @usernames(value)
+        text[key] = @mentions(value)
       text
 
 
@@ -101,7 +101,7 @@ class SlackFormatter
   Formats outgoing messages
   ###
   outgoing: (message) ->
-    @usernames message
+    @mentions message
 
 
 module.exports = SlackFormatter
