@@ -1,4 +1,5 @@
 node_modules/
 .idea
 coverage/
-npm-debug.log
+*.log
+.DS_Store
