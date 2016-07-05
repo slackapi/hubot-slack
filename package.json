@@ -24,7 +24,8 @@
     "url": "https://github.com/slackhq/hubot-slack/issues"
   },
   "dependencies": {
-    "@slack/client": "^3.4.0"
+    "@slack/client": "^3.4.0",
+    "lodash": "^3.10.1"
   },
   "devDependencies": {
     "hubot": "~2.11",

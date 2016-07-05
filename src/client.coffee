@@ -1,5 +1,6 @@
 {RtmClient, WebClient, MemoryDataStore} = require '@slack/client'
 SlackFormatter = require './formatter'
+_ = require 'lodash'
 
 SLACK_CLIENT_OPTIONS =
   dataStore: new MemoryDataStore()
@@ -8,8 +9,8 @@ SLACK_CLIENT_OPTIONS =
 class SlackClient
   
   constructor: (options) ->
-    options = Object.assign(SLACK_CLIENT_OPTIONS, options)      
-    
+    _.merge SLACK_CLIENT_OPTIONS, options
+
     # RTM is the default communication client
     @rtm = new RtmClient options.token, options
     

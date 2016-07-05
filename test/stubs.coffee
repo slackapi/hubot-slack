@@ -5,6 +5,7 @@ SlackFormatter = require '../src/formatter'
 {EventEmitter} = require 'events'
 # Use Hubot's brain in our stubs
 {Brain} = require 'hubot'
+_ = require 'lodash'
 
 # Stub a few interfaces to grease the skids for tests. These are intentionally
 # as minimal as possible and only provide enough to make the tests possible.
@@ -74,7 +75,8 @@ beforeEach ->
 # Generate a new slack instance for each test.
 beforeEach ->
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
-  Object.assign @slackbot.client, @stubs.client
+#  Object.assign @slackbot.client, @stubs.client
+  _.merge @slackbot.client, @stubs.client
 #  @slackbot.client = @stubs.client
 #  @slackbot.run
 
