@@ -75,7 +75,7 @@ beforeEach ->
 beforeEach ->
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
   @slackbot.client = @stubs.client
-  @slackbot.run
+#  @slackbot.run
 
 beforeEach ->
   @formatter = new SlackFormatter @stubs.client.dataStore
