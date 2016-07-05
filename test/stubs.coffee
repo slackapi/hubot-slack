@@ -1,6 +1,7 @@
 # Setup stubs used by the other tests
 
 SlackBot = require '../src/bot'
+Formatter = require '../src/formatter'
 {EventEmitter} = require 'events'
 # Use Hubot's brain in our stubs
 {Brain} = require 'hubot'
@@ -80,3 +81,6 @@ beforeEach ->
 beforeEach ->
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
   @slackbot.run
+
+beforeEach ->
+  @formatter = new Formatter @stubs.client.dataStore
