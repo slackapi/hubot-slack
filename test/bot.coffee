@@ -1,7 +1,4 @@
-SlackBot = require '../src/bot'
-
 should = require 'should'
-
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->

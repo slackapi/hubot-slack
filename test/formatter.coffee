@@ -1,5 +1,3 @@
-Formatter = require '../src/Formatter'
-
 should = require 'should'
 
 describe 'Handling message formatting', ->
