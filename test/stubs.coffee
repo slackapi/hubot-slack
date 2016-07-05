@@ -74,7 +74,8 @@ beforeEach ->
 # Generate a new slack instance for each test.
 beforeEach ->
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
-  @slackbot.client = @stubs.client
+  Object.assign @slackbot.client, @stubs.client
+#  @slackbot.client = @stubs.client
 #  @slackbot.run
 
 beforeEach ->
