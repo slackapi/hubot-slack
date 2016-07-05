@@ -72,13 +72,8 @@ beforeEach ->
     robot.name = 'bot'
     robot
 
-# Generate a new slack instance for each test.
-beforeEach ->
+  # Generate a new slack instance for each test.
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
-#  Object.assign @slackbot.client, @stubs.client
   _.merge @slackbot.client, @stubs.client
-#  @slackbot.client = @stubs.client
-#  @slackbot.run
 
-beforeEach ->
   @formatter = new SlackFormatter @stubs.client.dataStore
