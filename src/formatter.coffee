@@ -82,6 +82,8 @@ class SlackFormatter
           match = match.replace /@[\w]+/, "<@#{user.id}>"
         else if username in MESSAGE_RESERVED_KEYWORDS
           match = match.replace /@[\w]+/, "<!#{username}>"
+        else
+          match #do nothing if we don't revognize the name
 
     # object passed in, parse each property recursively
     else if typeof text is 'object'

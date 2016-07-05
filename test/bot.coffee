@@ -19,34 +19,8 @@ describe 'Send Messages', ->
 
   it 'Should not send empty messages', ->
     sentMessages = @slackbot.send {room: 'general'}, 'Hello', '', '', 'world!'
-    console.log sentMessages
     sentMessages.length.should.equal 2
 
-#  it 'Should split long messages', ->
-#    lines = 'Hello, Slackbot\nHow are you?\n'
-#    # Make a very long message
-#    msg = lines
-#    len = 10000
-#    msg += lines while msg.length < len
-#
-#    sentMessages = @slackbot.send {room: 'general'}, msg
-#    sentMessage = sentMessages.pop()
-#    sentMessage.length.should.equal Math.ceil(len / SlackBot.MAX_MESSAGE_LENGTH)
-#
-#  it 'Should try to split on word breaks', ->
-#    msg = 'Foo bar baz'
-#    @slackbot.constructor.MAX_MESSAGE_LENGTH = 10
-#    sentMessages = @slackbot.send {room: 'general'}, msg
-#    sentMessage = sentMessages.pop()
-#    sentMessage.length.should.equal 2
-#
-#  it 'Should split into max length chunks if there are no breaks', ->
-#    msg = 'Foobar'
-#    @slackbot.constructor.MAX_MESSAGE_LENGTH = 3
-#    sentMessages = @slackbot.send {room: 'general'}, msg
-#    sentMessage = sentMessages.pop()
-#    sentMessage.should.eql ['Foo', 'bar']
-#
   it 'Should open a DM channel if needed', ->
     msg = 'Test'
     @slackbot.send {room: 'name'}, msg

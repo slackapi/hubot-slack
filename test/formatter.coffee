@@ -1,10 +1,16 @@
 should = require 'should'
 
-describe 'Handling message formatting', ->
+describe 'incoming()', ->
 
   it 'Should do nothing if there are no user links', ->
     foo = @formatter.incoming {text: 'foo'}
     foo.should.equal 'foo'
+
+
+    
+
+
+describe 'links()', ->
 
   it 'Should decode entities', ->
     foo = @formatter.links 'foo &gt; &amp; &lt; &gt;&amp;&lt;'
@@ -77,3 +83,46 @@ describe 'Handling message formatting', ->
   it 'Should change multiple links at once', ->
     foo = @formatter.links 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
     foo.should.equal 'foo label bar #general @channel label (https://www.example.com)'
+
+
+
+describe 'flatten()', ->
+
+  it 'Should return a basic message passed untouched', ->
+    foo = @formatter.flatten {text: 'foo'}
+    foo.should.equal 'foo'
+
+  it 'Should concatenate attachments', ->
+    foo = @formatter.flatten {text: 'foo', attachments: [{fallback: 'bar'}, {fallback: 'baz'}, {fallback: 'qux'}]}
+    foo.should.equal 'foo\nbar\nbaz\nqux'
+
+
+
+describe 'mentions()', ->
+  it 'Should do nothing with null text', ->
+    foo = @formatter.mentions() || 'die'
+    foo.should.equal 'die'
+
+  it 'Should replace @name with <@U123>', ->
+    foo = @formatter.mentions 'Hello @name how are you?'
+    foo.should.equal 'Hello <@U123> how are you?'
+
+  it 'Should replace @ keywords with <!keyword>', ->
+    for keyword in ['channel','group','everyone','here']
+      foo = @formatter.mentions "Hello @#{keyword} how are you?"
+      foo.should.equal "Hello <!#{keyword}> how are you?"
+
+  it 'Should ignore @-names it doesnt recognize', ->
+    foo = @formatter.mentions 'Hello @thisisnotavalidatname how are you?'
+    foo.should.equal 'Hello @thisisnotavalidatname how are you?'
+
+  it 'Should replace @name with <@U123> in message objects too', ->
+    foo = @formatter.mentions {text: 'Hello @name how are you?'}
+    foo.text.should.equal 'Hello <@U123> how are you?'
+
+
+
+describe 'outgoing()', ->
+  it 'Should just pass things to mentions', ->
+    foo = @formatter.mentions {text: 'Hello @name how are you?'}
+    foo.text.should.equal 'Hello <@U123> how are you?'
