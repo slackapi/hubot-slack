@@ -74,9 +74,12 @@ class SlackBot extends Adapter
   Hubot is sending a message to Slack
   ###
   send: (envelope, messages...) ->
+    sent_messages = []
     for message in messages
-      @robot.logger.debug "Sending to #{envelope.room}: #{message}"
-      @client.send(envelope, message)
+      if message isnt ''
+        @robot.logger.debug "Sending to #{envelope.room}: #{message}"
+        sent_messages.push @client.send(envelope, message)
+    return sent_messages
 
 
   ###

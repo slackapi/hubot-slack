@@ -1,9 +1,11 @@
 # Setup stubs used by the other tests
 
-{SlackBot} = require '../index'
+SlackBot = require '../src/bot'
+SlackFormatter = require '../src/formatter'
 {EventEmitter} = require 'events'
 # Use Hubot's brain in our stubs
 {Brain} = require 'hubot'
+_ = require 'lodash'
 
 # Stub a few interfaces to grease the skids for tests. These are intentionally
 # as minimal as possible and only provide enough to make the tests possible.
@@ -28,8 +30,8 @@ beforeEach ->
     name: 'Example Team'
   # Slack client
   @stubs.client =
-    sendMessage: (msg, env) => 
-      if /user/.test(env)
+    send: (env, msg) =>
+      if /user/.test(env.room)
         @stubs._dmmsg = msg
       else
       @stubs._msg = msg
@@ -49,12 +51,6 @@ beforeEach ->
         return @stubs.channel if @stubs.channel.name == name
         for dm in @stubs.client.dataStore.dms
           return dm if dm.name is name
-      openDM: (user_id, callback) =>
-        user = @stubs.client.dataStore.getUserById user_id
-        @stubs.client.dataStore.dms.push
-          name: user.name
-          id: 'D1234'
-        callback?()
       users: [@stubs.user, @stubs.self]
       dms: [
         name: 'user2'
@@ -73,14 +69,16 @@ beforeEach ->
       @received.push msg
     # attach a real Brain to the robot
     robot.brain = new Brain robot
-    robot.Response = (robot, message, match) ->
+    robot.name = 'bot'
     robot
 
 # Generate a new slack instance for each test.
 beforeEach ->
-  # FIXME: this is dirty
-  SlackBot.MAX_MESSAGE_LENGTH = 4000
+  @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
+#  Object.assign @slackbot.client, @stubs.client
+  _.merge @slackbot.client, @stubs.client
+#  @slackbot.client = @stubs.client
+#  @slackbot.run
 
-  @slackbot = new SlackBot @stubs.robot
-  @slackbot.client = @stubs.client
-  @slackbot.loggedIn @stubs.self, @stubs.team
+beforeEach ->
+  @formatter = new SlackFormatter @stubs.client.dataStore
