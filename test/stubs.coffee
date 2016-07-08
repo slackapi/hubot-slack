@@ -2,6 +2,7 @@
 
 SlackBot = require '../src/bot'
 SlackFormatter = require '../src/formatter'
+SlackClient = require '../src/client'
 {EventEmitter} = require 'events'
 # Use Hubot's brain in our stubs
 {Brain} = require 'hubot'
@@ -71,9 +72,13 @@ beforeEach ->
     robot.brain = new Brain robot
     robot.name = 'bot'
     robot
+  @stubs.callback = do ->
+    return "done"
 
   # Generate a new slack instance for each test.
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
   _.merge @slackbot.client, @stubs.client
 
   @formatter = new SlackFormatter @stubs.client.dataStore
+
+  @client = new SlackClient token: 'xoxb-faketoken'
