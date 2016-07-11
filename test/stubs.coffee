@@ -57,6 +57,21 @@ beforeEach ->
         name: 'user2'
         id: 'D5432'
       ]
+  @stubs.rtm =
+    login: =>
+      @stubs._connected = true
+    on: (name, callback) =>
+    removeListener: (name) =>
+    sendMessage: (message, room) =>
+      @stubs._msg = message
+      @stubs._room = room
+  @stubs.chatMock =
+    postMessage: (room, messageText, message) =>
+      @stubs._msg = messageText
+      @stubs._room = room
+  @stubs.channelsMock =
+    setTopic: (id, topic) =>
+      @stubs._topic = topic
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter
@@ -82,3 +97,6 @@ beforeEach ->
   @formatter = new SlackFormatter @stubs.client.dataStore
 
   @client = new SlackClient token: 'xoxb-faketoken'
+  _.merge @client.rtm, @stubs.rtm
+  _.merge @client.web.chat, @stubs.chatMock
+  _.merge @client.web.channels, @stubs.channelsMock
