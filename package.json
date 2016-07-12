@@ -1,5 +1,5 @@
 {
-  "name": "hubot-slack",
+  "name": "@slack/hubot",
   "version": "4.0.0",
   "description": "A Slack adapter for hubot",
   "main": "./index",
@@ -42,7 +42,7 @@
     "should": "~2.0.2"
   },
   "engines": {
-    "node": ">=0.4.7",
+    "node": ">= 0.10.x",
     "npm": ">= 1.1.x"
   },
   "contributors": [
