@@ -1,6 +1,9 @@
 {RtmClient, WebClient, MemoryDataStore} = require '@slack/client'
 SlackFormatter = require './formatter'
 _ = require 'lodash'
+wsTransport = require('@slack/client/lib/clients/transports/ws')
+proxiedRequestTransport = require('@slack/client/lib/clients/transports/request.js').proxiedRequestTransport
+requestTransport = require('@slack/client/lib/clients/transports/request.js').requestTransport
 
 SLACK_CLIENT_OPTIONS =
   dataStore: new MemoryDataStore()
@@ -10,6 +13,12 @@ class SlackClient
   
   constructor: (options) ->
     _.merge SLACK_CLIENT_OPTIONS, options
+    
+    # Configure proxy url if set
+    if options.proxyUrl?
+      options['socketFn'] = (socketUrl) ->
+        return wsTransport socketUrl, { proxyURL: options.proxyUrl, proxyUrl: options.proxyUrl }
+      options['transport'] = proxiedRequestTransport(options.proxyUrl)
 
     # RTM is the default communication client
     @rtm = new RtmClient options.token, options
