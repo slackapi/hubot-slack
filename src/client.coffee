@@ -3,7 +3,6 @@ SlackFormatter = require './formatter'
 _ = require 'lodash'
 wsTransport = require('@slack/client/lib/clients/transports/ws')
 proxiedRequestTransport = require('@slack/client/lib/clients/transports/request.js').proxiedRequestTransport
-requestTransport = require('@slack/client/lib/clients/transports/request.js').requestTransport
 
 SLACK_CLIENT_OPTIONS =
   dataStore: new MemoryDataStore()
