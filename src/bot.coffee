@@ -188,17 +188,14 @@ class SlackBot extends Adapter
   ###
   brain_loaded: () =>
     @robot.logger.info "Brain loaded, reloading all users"
-    self = this
+    
+    # once the brain has loaded, reload all the users from the client
+    for id, user of @client.rtm.dataStore.users
+      @user_change { user: user }
 
-    @client.web.users.list((err,response) ->
-      # once the brain has loaded, reload all the users from the client
-      for id, user of response.members
-        self.user_change { user: user }
-
-      # also wipe out any broken users stored under usernames instead of ids
-      for id, user of self.robot.brain.data.users
-        if id is user.name then delete self.robot.brain.data.users[user.id]
-    )
+    # also wipe out any broken users stored under usernames instead of ids
+    for id, user of @robot.brain.data.users
+      if id is user.name then delete @robot.brain.data.users[user.id]
 
 
 module.exports = SlackBot
