@@ -12,8 +12,8 @@ class SlackBot extends Adapter
   Slackbot initialization
   ###
   run: ->
-    return @robot.logger.error "No services token provided to Hubot" unless @options.token
-    return @robot.logger.error "v2 services token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
+    return @robot.logger.error "No service token provided to Hubot" unless @options.token
+    return @robot.logger.error "Invalid service token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
 
     # Setup client event handlers
     @client.on 'open', @open
@@ -86,11 +86,13 @@ class SlackBot extends Adapter
   Hubot is replying to a Slack message
   ###
   reply: (envelope, messages...) ->
-    @robot.logger.debug "Sending reply"
-
+    sent_messages = []
     for message in messages
-      message = "<@#{envelope.user.id}>: #{message}" if envelope.room[0] is 'D'
-      @client.send(envelope, message)
+      if message isnt ''
+        message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
+        @robot.logger.debug "Sending to #{envelope.room}: #{message}"
+        sent_messages.push @client.send(envelope, message)
+    return sent_messages
 
 
   ###
@@ -129,10 +131,6 @@ class SlackBot extends Adapter
       when 'message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
         @receive new TextMessage(user, text, message.ts)
-
-      when 'bot_message'
-        @robot.logger.debug "#{bot.name} has joined #{channel.name}"
-        @receive new Message bot
 
       when 'channel_join', 'group_join'
         @robot.logger.debug "#{user.name} has joined #{channel.name}"

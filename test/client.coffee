@@ -24,16 +24,34 @@ describe 'connect()', ->
 
 describe 'on()', ->
   it 'Should open with a new connection', ->
-    @client.on('test', @stubs.callback)
+    @client.on 'test', ->
     @client.listeners.length.should.equal 1
 
   it 'Should open with a new message connection', ->
-    @client.on('message', @stubs.callback)
+    @client.on 'message', ->
     @client.listeners.length.should.equal 1
+
+  it 'Should hit a provided callback', ->
+    @hit = false
+    @client.on 'message', (msg) =>
+      msg.should.equal 'message'
+      @hit = true
+    @hit.should.equal true
+
+  it 'Should open with a new message connection', ->
+    @client.on 'channel_joined', ->
+    @client.listeners.length.should.equal 1
+
+  it 'Should hit a provided callback with non-message messages', ->
+    @hit = false
+    @client.on 'foo', (msg) =>
+      msg.should.equal 'foo'
+      @hit = true
+    @hit.should.equal true
 
 describe 'disconnect()', ->
   it 'Should disconnect all connections', ->
-    @client.on('test', @stubs.callback)
+    @client.on 'test', ->
     @client.listeners.length.should.equal 1
     @client.disconnect()
     @client.listeners.length.should.equal 0
