@@ -8,6 +8,19 @@ describe 'Login', ->
   it 'Should set the robot name', ->
     @slackbot.robot.name.should.equal 'bot'
 
+describe 'Logger', ->
+  it 'It should log missing token error', ->
+    {logger} = @slackbot.robot
+    @slackbot.options.token = null
+    @slackbot.run()
+    logger.logs["error"].length.should.be.above(0)
+
+  it 'It should log invalid token error', ->
+    {logger} = @slackbot.robot
+    @slackbot.options.token = "ABC123"
+    @slackbot.run() -
+    logger.logs["error"].length.should.be.above(0)
+
 describe 'Send Messages', ->
   it 'Should send a message', ->
     sentMessage = @slackbot.send {room: 'general'}, 'message'

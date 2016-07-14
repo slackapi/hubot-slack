@@ -77,8 +77,16 @@ beforeEach ->
     robot = new EventEmitter
     # noop the logging
     robot.logger =
-      info: ->
-      debug: ->
+      logs: {}
+      log: (type, message) ->
+        @logs[type] ?= []
+        @logs[type].push(message)
+      info: (message) ->
+        @log('info', message)
+      debug: (message) ->
+        @log('debug', message)
+      error: (message) ->
+        @log('error', message)
     # record all received messages
     robot.received = []
     robot.receive = (msg) ->
