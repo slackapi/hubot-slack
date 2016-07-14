@@ -65,6 +65,10 @@ beforeEach ->
     login: =>
       @stubs._connected = true
     on: (name, callback) =>
+      console.log("#####")
+      console.log(name)
+      console.log(callback)
+      callback(name)
     removeListener: (name) =>
     sendMessage: (message, room) =>
       @stubs._msg = message
