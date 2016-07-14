@@ -92,3 +92,32 @@ describe 'Handling incoming messages', ->
     @slackbot.message {subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof EnterMessage), true
     @stubs._received.user.id.should.equal @stubs.user.id
+
+  it 'Should handle channel_leave events as envisioned', ->
+    @slackbot.message {subtype: 'channel_leave', user: @stubs.user, channel: @stubs.channel}
+    should.equal (@stubs._received instanceof LeaveMessage), true
+    @stubs._received.user.id.should.equal @stubs.user.id
+
+  it 'Should handle channel_topic events as envisioned', ->
+    @slackbot.message {subtype: 'channel_topic', user: @stubs.user, channel: @stubs.channel}
+    should.equal (@stubs._received instanceof TopicMessage), true
+    @stubs._received.user.id.should.equal @stubs.user.id
+
+  it 'Should handle group_join events as envisioned', ->
+    @slackbot.message {subtype: 'group_join', user: @stubs.user, channel: @stubs.channel}
+    should.equal (@stubs._received instanceof EnterMessage), true
+    @stubs._received.user.id.should.equal @stubs.user.id
+
+  it 'Should handle group_leave events as envisioned', ->
+    @slackbot.message {subtype: 'group_leave', user: @stubs.user, channel: @stubs.channel}
+    should.equal (@stubs._received instanceof LeaveMessage), true
+    @stubs._received.user.id.should.equal @stubs.user.id
+
+  it 'Should handle group_topic events as envisioned', ->
+    @slackbot.message {subtype: 'group_topic', user: @stubs.user, channel: @stubs.channel}
+    should.equal (@stubs._received instanceof TopicMessage), true
+    @stubs._received.user.id.should.equal @stubs.user.id
+
+  it 'Should handle unknown events as catchalls', ->
+    @slackbot.message {subtype: 'hidey_ho', user: @stubs.user, channel: @stubs.channel}
+    should.equal (@stubs._received instanceof CatchAllMessage), true
