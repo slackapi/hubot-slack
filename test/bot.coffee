@@ -1,4 +1,5 @@
 should = require 'should'
+{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage} = require.main.require 'hubot'
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -89,5 +90,5 @@ describe 'Handling incoming messages', ->
 
   it 'Should handle channel_join events as envisioned', ->
     @slackbot.message {subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
-    should.equal (@stubs._received instanceOf EnterMessage), true
-    @stubs._received.user.should.equal @stubs.user.id
+    should.equal (@stubs._received instanceof EnterMessage), true
+    @stubs._received.user.id.should.equal @stubs.user.id
