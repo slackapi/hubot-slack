@@ -77,3 +77,12 @@ describe 'Setting the channel topic', ->
   it 'Should NOT set the topic in DMs', ->
     @slackbot.topic {room: 'D1232'}, 'DM'
     should.not.exists(@stubs._topic)
+
+describe 'Handling incoming messages', ->
+  it 'Should handle regular messages as hoped and dreamed', ->
+    @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.channel}
+    @stubs._received.text.should.equal 'foo'
+
+  it 'Should prepend our name to a message addressed to us in a DM', ->
+    @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.DM}
+    @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"

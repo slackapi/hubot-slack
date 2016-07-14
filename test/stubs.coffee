@@ -17,6 +17,10 @@ beforeEach ->
     name: 'general'
     id: 'C123'
     sendMessage: (msg) -> msg
+  @stubs.DM =
+    name: 'User'
+    id: 'D1232'
+    sendMessage: (msg) -> msg
   @stubs.user =
     name: 'name'
     id: 'U123'
@@ -98,12 +102,17 @@ beforeEach ->
   @stubs.callback = do ->
     return "done"
 
+  @stubs.receiveMock =
+    receive: (message, user) =>
+      @stubs._received = message
+
   # Generate a new slack instance for each test.
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
   _.merge @slackbot.client, @stubs.client
   _.merge @slackbot.client.rtm, @stubs.rtm
   _.merge @slackbot.client.web.chat, @stubs.chatMock
   _.merge @slackbot.client.web.channels, @stubs.channelsMock
+  _.merge @slackbot, @stubs.receiveMock
 
   @formatter = new SlackFormatter @stubs.client.dataStore
 
