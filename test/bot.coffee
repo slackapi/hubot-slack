@@ -25,8 +25,9 @@ describe 'Logger', ->
 
 describe 'Send Messages', ->
   it 'Should send a message', ->
-    sentMessage = @slackbot.send {room: 'general'}, 'message'
-    @stubs._msg.should.equal 'message'
+    sentMessages = @slackbot.send {room: 'general'}, 'message'
+    sentMessages.length.should.equal 1
+    sentMessages[0].should.equal 'message'
 
   it 'Should send multiple messages', ->
     sentMessages = @slackbot.send {room: 'general'}, 'one', 'two', 'three'
@@ -45,3 +46,25 @@ describe 'Send Messages', ->
     msg = 'Test'
     @slackbot.send {room: 'user2'}, msg
     @stubs._dmmsg.should.eql 'Test'
+
+describe 'Reply to Messages', ->
+  it 'Should mention the user in a reply sent in a channel', ->
+    sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'message'
+    sentMessages.length.should.equal 1
+    sentMessages[0].should.equal "<@#{@stubs.user.id}>: message"
+
+  it 'Should mention the user in multiple replies sent in a channel', ->
+    sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'one', 'two', 'three'
+    sentMessages.length.should.equal 3
+    sentMessages[0].should.equal "<@#{@stubs.user.id}>: one"
+    sentMessages[1].should.equal "<@#{@stubs.user.id}>: two"
+    sentMessages[2].should.equal "<@#{@stubs.user.id}>: three"
+
+  it 'Should send nothing if messages are empty', ->
+    sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, ''
+    sentMessages.length.should.equal 0
+
+  it 'Should NOT mention the user in a reply sent in a DM', ->
+    sentMessages = @slackbot.reply {user: @stubs.user, room: 'D123'}, 'message'
+    sentMessages.length.should.equal 1
+    sentMessages[0].should.equal "message"

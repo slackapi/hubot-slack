@@ -86,11 +86,13 @@ class SlackBot extends Adapter
   Hubot is replying to a Slack message
   ###
   reply: (envelope, messages...) ->
-    @robot.logger.debug "Sending reply"
-
+    sent_messages = []
     for message in messages
-      message = "<@#{envelope.user.id}>: #{message}" if envelope.room[0] is 'D'
-      @client.send(envelope, message)
+      if message isnt ''
+        message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
+        @robot.logger.debug "Sending to #{envelope.room}: #{message}"
+        sent_messages.push @client.send(envelope, message)
+    return sent_messages
 
 
   ###
