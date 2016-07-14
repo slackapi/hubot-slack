@@ -86,3 +86,8 @@ describe 'Handling incoming messages', ->
   it 'Should prepend our name to a message addressed to us in a DM', ->
     @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.DM}
     @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
+
+  it 'Should handle channel_join events as envisioned', ->
+    @slackbot.message {subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
+    should.equal (@stubs._received instanceOf EnterMessage), true
+    @stubs._received.user.should.equal @stubs.user.id
