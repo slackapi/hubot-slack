@@ -21,6 +21,8 @@ class SlackBot extends Adapter
     @client.on 'error', @error
     @client.on 'message', @message
     @client.on 'authenticated', @authenticated
+    @client.on 'user_change', @user_change
+    @robot.brain.on 'loaded', @brain_loaded
 
     # Start logging in
     @client.connect()
@@ -151,6 +153,49 @@ class SlackBot extends Adapter
         message.user = user
         @receive new CatchAllMessage(message)
 
+
+  ###
+  User changed on Slack
+  ###
+  user_change: (data) =>
+    {user} = data
+
+    return unless user?.id?
+
+    newUser =
+      name: user.name
+      real_name: user.real_name
+      email_address: user.profile.email
+      slack: {}
+    for key, value of user
+      # don't store the SlackClient, because it'd cause a circular reference
+      # (it contains users and channels), and because it has sensitive information like the token
+      continue if value instanceof SlackClient
+      newUser.slack[key] = value
+
+    if user.id of @robot.brain.data.users
+      for key, value of @robot.brain.data.users[user.id]
+        unless key of newUser
+          newUser[key] = value
+    delete @robot.brain.data.users[user.id]
+    @robot.brain.userForId user.id, newUser
+
+    @robot.logger.info "User #{user.name} reloaded"
+
+
+  ###
+  Hubot brain loaded
+  ###
+  brain_loaded: () =>
+    @robot.logger.info "Brain loaded, reloading all users"
+    
+    # once the brain has loaded, reload all the users from the client
+    for id, user of @client.rtm.dataStore.users
+      @user_change { user: user }
+
+    # also wipe out any broken users stored under usernames instead of ids
+    for id, user of @robot.brain.data.users
+      if id is user.name then delete @robot.brain.data.users[user.id]
 
 
 module.exports = SlackBot
