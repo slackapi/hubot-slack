@@ -79,6 +79,16 @@ describe 'Setting the channel topic', ->
     @slackbot.topic {room: 'D1232'}, 'DM'
     should.not.exists(@stubs._topic)
 
+describe 'Receiving an error event', ->
+  it 'Should propogate that error', ->
+    @hit = false
+    @slackbot.robot.on 'error', (error) =>
+      error.msg.should.equal 'ohno'
+      @hit = true
+    @hit.should.equal false
+    @slackbot.error {msg: 'ohno', code: -2}
+    @hit.should.equal true
+
 describe 'Handling incoming messages', ->
   it 'Should handle regular messages as hoped and dreamed', ->
     @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.channel}
