@@ -68,3 +68,12 @@ describe 'Reply to Messages', ->
     sentMessages = @slackbot.reply {user: @stubs.user, room: 'D123'}, 'message'
     sentMessages.length.should.equal 1
     sentMessages[0].should.equal "message"
+
+describe 'Setting the channel topic', ->
+  it 'Should set the topic in channels', ->
+    @slackbot.topic {room: @stubs.channel.id}, 'channel'
+    @stubs._topic.should.equal 'channel'
+
+  it 'Should NOT set the topic in DMs', ->
+    @slackbot.topic {room: 'D1232'}, 'DM'
+    should.not.exists(@stubs._topic)
