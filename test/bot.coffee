@@ -14,12 +14,14 @@ describe 'Logger', ->
     @slackbot.options.token = null
     @slackbot.run()
     logger.logs["error"].length.should.be.above(0)
+    logger.logs["error"][logger.logs["error"].length-1].should.equal 'No service token provided to Hubot'
 
   it 'It should log invalid token error', ->
     {logger} = @slackbot.robot
     @slackbot.options.token = "ABC123"
     @slackbot.run() -
     logger.logs["error"].length.should.be.above(0)
+    logger.logs["error"][logger.logs["error"].length-1].should.equal 'Invalid service token provided, please follow the upgrade instructions'
 
 describe 'Send Messages', ->
   it 'Should send a message', ->
