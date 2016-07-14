@@ -30,3 +30,59 @@ describe 'Send Messages', ->
     msg = 'Test'
     @slackbot.send {room: 'user2'}, msg
     @stubs._dmmsg.should.eql 'Test'
+
+describe 'User change', ->
+  it 'Should add new user', ->
+    @slackbot.user_change { user: @stubs.user }
+    @stubs.robot.brain.data.users[@stubs.user.id].should.eql {
+      id: @stubs.user.id
+      name: @stubs.user.name
+      real_name: @stubs.user.real_name
+      email_address: @stubs.user.profile.email
+      slack: @stubs.user
+    }
+  it 'Should reload user', ->
+    @stubs.robot.brain.userForId @stubs.user.id, {
+      id: @stubs.user.id
+      name: 'test'
+      real_name: @stubs.user.real_name
+      email_address: @stubs.user.profile.email
+      slack: @stubs.user
+    }
+    @slackbot.user_change { user: @stubs.user }
+    @stubs.robot.brain.data.users[@stubs.user.id].should.eql {
+      id: @stubs.user.id
+      name: @stubs.user.name
+      real_name: @stubs.user.real_name
+      email_address: @stubs.user.profile.email
+      slack: @stubs.user
+    }
+
+describe 'Brain Loaded', ->
+  it 'Should reload all users', ->
+    @slackbot.brain_loaded()
+    @stubs.robot.brain.data.users[@stubs.user.id].should.eql {
+      id: @stubs.user.id
+      name: @stubs.user.name
+      real_name: @stubs.user.real_name
+      email_address: @stubs.user.profile.email
+      slack: @stubs.user
+    }
+    @stubs.robot.brain.data.users[@stubs.self.id].should.eql {
+      id: @stubs.self.id
+      name: @stubs.self.name
+      real_name: @stubs.self.real_name
+      email_address: @stubs.self.profile.email
+      slack: @stubs.self
+    }
+
+  it 'Should wipe out broken users', ->
+    @stubs.robot.brain.userForId @stubs.user.name, {
+      id: @stubs.user.id
+      name: @stubs.user.name
+      real_name: @stubs.user.real_name
+      email_address: @stubs.user.profile.email
+      slack: @stubs.user
+    }
+    @slackbot.brain_loaded()
+    @stubs.robot.brain.data.users.hasOwnProperty(@stubs.user.name).should.eql false

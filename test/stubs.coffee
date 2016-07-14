@@ -19,13 +19,19 @@ beforeEach ->
     sendMessage: (msg) -> msg
   @stubs.user =
     name: 'name'
+    real_name: 'real name'
     id: 'U123'
     profile:
+      first_name: 'real'
+      last_name: 'name'
       email: 'email@example.com'
   @stubs.self =
     name: 'self'
+    real_name: 'self this'
     id: 'U456'
     profile:
+      first_name: 'self'
+      last_name: 'this'
       email: 'self@example.com'
   @stubs.team =
     name: 'Example Team'
@@ -57,6 +63,9 @@ beforeEach ->
         name: 'user2'
         id: 'D5432'
       ]
+    rtm:
+      dataStore:
+        users: [@stubs.user, @stubs.self]
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter

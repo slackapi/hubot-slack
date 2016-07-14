@@ -195,7 +195,7 @@ class SlackBot extends Adapter
 
     # also wipe out any broken users stored under usernames instead of ids
     for id, user of @robot.brain.data.users
-      if id is user.name then delete @robot.brain.data.users[user.id]
+      if id is user.name then delete @robot.brain.data.users[id]
 
 
 module.exports = SlackBot
