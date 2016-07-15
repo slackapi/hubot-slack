@@ -1,8 +1,8 @@
 {
   "name": "hubot-slack",
-  "version": "3.4.2",
+  "version": "4.0.0",
   "description": "A Slack adapter for hubot",
-  "main": "./index",
+  "main": "./slack",
   "scripts": {
     "test": "npm run mocha && istanbul report text-summary lcov",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
@@ -24,9 +24,11 @@
     "url": "https://github.com/slackhq/hubot-slack/issues"
   },
   "dependencies": {
-    "slack-client": "~1.5"
+    "@slack/client": "^3.4.0",
+    "lodash": "^3.10.1"
   },
   "devDependencies": {
+    "hubot": "~2.11",
     "coffee-coverage": "^1.0.1",
     "coffee-script": "~1.7.1",
     "coveralls": "^2.11.9",
@@ -35,13 +37,12 @@
     "grunt-contrib-watch": "~0.5.3",
     "grunt-release": "~0.6.0",
     "grunt-shell": "~0.5.0",
-    "hubot": "~2.11",
     "istanbul": "^0.4.3",
     "mocha": "~1.13.0",
     "should": "~2.0.2"
   },
   "engines": {
-    "node": ">=0.4.7",
+    "node": ">= 0.10.x",
     "npm": ">= 1.1.x"
   },
   "contributors": [
@@ -65,6 +66,14 @@
     {
       "name": "Eric Lindvall",
       "email": "eric@papertrailapp.com"
+    },
+    {
+      "email": "don@slack-corp.com",
+      "name": "D.E. Goodman-Wilson"
+    },
+    {
+      "email": "jagan@slack-corp.com",
+      "name": "John Agan"
     }
   ]
 }

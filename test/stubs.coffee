@@ -1,9 +1,12 @@
 # Setup stubs used by the other tests
 
-{SlackBot} = require '../index'
+SlackBot = require '../src/bot'
+SlackFormatter = require '../src/formatter'
+SlackClient = require '../src/client'
 {EventEmitter} = require 'events'
 # Use Hubot's brain in our stubs
 {Brain} = require 'hubot'
+_ = require 'lodash'
 
 # Stub a few interfaces to grease the skids for tests. These are intentionally
 # as minimal as possible and only provide enough to make the tests possible.
@@ -13,7 +16,11 @@ beforeEach ->
   @stubs.channel =
     name: 'general'
     id: 'C123'
-    send: (msg) -> msg
+    sendMessage: (msg) -> msg
+  @stubs.DM =
+    name: 'User'
+    id: 'D1232'
+    sendMessage: (msg) -> msg
   @stubs.user =
     name: 'name'
     id: 'U123'
@@ -28,58 +35,92 @@ beforeEach ->
     name: 'Example Team'
   # Slack client
   @stubs.client =
-    getUserByID: (id) =>
-      for user in @stubs.client.users
-        return user if user.id is id
-    getUserByName: (name) =>
-      for user in @stubs.client.users
-        return user if user.name is name
-    getChannelByID: (id) =>
-      @stubs.channel if @stubs.channel.id == id
-    getChannelGroupOrDMByID: (id) =>
-      @stubs.channel if @stubs.channel.id == id
-    getChannelGroupOrDMByName: (name) =>
-      return @stubs.channel if @stubs.channel.name == name
-      for dm in @stubs.client.dms
-        return dm if dm.name is name
-    openDM: (user_id, callback) =>
-      user = @stubs.client.getUserByID user_id
-      @stubs.client.dms.push {
-        name: user.name,
-        id: 'D1234',
-        send: (msg) =>
-          @stubs._msg = if @stubs._msg then @stubs._msg + msg else msg
-        }
-      callback?()
-    users: [@stubs.user, @stubs.self]
-    dms: [
-      {
-        name: 'user2',
-        id: 'D5432',
-        send: (msg) =>
-          @stubs._dmmsg = if @stubs._dmmsg then @stubs._dmmsg + msg else msg
-      }
-    ]
+    send: (env, msg) =>
+      if /user/.test(env.room)
+        @stubs._dmmsg = msg
+      else
+      @stubs._msg = msg
+
+    dataStore:
+      getUserById: (id) =>
+        for user in @stubs.client.dataStore.users
+          return user if user.id is id
+      getUserByName: (name) =>
+        for user in @stubs.client.dataStore.users
+          return user if user.name is name
+      getChannelById: (id) =>
+        @stubs.channel if @stubs.channel.id == id
+      getChannelGroupOrDMById: (id) =>
+        @stubs.channel if @stubs.channel.id == id
+      getChannelGroupOrDMByName: (name) =>
+        return @stubs.channel if @stubs.channel.name == name
+        for dm in @stubs.client.dataStore.dms
+          return dm if dm.name is name
+      users: [@stubs.user, @stubs.self]
+      dms: [
+        name: 'user2'
+        id: 'D5432'
+      ]
+  @stubs.rtm =
+    login: =>
+      @stubs._connected = true
+    on: (name, callback) =>
+      console.log("#####")
+      console.log(name)
+      console.log(callback)
+      callback(name)
+    removeListener: (name) =>
+    sendMessage: (message, room) =>
+      @stubs._msg = message
+      @stubs._room = room
+  @stubs.chatMock =
+    postMessage: (room, messageText, message) =>
+      @stubs._msg = messageText
+      @stubs._room = room
+  @stubs.channelsMock =
+    setTopic: (id, topic) =>
+      @stubs._topic = topic
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter
     # noop the logging
     robot.logger =
-      info: ->
-      debug: ->
+      logs: {}
+      log: (type, message) ->
+        @logs[type] ?= []
+        @logs[type].push(message)
+      info: (message) ->
+        @log('info', message)
+      debug: (message) ->
+        @log('debug', message)
+      error: (message) ->
+        @log('error', message)
     # record all received messages
     robot.received = []
     robot.receive = (msg) ->
       @received.push msg
     # attach a real Brain to the robot
     robot.brain = new Brain robot
+    robot.name = 'bot'
     robot
+  @stubs.callback = do ->
+    return "done"
 
-# Generate a new slack instance for each test.
-beforeEach ->
-  # FIXME: this is dirty
-  SlackBot.MAX_MESSAGE_LENGTH = 4000
+  @stubs.receiveMock =
+    receive: (message, user) =>
+      @stubs._received = message
 
-  @slackbot = new SlackBot @stubs.robot
-  @slackbot.client = @stubs.client
-  @slackbot.loggedIn @stubs.self, @stubs.team
+  # Generate a new slack instance for each test.
+  @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
+  _.merge @slackbot.client, @stubs.client
+  _.merge @slackbot.client.rtm, @stubs.rtm
+  _.merge @slackbot.client.web.chat, @stubs.chatMock
+  _.merge @slackbot.client.web.channels, @stubs.channelsMock
+  _.merge @slackbot, @stubs.receiveMock
+
+  @formatter = new SlackFormatter @stubs.client.dataStore
+
+  @client = new SlackClient token: 'xoxb-faketoken'
+  _.merge @client.rtm, @stubs.rtm
+  _.merge @client.web.chat, @stubs.chatMock
+  _.merge @client.web.channels, @stubs.channelsMock
