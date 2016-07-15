@@ -1,9 +1,12 @@
 # hubot-slack
 
+***NOTICE* as of version 4.x, you can find the Hubot Slack adapter on npm under `@slack/hubot`**
+
 This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).
 
-[![Build Status](https://travis-ci.org/slackhq/hubot-slack.png)](https://travis-ci.org/slackhq/hubot-slack)
-[![Coverage Status](https://coveralls.io/repos/github/slackhq/hubot-slack/badge.svg?branch=master)](https://coveralls.io/github/slackhq/hubot-slack?branch=master)
+[![Travis branch](https://img.shields.io/travis/slackhq/hubot-slack/master.svg?maxAge=2592000)]()
+[![Coveralls](https://img.shields.io/coveralls/slackhq/hubot-slack.svg?maxAge=2592000)]()
+[![npm (scoped)](https://img.shields.io/npm/v/@slack/hubot.svg?maxAge=2592000)]()
 
 ## Getting Started
 
@@ -13,7 +16,7 @@ This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://
 - `mkdir -p /path/to/hubot`
 - `cd /path/to/hubot`
 - `yo hubot`
-- `npm install hubot-slack --save`
+- `npm install @slack/hubot --save`
 - Initialize git and make your initial commit
 - Check out the [hubot docs](https://github.com/github/hubot/tree/master/docs) for further guidance on how to build your bot
 
@@ -42,7 +45,7 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 
 - Profit!
 
-## Upgrading from earlier versions of Hubot
+## Upgrading from version 2 or earlier of Hubot
 
 Version 3 of the hubot-slack adapter requires different server support to
 previous versions. If you have an existing "hubot" integration set up you'll
@@ -74,4 +77,4 @@ If you're using the [hubot-auth](https://github.com/hubot-scripts/hubot-auth/) s
 
 ## Copyright
 
-Copyright &copy; Slack Technologies, Inc. MIT License; see LICENSE for further details.
+Copyright &copy; 2014–2016 Slack Technologies, Inc. MIT License; see LICENSE for further details.
