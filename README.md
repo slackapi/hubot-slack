@@ -45,7 +45,7 @@ This is a modified set of instructions based on the [instructions on the Hubot w
 
 - Profit!
 
-## Upgrading from earlier versions of Hubot
+## Upgrading from version 2 or earlier of Hubot
 
 Version 3 of the hubot-slack adapter requires different server support to
 previous versions. If you have an existing "hubot" integration set up you'll
