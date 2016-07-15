@@ -1,12 +1,10 @@
 # hubot-slack
 
-***NOTICE* as of version 4.x, you can find the Hubot Slack adapter on npm under `@slack/hubot`**
-
 This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).
 
 [![Travis branch](https://img.shields.io/travis/slackhq/hubot-slack/master.svg?maxAge=2592000)]()
 [![Coveralls](https://img.shields.io/coveralls/slackhq/hubot-slack.svg?maxAge=2592000)]()
-[![npm (scoped)](https://img.shields.io/npm/v/@slack/hubot.svg?maxAge=2592000)]()
+[![npm (scoped)](https://img.shields.io/npm/v/hubot-slack.svg?maxAge=2592000)]()
 
 ## Getting Started
 
@@ -15,8 +13,7 @@ This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://
 - `npm install -g hubot coffee-script yo generator-hubot`
 - `mkdir -p /path/to/hubot`
 - `cd /path/to/hubot`
-- `yo hubot`
-- `npm install @slack/hubot --save`
+- `yo hubot` and enter 'slack' (no quotes) when [prompted for the adapter, or set everything with the option flags](https://hubot.github.com/docs/)
 - Initialize git and make your initial commit
 - Check out the [hubot docs](https://github.com/github/hubot/tree/master/docs) for further guidance on how to build your bot
 
