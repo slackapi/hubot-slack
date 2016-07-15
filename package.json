@@ -1,8 +1,8 @@
 {
-  "name": "@slack/hubot",
+  "name": "hubot-slack",
   "version": "4.0.0",
   "description": "A Slack adapter for hubot",
-  "main": "./index",
+  "main": "./slack",
   "scripts": {
     "test": "npm run mocha && istanbul report text-summary lcov",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
