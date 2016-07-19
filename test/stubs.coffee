@@ -26,6 +26,9 @@ beforeEach ->
     id: 'U123'
     profile:
       email: 'email@example.com'
+  @stubs.bot =
+    name: 'testbot'
+    id: 'B123'
   @stubs.self =
     name: 'self'
     id: 'U456'
@@ -45,6 +48,9 @@ beforeEach ->
       getUserById: (id) =>
         for user in @stubs.client.dataStore.users
           return user if user.id is id
+      getBotById: (id) =>
+        for bot in @stubs.client.dataStore.bots
+          return bot if bot.id is id
       getUserByName: (name) =>
         for user in @stubs.client.dataStore.users
           return user if user.name is name
@@ -57,6 +63,7 @@ beforeEach ->
         for dm in @stubs.client.dataStore.dms
           return dm if dm.name is name
       users: [@stubs.user, @stubs.self]
+      bots: [@stubs.bot]
       dms: [
         name: 'user2'
         id: 'D5432'

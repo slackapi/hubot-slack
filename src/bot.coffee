@@ -113,11 +113,11 @@ class SlackBot extends Adapter
     subtype = subtype || 'message'
 
     # Hubot expects this format for TextMessage Listener
-    bot.room = channel.id if bot
-    user.room = channel.id if user
-    user = {
-      room: channel.id
-    } if !user && !bot
+    user = bot if bot
+    user = user if user
+    user = {} if !user && !bot
+    user.room = channel.id
+
 
     # Direct messages
     if channel.id[0] is 'D'
@@ -128,7 +128,7 @@ class SlackBot extends Adapter
     # Send to Hubot based on message type
     switch subtype
 
-      when 'message'
+      when 'message', 'bot_message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
         @receive new TextMessage(user, text, message.ts)
 
