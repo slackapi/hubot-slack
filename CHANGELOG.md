@@ -1,6 +1,10 @@
 # [slack-hubot] Changelog
 
-### v4.0.0 (2016-06-15)
+### v4.1.1 (2016-07-19)
+  * Usernames with `-` and `.` no longer borked
+  * You could craft a bot that would crash Hubot by simply having it send a message. Wow! That got fixed.
+
+### v4.0.0 (2016-07-15)
 
   * Now uses the latest version of `node-slack-sdk` (v3.4.1 as of this writing), inheriting all the improvements therein.
   * Better (and automatically enabled) reconnect logic. As in, it actually reconnects automatically at all.
