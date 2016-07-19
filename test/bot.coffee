@@ -131,3 +131,7 @@ describe 'Handling incoming messages', ->
   it 'Should handle unknown events as catchalls', ->
     @slackbot.message {subtype: 'hidey_ho', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof CatchAllMessage), true
+
+  it 'Should not crash with bot messages', ->
+    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer' }
+    should.equal (@stubs._received instanceof TextMessage), true
