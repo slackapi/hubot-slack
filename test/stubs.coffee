@@ -29,6 +29,16 @@ beforeEach ->
   @stubs.bot =
     name: 'testbot'
     id: 'B123'
+  @stubs.userperiod =
+    name: 'name.lname'
+    id: 'U124'
+    profile:
+      email: 'name.lname@example.com'
+  @stubs.userhyphen =
+    name: 'name-lname'
+    id: 'U125'
+    profile:
+      email: 'name-lname@example.com'
   @stubs.self =
     name: 'self'
     id: 'U456'
@@ -62,7 +72,7 @@ beforeEach ->
         return @stubs.channel if @stubs.channel.name == name
         for dm in @stubs.client.dataStore.dms
           return dm if dm.name is name
-      users: [@stubs.user, @stubs.self]
+      users: [@stubs.user, @stubs.self, @stubs.userperiod, @stubs.userhyphen]
       bots: [@stubs.bot]
       dms: [
         name: 'user2'

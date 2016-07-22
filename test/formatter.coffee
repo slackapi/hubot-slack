@@ -120,6 +120,14 @@ describe 'mentions()', ->
     foo = @formatter.mentions {text: 'Hello @name how are you?'}
     foo.text.should.equal 'Hello <@U123> how are you?'
 
+  it 'Should replace @name.lname with <@U124> (contains period)', ->
+    foo = @formatter.mentions {text: 'Hello @name.lname how are you?'}
+    foo.text.should.equal 'Hello <@U124> how are you?'
+
+  it 'Should replace @name-lname with <@U125> (contains hyphen)', ->
+    foo = @formatter.mentions {text: 'Hello @name-lname how are you?'}
+    foo.text.should.equal 'Hello <@U125> how are you?'
+
 
 
 describe 'outgoing()', ->
