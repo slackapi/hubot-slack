@@ -91,6 +91,10 @@ class SlackFormatter
         text[key] = @mentions(value)
       text
 
+    # we got something else, just pass it back out.
+    else
+      text
+
 
   ###
   Formats an incoming Slack message
