@@ -1,6 +1,9 @@
 # [slack-hubot] Changelog
 
-### v4.1.1 (2016-07-19)
+### v4.0.2 (2016-08-03)
+  * v4 shipped with this amazing feature whereby we would silently destroy any non-string fields in a message object before sending it out. Y'all loved that feature so much, we just had to build on it. Now we silently destroy you entire message object before sending it out. J/K, that was actually a bug, and we fixed it.
+
+### v4.0.1 (2016-07-19)
   * Usernames with `-` and `.` no longer borked
   * You could craft a bot that would crash Hubot by simply having it send a message. Wow! That got fixed.
 
