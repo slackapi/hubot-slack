@@ -119,7 +119,6 @@ class SlackBot extends Adapter
     return if user && (user.id == @self.id) #Ignore anything we sent
     return if bot && (bot.id == @self.bot_id) #Ignore anything we sent
 
-
     subtype = subtype || 'message'
 
     # Hubot expects this format for TextMessage Listener

@@ -135,3 +135,11 @@ describe 'Handling incoming messages', ->
   it 'Should not crash with bot messages', ->
     @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer' }
     should.equal (@stubs._received instanceof TextMessage), true
+
+  it 'Should ignore messages it sent itself', ->
+    @slackbot.message { subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
+    should.equal @stubs._received, undefined
+
+  it 'Should ignore messages it sent itself, if sent as a botuser', ->
+    @slackbot.message { subtype: 'bot_message', user: @stubs.self_bot, channel: @stubs.channel, text: 'Ignore me' }
+    should.equal @stubs._received, undefined

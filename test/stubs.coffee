@@ -45,6 +45,11 @@ beforeEach ->
     bot_id: 'B456'
     profile:
       email: 'self@example.com'
+  @stubs.self_bot =
+    name: 'self'
+    id: 'B456'
+    profile:
+      email: 'self@example.com'
   @stubs.team =
     name: 'Example Team'
   # Slack client
