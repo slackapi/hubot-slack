@@ -99,6 +99,7 @@ beforeEach ->
   @stubs.chatMock =
     postMessage: (room, messageText, message) =>
       @stubs._msg = messageText
+      @stubs._opts = message
       @stubs._room = room
   @stubs.channelsMock =
     setTopic: (id, topic) =>

@@ -48,6 +48,16 @@ describe 'Send Messages', ->
     @slackbot.send {room: 'user2'}, msg
     @stubs._dmmsg.should.eql 'Test'
 
+
+describe 'Client sending message', ->
+  it 'Should append as_user = true', ->
+    @client.send {room: 'name'}, {text: 'foo', user: @stubs.user, channel: @stubs.channel}
+    @stubs._opts.as_user.should.eql true
+
+  it 'Should append as_user = true only as a default', ->
+    @client.send {room: 'name'}, {text: 'foo', user: @stubs.user, channel: @stubs.channel, as_user: false}
+    @stubs._opts.as_user.should.eql false
+
 describe 'Reply to Messages', ->
   it 'Should mention the user in a reply sent in a channel', ->
     sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'message'
