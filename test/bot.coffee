@@ -141,5 +141,5 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received, undefined
 
   it 'Should ignore messages it sent itself, if sent as a botuser', ->
-    @slackbot.message { subtype: 'bot_message', user: @stubs.self_bot, channel: @stubs.channel, text: 'Ignore me' }
+    @slackbot.message { subtype: 'bot_message', bot: @stubs.self_bot, channel: @stubs.channel, text: 'Ignore me' }
     should.equal @stubs._received, undefined
