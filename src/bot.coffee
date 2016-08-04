@@ -115,8 +115,9 @@ class SlackBot extends Adapter
   ###
   message: (message) =>
     {text, user, channel, subtype, topic, bot} = message
-    return if user && (user.id == @robot.adapter.self.id) #Ignore anything we sent
-    return if bot && (bot.id == @robot.adapter.self.bot_id) #Ignore anything we sent
+
+    return if user && (user.id == @self.id) #Ignore anything we sent
+    return if bot && (bot.id == @self.bot_id) #Ignore anything we sent
 
 
     subtype = subtype || 'message'

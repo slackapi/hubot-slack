@@ -42,6 +42,7 @@ beforeEach ->
   @stubs.self =
     name: 'self'
     id: 'U456'
+    bot_id: 'B456'
     profile:
       email: 'self@example.com'
   @stubs.team =
@@ -134,6 +135,7 @@ beforeEach ->
   _.merge @slackbot.client.web.chat, @stubs.chatMock
   _.merge @slackbot.client.web.channels, @stubs.channelsMock
   _.merge @slackbot, @stubs.receiveMock
+  @slackbot.self = @stubs.self
 
   @formatter = new SlackFormatter @stubs.client.dataStore
 
