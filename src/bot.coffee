@@ -42,6 +42,12 @@ class SlackBot extends Adapter
   authenticated: (identity) =>
     {@self, team} = identity
 
+    # Find out bot_id
+    for user in identity.users
+      if user.id == @self.id
+        @self.bot_id = user.profile.bot_id
+        break
+
     # Provide our name to Hubot
     @robot.name = @self.name
 
@@ -109,6 +115,9 @@ class SlackBot extends Adapter
   ###
   message: (message) =>
     {text, user, channel, subtype, topic, bot} = message
+    return if user && (user.id == @robot.adapter.self.id) #Ignore anything we sent
+    return if bot && (bot.id == @robot.adapter.self.bot_id) #Ignore anything we sent
+
 
     subtype = subtype || 'message'
 
