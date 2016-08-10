@@ -48,6 +48,16 @@ describe 'Send Messages', ->
     @slackbot.send {room: 'user2'}, msg
     @stubs._dmmsg.should.eql 'Test'
 
+
+describe 'Client sending message', ->
+  it 'Should append as_user = true', ->
+    @client.send {room: 'name'}, {text: 'foo', user: @stubs.user, channel: @stubs.channel}
+    @stubs._opts.as_user.should.eql true
+
+  it 'Should append as_user = true only as a default', ->
+    @client.send {room: 'name'}, {text: 'foo', user: @stubs.user, channel: @stubs.channel, as_user: false}
+    @stubs._opts.as_user.should.eql false
+
 describe 'Reply to Messages', ->
   it 'Should mention the user in a reply sent in a channel', ->
     sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'message'
@@ -135,3 +145,11 @@ describe 'Handling incoming messages', ->
   it 'Should not crash with bot messages', ->
     @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer' }
     should.equal (@stubs._received instanceof TextMessage), true
+
+  it 'Should ignore messages it sent itself', ->
+    @slackbot.message { subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
+    should.equal @stubs._received, undefined
+
+  it 'Should ignore messages it sent itself, if sent as a botuser', ->
+    @slackbot.message { subtype: 'bot_message', bot: @stubs.self_bot, channel: @stubs.channel, text: 'Ignore me' }
+    should.equal @stubs._received, undefined

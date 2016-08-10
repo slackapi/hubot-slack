@@ -74,11 +74,11 @@ class SlackClient
     message = @format.outgoing(message)
 
     if typeof message isnt 'string'
-      @web.chat.postMessage(envelope.room, message.text, message)
+      @web.chat.postMessage(envelope.room, message.text, _.defaults(message, {'as_user': true}))
     else if /<.+\|.+>/.test(message)
-      @web.chat.postMessage(envelope.room, message)
+      @web.chat.postMessage(envelope.room, message, {'as_user' : true})
     else
-      @rtm.sendMessage(message, envelope.room)
+      @rtm.sendMessage(message, envelope.room) # RTM behaves as though `as_user` is true already
 
 
 module.exports = SlackClient
