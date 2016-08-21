@@ -74,5 +74,5 @@ describe 'send()', ->
 
   it 'Should send an object message to room', ->
     @client.send {room: 'room3'}, '<test|test>'
-    @stubs._msg.should.equal '<test|test>'
+    @stubs._msg.should.equal '&lt;test|test&gt;'
     @stubs._room.should.equal 'room3'

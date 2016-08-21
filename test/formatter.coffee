@@ -133,6 +133,10 @@ describe 'mentions()', ->
     foo = @formatter.mentions {text: 'Hello @name-lname how are you?'}
     foo.text.should.equal 'Hello <@U125> how are you?'
 
+  it 'Should encode entities', ->
+    foo = @formatter.mentions {text: 'Hello <foo|bar> &'}
+    foo.text.should.equal "Hello &lt;foo|bar&gt; &amp;"
+
 describe 'outgoing()', ->
   it 'Should just pass things to mentions', ->
     foo = @formatter.mentions {text: 'Hello @name how are you?'}

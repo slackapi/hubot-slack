@@ -74,8 +74,12 @@ class SlackFormatter
   ###
   mentions: (text) ->
     return if text is null # nothing to do
-      
+
     if typeof text is 'string'
+      text = text.replace /&/g, '&amp;'
+      text = text.replace /</g, '&lt;'
+      text = text.replace />/g, '&gt;'
+
       text.replace /(?:^| )@([\w\.-]+)/gm, (match, username) =>
         user = @dataStore.getUserByName(username)
         if user
