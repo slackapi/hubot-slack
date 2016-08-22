@@ -65,17 +65,22 @@ describe 'send()', ->
   it 'Should send a plain string message to room', ->
     @client.send {room: 'room1'}, 'Message'
     @stubs._msg.should.equal 'Message'
-    @stubs._room.should.equal 'C00000001'
+    @stubs._room.should.equal 'room1'
 
   it 'Should send an object message to room', ->
     @client.send {room: 'room2'}, {text: 'textMessage'}
     @stubs._msg.should.equal 'textMessage'
-    @stubs._room.should.equal 'C00000002'
+    @stubs._room.should.equal 'room2'
 
   it 'Should send an object message to room', ->
     @client.send {room: 'room3'}, '<test|test>'
     @stubs._msg.should.equal '<test|test>'
-    @stubs._room.should.equal 'C00000003'
+    @stubs._room.should.equal 'room3'
+
+  it 'Should translate known room names to a channel id', ->
+    @client.send {room: 'known_room'}, 'Message'
+    @stubs._msg.should.equal 'Message'
+    @stubs._room.should.equal 'C00000004'
 
   it 'Should not translate an unknown room', ->
     @client.send {room: 'unknown_room'}, 'Message'
