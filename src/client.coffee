@@ -73,7 +73,7 @@ class SlackClient
   send: (envelope, message) ->
     message = @format.outgoing(message)
     room = envelope.room
-    if !(room.match /C0[A-Z0-9]{7}/)
+    if !(room.match /[A-Z]/) # slack rooms are always lowercase
       # try to translate room name to room id
       channelForName = @rtm.dataStore.getChannelByName(room)
       if channelForName
