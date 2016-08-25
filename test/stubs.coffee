@@ -96,6 +96,11 @@ beforeEach ->
     sendMessage: (message, room) =>
       @stubs._msg = message
       @stubs._room = room
+    dataStore:
+      getChannelByName: (name) =>
+        switch name
+          when 'known_room' then {id: 'C00000004'}
+          else undefined
   @stubs.chatMock =
     postMessage: (room, messageText, message) =>
       @stubs._msg = messageText

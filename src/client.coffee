@@ -7,13 +7,13 @@ SLACK_CLIENT_OPTIONS =
 
 
 class SlackClient
-  
+
   constructor: (options) ->
     _.merge SLACK_CLIENT_OPTIONS, options
 
     # RTM is the default communication client
     @rtm = new RtmClient options.token, options
-    
+
     # Web is the fallback for complex messages
     @web = new WebClient options.token, options
 
@@ -36,7 +36,7 @@ class SlackClient
   ###
   on: (name, callback) ->
     @listeners.push(name)
-    
+
     # override message to format text
     if name is "message"
       @rtm.on name, (message) =>
@@ -72,13 +72,19 @@ class SlackClient
   ###
   send: (envelope, message) ->
     message = @format.outgoing(message)
+    room = envelope.room
+    if !(room.match /[A-Z]/) # slack rooms are always lowercase
+      # try to translate room name to room id
+      channelForName = @rtm.dataStore.getChannelByName(room)
+      if channelForName
+        room = channelForName.id
 
     if typeof message isnt 'string'
-      @web.chat.postMessage(envelope.room, message.text, _.defaults(message, {'as_user': true}))
+      @web.chat.postMessage(room, message.text, _.defaults(message, {'as_user': true}))
     else if /<.+\|.+>/.test(message)
-      @web.chat.postMessage(envelope.room, message, {'as_user' : true})
+      @web.chat.postMessage(room, message, {'as_user' : true})
     else
-      @rtm.sendMessage(message, envelope.room) # RTM behaves as though `as_user` is true already
+      @rtm.sendMessage(message, room) # RTM behaves as though `as_user` is true already
 
 
 module.exports = SlackClient
