@@ -72,12 +72,12 @@ class SlackClient
   ###
   send: (envelope, message) ->
     {room} = envelope
-    defaults = { as_user: true, parse: 'full', link_names: 1 }
+    options = { as_user: true, parse: 'full', link_names: 1 }
 
     if typeof message isnt 'string'
-      @web.chat.postMessage(room, message.text, defaults)
+      @web.chat.postMessage(room, message.text, _.defaults(message, options))
     else if /<.+\|.+|>|@|#/.test(message)
-      @web.chat.postMessage(room, message, defaults)
+      @web.chat.postMessage(room, message, options)
     else
       @rtm.sendMessage(message, room)
 
