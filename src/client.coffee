@@ -71,20 +71,15 @@ class SlackClient
   Send a message to Slack using the best client for the message type
   ###
   send: (envelope, message) ->
-    message = @format.outgoing(message)
-    room = envelope.room
-    if !(room.match /[A-Z]/) # slack rooms are always lowercase
-      # try to translate room name to room id
-      channelForName = @rtm.dataStore.getChannelByName(room)
-      if channelForName
-        room = channelForName.id
+    {room} = envelope
+    defaults = { as_user: true, parse: 'full', link_names: 1 }
 
     if typeof message isnt 'string'
-      @web.chat.postMessage(room, message.text, _.defaults(message, {'as_user': true}))
-    else if /<.+\|.+>/.test(message)
-      @web.chat.postMessage(room, message, {'as_user' : true})
+      @web.chat.postMessage(room, message.text, defaults)
+    else if /<.+\|.+|>|@|#/.test(message)
+      @web.chat.postMessage(room, message, defaults)
     else
-      @rtm.sendMessage(message, room) # RTM behaves as though `as_user` is true already
+      @rtm.sendMessage(message, room)
 
 
 module.exports = SlackClient
