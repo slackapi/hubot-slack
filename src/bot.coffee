@@ -5,7 +5,7 @@ SlackClient = require './client'
 class SlackBot extends Adapter
 
   constructor: (@robot, @options) ->
-    @client = new SlackClient(@options)
+    @client = new SlackClient(@options, @robot)
 
 
   ###

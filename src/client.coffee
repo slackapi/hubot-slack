@@ -8,8 +8,10 @@ SLACK_CLIENT_OPTIONS =
 
 class SlackClient
 
-  constructor: (options) ->
+  constructor: (options, robot) ->
     _.merge SLACK_CLIENT_OPTIONS, options
+
+    @robot = robot
 
     # RTM is the default communication client
     @rtm = new RtmClient options.token, options
@@ -22,7 +24,6 @@ class SlackClient
 
     # Track listeners for easy clean-up
     @listeners = []
-
 
   ###
   Open connection to the Slack RTM API
@@ -64,7 +65,18 @@ class SlackClient
   Set a channel's topic
   ###
   setTopic: (id, topic) ->
-    @web.channels.setTopic(id, topic)
+    channel = @rtm.dataStore.getChannelGroupOrDMById(id)
+    @robot.logger.debug topic
+
+    type = channel.getType()
+    switch type
+      when "channel" then @web.channels.setTopic(id, topic)
+      # some groups are private channels which have a topic
+      # some groups are MPIMs which do not
+      when "group"
+          @web.groups.setTopic id, topic, (err,res) =>
+            if (err || !res.ok) then @robot.logger.debug "Cannot set topic in MPIM"
+      else @robot.logger.debug "Cannot set topic in "+type
 
 
   ###
