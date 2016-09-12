@@ -102,9 +102,9 @@ beforeEach ->
           when 'known_room' then {id: 'C00000004'}
           else undefined
   @stubs.chatMock =
-    postMessage: (room, messageText, message) =>
+    postMessage: (room, messageText, options) =>
       @stubs._msg = messageText
-      @stubs._opts = message
+      @stubs._opts = options
       @stubs._room = room
   @stubs.channelsMock =
     setTopic: (id, topic) =>

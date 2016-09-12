@@ -77,10 +77,11 @@ describe 'send()', ->
     @stubs._msg.should.equal '<test|test>'
     @stubs._room.should.equal 'room3'
 
-  it 'Should translate known room names to a channel id', ->
-    @client.send {room: 'known_room'}, 'Message'
-    @stubs._msg.should.equal 'Message'
-    @stubs._room.should.equal 'C00000004'
+  #### Handled by Slack API now
+  # it 'Should translate known room names to a channel id', ->
+  #   @client.send {room: 'known_room'}, 'Message'
+  #   @stubs._msg.should.equal 'Message'
+  #   @stubs._room.should.equal 'C00000004'
 
   it 'Should not translate an unknown room', ->
     @client.send {room: 'unknown_room'}, 'Message'

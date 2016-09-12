@@ -69,45 +69,12 @@ class SlackFormatter
     text.join('\n')
 
 
-  ### 
-  Recursively replace @username with <@UXXXXX> for mentioning users and channels
-  ###
-  mentions: (text) ->
-    return if text is null # nothing to do
-      
-    if typeof text is 'string'
-      text.replace /(?:^| )@([\w\.-]+)/gm, (match, username) =>
-        user = @dataStore.getUserByName(username)
-        if user
-          match = match.replace /@[\w\.-]+/, "<@#{user.id}>"
-        else if username in MESSAGE_RESERVED_KEYWORDS
-          match = match.replace /@[\w\.-]+/, "<!#{username}>"
-        else
-          match #do nothing if we don't revognize the name
-
-    # object passed in, parse each property recursively
-    else if typeof text is 'object'
-      for key, value of text
-        text[key] = @mentions(value)
-      text
-
-    # we got something else, just pass it back out.
-    else
-      text
-
-
   ###
   Formats an incoming Slack message
   ###
   incoming: (message) ->
     @links @flatten message
 
-
-  ###
-  Formats outgoing messages
-  ###
-  outgoing: (message) ->
-    @mentions message
 
 
 module.exports = SlackFormatter
