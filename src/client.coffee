@@ -83,12 +83,16 @@ class SlackClient
   Send a message to Slack using the best client for the message type
   ###
   send: (envelope, message) ->
+    @robot.logger.debug "~~~~~~~"
+    @robot.logger.debug message
     {room} = envelope
-    options = { as_user: true, parse: 'full', link_names: 1 }
+    options = { as_user: true, link_names: 1 }
 
     if typeof message isnt 'string'
       @web.chat.postMessage(room, message.text, _.defaults(message, options))
     else if /<.+\|.+|>|@|#/.test(message)
+      @robot.logger.debug "sending with options"
+      @robot.logger.debug options
       @web.chat.postMessage(room, message, options)
     else
       @rtm.sendMessage(message, room)

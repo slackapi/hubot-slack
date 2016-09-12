@@ -1,5 +1,8 @@
 # [slack-hubot] Changelog
 
+### v4.0.4 (2016-09-12)
+  * Oh, so it turns out that the solution to using Slack's message formatting was incorrectly conceived. Fixed.
+
 ### v4.0.3 (2016-09-12)
   * So, you know how Hubot would crash when you tried to set the topic in a private channel? Yeah, me too. Fixed. (#350)
   * As it happens, we were taking on some of the message formatting work that the Slack servers can do on our behalf. Fixed. (#236, #356)
