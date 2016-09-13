@@ -57,8 +57,8 @@ describe 'disconnect()', ->
     @client.listeners.length.should.equal 0
 
 describe 'setTopic()', ->
-  it "Should set the topic", ->
-    @client.setTopic 12, 'iAmTopic'
+  it "Should set the topic in a channel", ->
+    @client.setTopic 'C123', 'iAmTopic'
     @stubs._topic.should.equal 'iAmTopic'
 
 describe 'send()', ->

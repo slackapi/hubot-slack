@@ -17,10 +17,17 @@ beforeEach ->
     name: 'general'
     id: 'C123'
     sendMessage: (msg) -> msg
+    getType: -> 'channel'
   @stubs.DM =
     name: 'User'
     id: 'D1232'
     sendMessage: (msg) -> msg
+    getType: -> 'dm'
+  @stubs.group =
+    name: 'Group'
+    id: 'G12324'
+    sendMessage: (msg) -> msg
+    getType: -> 'group'
   @stubs.user =
     name: 'name'
     id: 'U123'
@@ -101,6 +108,10 @@ beforeEach ->
         switch name
           when 'known_room' then {id: 'C00000004'}
           else undefined
+      getChannelGroupOrDMById: (id) =>
+        switch id
+          when @stubs.channel.id then @stubs.channel
+          when @stubs.DM.id then @stubs.DM
   @stubs.chatMock =
     postMessage: (room, messageText, options) =>
       @stubs._msg = messageText
@@ -150,7 +161,7 @@ beforeEach ->
 
   @formatter = new SlackFormatter @stubs.client.dataStore
 
-  @client = new SlackClient token: 'xoxb-faketoken'
+  @client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
   _.merge @client.rtm, @stubs.rtm
   _.merge @client.web.chat, @stubs.chatMock
   _.merge @client.web.channels, @stubs.channelsMock
