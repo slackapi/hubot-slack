@@ -87,3 +87,18 @@ describe 'send()', ->
     @client.send {room: 'unknown_room'}, 'Message'
     @stubs._msg.should.equal 'Message'
     @stubs._room.should.equal 'unknown_room'
+
+  it 'Should be able to send a DM to a user by id', ->
+    @client.send {room: @stubs.user.id}, 'DM Message'
+    @stubs._dmmsg.should.equal 'DM Message'
+    @stubs._room.should.equal @stubs.user.id
+
+  it 'Should be able to send a DM to a user by username', ->
+    @client.send {room: "@"+@stubs.user.name}, 'DM Message'
+    @stubs._dmmsg.should.equal 'DM Message'
+    @stubs._room.should.equal "@"+@stubs.user.name
+
+  it 'Should be able to send a DM to a user object', ->
+    @client.send @stubs.user, 'DM Message'
+    @stubs._dmmsg.should.equal 'DM Message'
+    @stubs._room.should.equal "@"+@stubs.user.name

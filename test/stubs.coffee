@@ -13,6 +13,16 @@ _ = require 'lodash'
 # Stubs are recreated before each test.
 beforeEach ->
   @stubs = {}
+
+  @stubs.send = (room, msg, opts) =>
+    @stubs._room = room
+    @stubs._opts = opts
+    if /^[UD@][\d\w]+/.test(room)
+      @stubs._dmmsg = msg
+    else
+      @stubs._msg = msg
+    msg
+
   @stubs.channel =
     name: 'general'
     id: 'C123'
@@ -61,11 +71,6 @@ beforeEach ->
     name: 'Example Team'
   # Slack client
   @stubs.client =
-    send: (env, msg) =>
-      if /user/.test(env.room)
-        @stubs._dmmsg = msg
-      else
-      @stubs._msg = msg
 
     dataStore:
       getUserById: (id) =>
@@ -100,9 +105,8 @@ beforeEach ->
       console.log(callback)
       callback(name)
     removeListener: (name) =>
-    sendMessage: (message, room) =>
-      @stubs._msg = message
-      @stubs._room = room
+    sendMessage: (msg, room) =>
+      @stubs.send room, msg
     dataStore:
       getChannelByName: (name) =>
         switch name
@@ -113,10 +117,8 @@ beforeEach ->
           when @stubs.channel.id then @stubs.channel
           when @stubs.DM.id then @stubs.DM
   @stubs.chatMock =
-    postMessage: (room, messageText, options) =>
-      @stubs._msg = messageText
-      @stubs._opts = options
-      @stubs._room = room
+    postMessage: (msg, room, opts) =>
+      @stubs.send(msg, room, opts)
   @stubs.channelsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic

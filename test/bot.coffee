@@ -41,12 +41,18 @@ describe 'Send Messages', ->
   it 'Should open a DM channel if needed', ->
     msg = 'Test'
     @slackbot.send {room: 'name'}, msg
-    @stubs._msg.should.eql 'Test'
+    @stubs._msg.should.eql msg
 
   it 'Should use an existing DM channel if possible', ->
     msg = 'Test'
-    @slackbot.send {room: 'user2'}, msg
-    @stubs._dmmsg.should.eql 'Test'
+    @slackbot.send {room: '@user2'}, msg
+    @stubs._dmmsg.should.eql msg
+    @stubs._room.should.eql '@user2'
+
+  it 'Should send a message to a user', ->
+    @slackbot.send @stubs.user, 'message'
+    @stubs._dmmsg.should.eql 'message'
+    @stubs._room.should.eql "@"+@stubs.user.name
 
 
 describe 'Client sending message', ->
