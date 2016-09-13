@@ -86,6 +86,12 @@ class SlackClient
     @robot.logger.debug "~~~~~~~"
     @robot.logger.debug message
     {room} = envelope
+    
+    if !(room.match /[A-Z]/) # slack rooms are always lowercase
+      # try to translate room name to room id
+      channelForName = @rtm.dataStore.getChannelByName(room)
+      room = channelForName.id if channelForName
+    
     options = { as_user: true, link_names: 1 }
 
     if typeof message isnt 'string'
