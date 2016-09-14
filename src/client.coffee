@@ -83,25 +83,19 @@ class SlackClient
   Send a message to Slack using the best client for the message type
   ###
   send: (envelope, message) ->
-    @robot.logger.debug "~~~~~~~"
-    @robot.logger.debug message
-    {room} = envelope
-    
-    if !(room.match /[A-Z]/) # slack rooms are always lowercase
-      # try to translate room name to room id
-      channelForName = @rtm.dataStore.getChannelByName(room)
-      room = channelForName.id if channelForName
-    
+    if envelope.room
+      room = envelope.room
+    else if envelope.id #Maybe we were sent a user object or channel object. Use the id, in that case.
+      room = envelope.id
+
+    @robot.logger.debug "Sending to #{room}: #{message}"
+
     options = { as_user: true, link_names: 1 }
 
     if typeof message isnt 'string'
       @web.chat.postMessage(room, message.text, _.defaults(message, options))
-    else if /<.+\|.+|>|@|#/.test(message)
-      @robot.logger.debug "sending with options"
-      @robot.logger.debug options
-      @web.chat.postMessage(room, message, options)
     else
-      @rtm.sendMessage(message, room)
+      @web.chat.postMessage(room, message, options)
 
 
 module.exports = SlackClient

@@ -83,7 +83,6 @@ class SlackBot extends Adapter
     sent_messages = []
     for message in messages
       if message isnt ''
-        @robot.logger.debug "Sending to #{envelope.room}: #{message}"
         sent_messages.push @client.send(envelope, message)
     return sent_messages
 
