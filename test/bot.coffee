@@ -52,7 +52,7 @@ describe 'Send Messages', ->
   it 'Should send a message to a user', ->
     @slackbot.send @stubs.user, 'message'
     @stubs._dmmsg.should.eql 'message'
-    @stubs._room.should.eql "@"+@stubs.user.name
+    @stubs._room.should.eql @stubs.user.id
 
 
 describe 'Client sending message', ->

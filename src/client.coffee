@@ -85,9 +85,7 @@ class SlackClient
   send: (envelope, message) ->
     if envelope.room
       room = envelope.room
-    else if envelope.name #in case we were sent a user object _as_ the envelope
-      room = "@"+envelope.name
-    else if envelope.id #in case we only have a user name in the user object sent to us
+    else if envelope.id #Maybe we were sent a user object or channel object. Use the id, in that case.
       room = envelope.id
 
     @robot.logger.debug "Sending to #{room}: #{message}"

@@ -101,4 +101,4 @@ describe 'send()', ->
   it 'Should be able to send a DM to a user object', ->
     @client.send @stubs.user, 'DM Message'
     @stubs._dmmsg.should.equal 'DM Message'
-    @stubs._room.should.equal "@"+@stubs.user.name
+    @stubs._room.should.equal @stubs.user.id
