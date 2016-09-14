@@ -1,5 +1,8 @@
 # [slack-hubot] Changelog
 
+### v4.0.5 (2016-09-14)
+  * Sometimes you could send a message to an @username or a #channelname, but most of the time you couldn't. We have found the problem, and politely asked it to leave.
+
 ### v4.0.4 (2016-09-12)
   * Oh, so it turns out that the solution to using Slack's message formatting was incorrectly conceived. Fixed.
 
