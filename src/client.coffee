@@ -94,12 +94,8 @@ class SlackClient
 
     if typeof message isnt 'string'
       @web.chat.postMessage(room, message.text, _.defaults(message, options))
-    else if /<.+\|.+|>|@|#/.test(message)
-      @robot.logger.debug "sending with options"
-      @robot.logger.debug options
-      @web.chat.postMessage(room, message, options)
     else
-      @rtm.sendMessage(message, room)
+      @web.chat.postMessage(room, message, options)
 
 
 module.exports = SlackClient
