@@ -20,6 +20,7 @@ class SlackBot extends Adapter
     @client.on 'close', @close
     @client.on 'error', @error
     @client.on 'message', @message
+    @client.on 'reaction_added', @reactionAdded
     @client.on 'authenticated', @authenticated
 
     # Start logging in
@@ -157,6 +158,17 @@ class SlackBot extends Adapter
         message.user = user
         @receive new CatchAllMessage(message)
 
+  ###
+  Reaction added event received from Slack
+  ###
+  reactionAdded: (message) =>
+    {user, item, reaction, event_ts} = message
+    return if (user == @self.id) || (user == @self.bot_id) #Ignore anything we sent
 
+    user = @client.rtm.dataStore.getUserById(user)
+    user.room = item.channel
+    msg = new TextMessage(user, reaction, event_ts)
+    msg.rawMessage = message
+    @receive msg
 
 module.exports = SlackBot

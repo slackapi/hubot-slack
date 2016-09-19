@@ -108,6 +108,13 @@ beforeEach ->
     sendMessage: (msg, room) =>
       @stubs.send room, msg
     dataStore:
+      getUserById: (id) =>
+        switch id
+          when @stubs.user.id then @stubs.user
+          when @stubs.bot.id then @stubs.bot
+          when @stubs.self.id then @stubs.self
+          when @stubs.self_bot.id then @stubs.self_bot
+          else undefined
       getChannelByName: (name) =>
         switch name
           when 'known_room' then {id: 'C00000004'}
