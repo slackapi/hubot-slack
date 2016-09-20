@@ -147,7 +147,7 @@ describe 'Handling incoming messages', ->
 
   it 'Should handle reaction_added events as envisioned', ->
     reactionMessage = {
-      type: 'reaction_added', user: @stubs.user.id, item_user: 'U456'
+      type: 'reaction_added', user: @stubs.user.id, item_user: @stubs.self.id
       item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
@@ -156,12 +156,13 @@ describe 'Handling incoming messages', ->
     should.equal (@stubs._received instanceof ReactionMessage), true
     should.equal @stubs._received.user.id, @stubs.user.id
     should.equal @stubs._received.user.room, @stubs.channel.id
+    should.equal @stubs._received.item_user.id, @stubs.self.id
     should.equal @stubs._received.type, 'added'
     should.equal @stubs._received.reaction, 'thumbsup'
 
   it 'Should handle reaction_removed events as envisioned', ->
     reactionMessage = {
-      type: 'reaction_removed', user: @stubs.user.id, item_user: 'U456'
+      type: 'reaction_removed', user: @stubs.user.id, item_user: @stubs.self.id
       item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
@@ -170,6 +171,7 @@ describe 'Handling incoming messages', ->
     should.equal (@stubs._received instanceof ReactionMessage), true
     should.equal @stubs._received.user.id, @stubs.user.id
     should.equal @stubs._received.user.room, @stubs.channel.id
+    should.equal @stubs._received.item_user.id, @stubs.self.id
     should.equal @stubs._received.type, 'removed'
     should.equal @stubs._received.reaction, 'thumbsup'
 
