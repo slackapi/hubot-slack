@@ -1,6 +1,7 @@
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage} = require.main.require 'hubot'
 
 SlackClient = require './client'
+ReactionMessage = require './reaction-message'
 
 class SlackBot extends Adapter
 
@@ -20,6 +21,8 @@ class SlackBot extends Adapter
     @client.on 'close', @close
     @client.on 'error', @error
     @client.on 'message', @message
+    @client.on 'reaction_added', @reaction
+    @client.on 'reaction_removed', @reaction
     @client.on 'authenticated', @authenticated
 
     # Start logging in
@@ -157,6 +160,16 @@ class SlackBot extends Adapter
         message.user = user
         @receive new CatchAllMessage(message)
 
+  ###
+  Reaction added/removed event received from Slack
+  ###
+  reaction: (message) =>
+    {type, user, reaction, item_user, item, event_ts} = message
+    return if (user == @self.id) || (user == @self.bot_id) #Ignore anything we sent
 
+    user = @client.rtm.dataStore.getUserById(user)
+    user.room = item.channel
+    item_user = @client.rtm.dataStore.getUserById(item_user)
+    @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
 
 module.exports = SlackBot
