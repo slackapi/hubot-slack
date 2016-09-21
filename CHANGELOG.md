@@ -1,5 +1,8 @@
 # [slack-hubot] Changelog
 
+### v4.1.0 (2016-09-21)
+  * Somewhere out there, someone has been pining to handle message reactions. If that someone is you, this release lets you do that. Preprare to receive new `ReactionMessage` messages when reactions are added or removed from messages! To the rest of you: Carry on.
+
 ### v4.0.5 (2016-09-14)
   * Sometimes you could send a message to an @username or a #channelname, but most of the time you couldn't. We have found the problem, and politely asked it to leave.
 
