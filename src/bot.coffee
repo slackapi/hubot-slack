@@ -1,7 +1,34 @@
-{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage} = require.main.require 'hubot'
+{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot} = require.main.require 'hubot'
 
 SlackClient = require './client'
 ReactionMessage = require './reaction-message'
+
+# Public: Adds a Listener for ReactionMessages with the provided matcher,
+# options, and callback
+#
+# matcher  - A Function that determines whether to call the callback.
+#            Expected to return a truthy value if the callback should be
+#            executed (optional).
+# options  - An Object of additional parameters keyed on extension name
+#            (optional).
+# callback - A Function that is called with a Response object if the
+#            matcher function returns true.
+#
+# Returns nothing.
+Robot::react = (matcher, options, callback) ->
+  matchReaction = (msg) -> msg instanceof ReactionMessage
+
+  if arguments.length == 1
+    return @listen matchReaction, matcher
+
+  else if matcher instanceof Function
+    matchReaction = (msg) -> msg instanceof ReactionMessage && matcher(msg)
+
+  else
+    callback = options
+    options = matcher
+
+  @listen matchReaction, options, callback
 
 class SlackBot extends Adapter
 

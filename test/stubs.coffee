@@ -5,7 +5,7 @@ SlackFormatter = require '../src/formatter'
 SlackClient = require '../src/client'
 {EventEmitter} = require 'events'
 # Use Hubot's brain in our stubs
-{Brain} = require 'hubot'
+{Brain, Robot} = require 'hubot'
 _ = require 'lodash'
 
 # Stub a few interfaces to grease the skids for tests. These are intentionally
@@ -151,6 +151,9 @@ beforeEach ->
     # attach a real Brain to the robot
     robot.brain = new Brain robot
     robot.name = 'bot'
+    robot.listeners = []
+    robot.listen = Robot.prototype.listen.bind(robot)
+    robot.react = Robot.prototype.react.bind(robot)
     robot
   @stubs.callback = do ->
     return "done"
