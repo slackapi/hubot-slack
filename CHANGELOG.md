@@ -1,5 +1,8 @@
 # [slack-hubot] Changelog
 
+### v4.2.1 (2016-10-120
+  * Please don't ask. A bug. A tiny bug. But not here. In NPM. *sigh*
+
 ### v4.2.0 (2016-10-12)
   * And now we have an even easier way of watching for message reactions
 
