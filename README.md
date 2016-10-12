@@ -60,6 +60,41 @@ need to upgrade:
 - Once you're happy it works, disable the old hubot integration from
   https://my.slack.com/services
 
+## Upgrading from version 3 or earlier of hubot-slack
+
+Version 4 of the hubot-slack adapter uses a more recent version of
+`node-slack-sdk`.  As a result, there are some syntax changes within Hubot:
+
+1. Before version 4, `msg.message.room` would return the name of the room
+(e.g. `general`).  `msg.message.room` now returns a room identifier
+(e.g. `C03NM270D`).  If you need to translate the room id to a room name,
+you can look it up with the client:
+
+    ```coffeescript
+      robot.respond /what room am i in\?/i, (msg) ->
+        room = msg.message.room
+        roomName = robot.adapter.client.rtm.dataStore.getChannelById(room).name
+        msg.send roomName
+    ```
+
+2. Version 3 of hubot-slack supported attachments by emitting a
+`slack.attachment` event.  In version 4, you use `msg.send`, passing an object
+with an `attachments` array:
+
+    ```coffeescript
+      robot.respond /send attachments/i, (msg) ->
+        msg.send(
+          attachments: [
+            {
+              text: '*error*: something bad happened'
+              fallback: 'error: something bad happened'
+              color: 'danger'
+              mrkdwn_in: ['text']
+            }
+          ]
+        )
+    ```
+
 ## Configuration
 
 This adapter uses the following environment variables:
