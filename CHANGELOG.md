@@ -1,5 +1,8 @@
 # [slack-hubot] Changelog
 
+### v4.2.0 (2016-10-12)
+  * And now we have an even easier way of watching for message reactions
+
 ### v4.1.0 (2016-09-21)
   * Somewhere out there, someone has been pining to handle message reactions. If that someone is you, this release lets you do that. Preprare to receive new `ReactionMessage` messages when reactions are added or removed from messages! To the rest of you: Carry on.
 
