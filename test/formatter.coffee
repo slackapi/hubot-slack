@@ -7,8 +7,6 @@ describe 'incoming()', ->
     foo.should.equal 'foo'
 
 
-    
-
 
 describe 'links()', ->
 
@@ -22,15 +20,15 @@ describe 'links()', ->
 
   it 'Should change <@U123|label> links to label', ->
     foo = @formatter.links 'foo <@U123|label> bar'
-    foo.should.equal 'foo label bar'
+    foo.should.equal 'foo @label bar'
 
   it 'Should change <#C123> links to #general', ->
     foo = @formatter.links 'foo <#C123> bar'
     foo.should.equal 'foo #general bar'
 
-  it 'Should change <#C123|label> links to label', ->
+  it 'Should change <#C123|label> links to #label', ->
     foo = @formatter.links 'foo <#C123|label> bar'
-    foo.should.equal 'foo label bar'
+    foo.should.equal 'foo #label bar'
 
   it 'Should change <!everyone> links to @everyone', ->
     foo = @formatter.links 'foo <!everyone> bar'
@@ -82,7 +80,7 @@ describe 'links()', ->
 
   it 'Should change multiple links at once', ->
     foo = @formatter.links 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
-    foo.should.equal 'foo label bar #general @channel label (https://www.example.com)'
+    foo.should.equal 'foo @label bar #general @channel label (https://www.example.com)'
 
 
 

@@ -10,7 +10,7 @@ class SlackFormatter
   ###
   Formats links and ids
   ###
-  links: (text) ->    
+  links: (text) ->
     regex = ///
       <              # opening angle bracket
       ([@#!])?       # link type
@@ -25,13 +25,13 @@ class SlackFormatter
       switch type
 
         when '@'
-          if label then return label
+          if label then return "@#{label}"
           user = @dataStore.getUserById link
           if user
             return "@#{user.name}"
 
         when '#'
-          if label then return label
+          if label then return "\##{label}"
           channel = @dataStore.getChannelById link
           if channel
             return "\##{channel.name}"
@@ -63,7 +63,7 @@ class SlackFormatter
 
     # append all attachments
     for attachment in message.attachments or []
-      text.push(attachment.fallback)    
+      text.push(attachment.fallback)
 
     # flatten array
     text.join('\n')
