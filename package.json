@@ -1,6 +1,6 @@
 {
   "name": "hubot-slack",
-  "version": "4.1.0",
+  "version": "4.2.1",
   "description": "A Slack adapter for hubot",
   "main": "./slack",
   "scripts": {
@@ -28,7 +28,7 @@
     "lodash": "^3.10.1"
   },
   "devDependencies": {
-    "hubot": "~2.11",
+    "hubot": "~2.19",
     "coffee-coverage": "^1.0.1",
     "coffee-script": "~1.7.1",
     "coveralls": "^2.11.9",
