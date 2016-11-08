@@ -180,7 +180,7 @@ class SlackBot extends Adapter
 
       when 'channel_topic', 'group_topic'
         @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{topic}"
-        @receive new TopicMessage user, message.setTopic, message.ts
+        @receive new TopicMessage user, message.topic, message.ts
 
       else        
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, subtype: #{subtype}"
