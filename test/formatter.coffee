@@ -47,6 +47,10 @@ describe 'links()', ->
   it 'Should change <!here> links to @here', ->
     foo = @formatter.links 'foo <!here> bar'
     foo.should.equal 'foo @here bar'
+  
+  it 'Should change <!subteam^T123|@subteam> links to @subteam', ->
+    foo = @formatter.links 'foo <!subteam^T123|@subteam> bar'
+    foo.should.equal 'foo @subteam bar'
 
   it 'Should remove formatting around <http> links', ->
     foo = @formatter.links 'foo <http://www.example.com> bar'

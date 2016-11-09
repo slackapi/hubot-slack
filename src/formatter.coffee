@@ -39,6 +39,7 @@ class SlackFormatter
         when '!'
           if link in MESSAGE_RESERVED_KEYWORDS
             return "@#{link}"
+          return label
 
         else
           link = link.replace /^mailto:/, ''
