@@ -133,7 +133,7 @@ class SlackBot extends Adapter
   ###
   Hubot is setting the Slack channel topic
   ###
-  topic: (envelope, strings...) ->
+  setTopic: (envelope, strings...) ->
     return if envelope.room[0] is 'D' # ignore DMs
 
     @client.setTopic envelope.room, strings.join "\n"
