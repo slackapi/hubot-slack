@@ -3,4 +3,4 @@ node_js:
   - "0.12"
   - "0.10"
 after_success:
-  - npm run coveralls
+  - npm run codecov
