@@ -5,7 +5,7 @@
   "main": "./slack",
   "scripts": {
     "test": "npm run mocha && istanbul report text-summary lcov",
-    "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "codecov": "codecov",
     "mocha": "mocha --compilers coffee:coffee-script/register  --require coffee-coverage/register-istanbul --reporter spec test"
   },
   "keywords": [
@@ -18,25 +18,25 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/slackhq/hubot-slack.git"
+    "url": "http://github.com/slackapi/hubot-slack.git"
   },
   "bugs": {
-    "url": "https://github.com/slackhq/hubot-slack/issues"
+    "url": "https://github.com/slackapi/hubot-slack/issues"
   },
   "dependencies": {
     "@slack/client": "^3.4.0",
     "lodash": "^3.10.1"
   },
   "devDependencies": {
-    "hubot": "^2.19",
-    "coffee-coverage": "^1.0.1",
+    "coffee-coverage": "~1.0.1",
     "coffee-script": "~1.7.1",
-    "coveralls": "^2.11.9",
+    "codecov": "~1.0.1",
     "grunt": "~0.4.1",
     "grunt-cli": "^0.1.13",
     "grunt-contrib-watch": "~0.5.3",
     "grunt-release": "~0.6.0",
     "grunt-shell": "~0.5.0",
+    "hubot": "~2.19",
     "istanbul": "^0.4.3",
     "mocha": "~1.13.0",
     "should": "~2.0.2"

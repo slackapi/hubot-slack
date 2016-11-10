@@ -25,13 +25,13 @@ class SlackFormatter
       switch type
 
         when '@'
-          if label then return label
+          if label then return "@#{label}"
           user = @dataStore.getUserById link
           if user
             return "@#{user.name}"
 
         when '#'
-          if label then return label
+          if label then return "\##{label}"
           channel = @dataStore.getChannelById link
           if channel
             return "\##{channel.name}"
@@ -39,6 +39,9 @@ class SlackFormatter
         when '!'
           if link in MESSAGE_RESERVED_KEYWORDS
             return "@#{link}"
+          else if label
+            return label
+          return m
 
         else
           link = link.replace /^mailto:/, ''

@@ -96,11 +96,11 @@ describe 'Reply to Messages', ->
 
 describe 'Setting the channel topic', ->
   it 'Should set the topic in channels', ->
-    @slackbot.topic {room: @stubs.channel.id}, 'channel'
+    @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
     @stubs._topic.should.equal 'channel'
 
   it 'Should NOT set the topic in DMs', ->
-    @slackbot.topic {room: 'D1232'}, 'DM'
+    @slackbot.setTopic {room: 'D1232'}, 'DM'
     should.not.exists(@stubs._topic)
 
 describe 'Receiving an error event', ->
