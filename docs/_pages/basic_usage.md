@@ -4,7 +4,6 @@ title: Basic Usage
 permalink: /basic_usage
 order: 4
 headings:
-    - title: A note on handling tokens and other sensitive data
     - title: Listening for a message
     - title: Messages directed to your bot
     - title: Posting a response
