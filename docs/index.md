@@ -9,8 +9,8 @@ headings:
     - title: Getting Help
 ---
 
-So you want to get started with chatops using Hubot and Slack? We've got your covered. {{ site.product_name }} is an
-adapter to let your connect your Hubot scripts to your Slack team, giving you and your fellow devops engineers 
+So you want to get started with ChatOps using Hubot and Slack? We've got you covered. {{ site.product_name }} is an
+adapter that connects your Hubot scripts to your Slack team, giving you and your fellow DevOps engineers a new best friend: your very own ChatOps bot.
 
 ## Requirements and Installation
 
