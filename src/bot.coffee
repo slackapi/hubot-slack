@@ -51,6 +51,7 @@ class SlackBot extends Adapter
     @client.on 'reaction_added', @reaction
     @client.on 'reaction_removed', @reaction
     @client.on 'authenticated', @authenticated
+    @client.on 'presence_change', @presence_change
 
     # Start logging in
     @client.connect()
@@ -170,22 +171,35 @@ class SlackBot extends Adapter
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
         @receive new TextMessage(user, text, message.ts)
 
-      when 'channel_join', 'group_join'
-        @robot.logger.debug "#{user.name} has joined #{channel.name}"
-        @receive new EnterMessage user
-
-      when 'channel_leave', 'group_leave'
-        @robot.logger.debug "#{user.name} has left #{channel.name}"
-        @receive new LeaveMessage user
-
       when 'channel_topic', 'group_topic'
         @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{topic}"
         @receive new TopicMessage user, message.topic, message.ts
 
-      else        
+      else
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, subtype: #{subtype}"
         message.user = user
         @receive new CatchAllMessage(message)
+
+  ###
+  Presence notification received from Slack: this marks transition from active to away and vice versa
+  ###
+  presence_change: (message) =>
+    {type, presence, user} = message
+
+    return if user == @self.id #Ignore presence messages about hubot (at start up)
+
+    user = @client.rtm.dataStore.getUserById(user)
+    switch presence
+        when 'active'
+            @robot.logger.debug "#{user.name} has arrived"
+            @receive new EnterMessage user
+        when 'away'
+            @robot.logger.debug "#{user.name} has departed"
+            @receive new LeaveMessage user
+        else
+            @robot.logger.debug "Unknown presence state: #{presence}"
+
+
 
   ###
   Reaction added/removed event received from Slack
