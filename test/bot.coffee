@@ -254,3 +254,51 @@ describe 'Robot.react', ->
     @slackbot.robot.react matcher, @handleReaction
     listener = @slackbot.robot.listeners.shift()
     listener.matcher(@reactionMessage).should.be.false
+
+describe 'Users data', ->
+  it 'Should add a user data', ->
+    @slackbot.userChange(@stubs.user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+  it 'Should modify a user data', ->
+    @slackbot.userChange(@stubs.user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+    modified_user =
+      id: @stubs.user.id
+      name: 'modified_name'
+      real_name: @stubs.user.real_name
+      profile:
+        email: @stubs.user.profile.email
+
+    @slackbot.userChange(modified_user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.name, modified_user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, undefined
+
+  it 'Should load users data from web api', ->
+    @slackbot.loadUsers(null, @stubs.responseUsersList)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+    userperiod = @slackbot.robot.brain.data.users[@stubs.userperiod.id]
+    should.equal userperiod.name, @stubs.userperiod.name
+    should.equal userperiod.real_name, @stubs.userperiod.real_name
+    should.equal userperiod.email_address, @stubs.userperiod.profile.email
