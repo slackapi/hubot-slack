@@ -135,6 +135,8 @@ beforeEach ->
   @stubs.responseUsersList =
     ok: 'ok'
     members: [@stubs.user, @stubs.userperiod]
+  @stubs.wrongResponseUsersList =
+    members: [@stubs.user, @stubs.userperiod]
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter

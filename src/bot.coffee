@@ -205,7 +205,7 @@ class SlackBot extends Adapter
 
   loadUsers: (err, res) =>
     if err || !res.ok
-      @robot.logger.warning "Can't fetch users"
+      @robot.logger.error "Can't fetch users"
       return
 
     for id, user of res.members

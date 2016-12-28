@@ -302,3 +302,7 @@ describe 'Users data', ->
     should.equal userperiod.name, @stubs.userperiod.name
     should.equal userperiod.real_name, @stubs.userperiod.real_name
     should.equal userperiod.email_address, @stubs.userperiod.profile.email
+
+  it 'Should detect wrong response from web api', ->
+    @slackbot.loadUsers(null, @stubs.wrongResponseUsersList)
+    should.equal @slackbot.robot.brain.data.users[@stubs.user.id], undefined
