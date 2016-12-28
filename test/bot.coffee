@@ -289,6 +289,14 @@ describe 'Users data', ->
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, undefined
 
+  it 'Should ignore user data which have no id', ->
+    invalid_user =
+      name: 'username'
+
+    @slackbot.userChange(invalid_user)
+    users = @slackbot.robot.brain.data.users
+    should.equal Object.keys(users).length, 0
+
   it 'Should load users data from web api', ->
     @slackbot.loadUsers(null, @stubs.responseUsersList)
 
