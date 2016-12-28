@@ -1,6 +1,7 @@
 should = require 'should'
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
 ReactionMessage = require '../src/reaction-message'
+SlackClient = require '../src/client'
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -274,12 +275,16 @@ describe 'Users data', ->
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, @stubs.user.misc
 
+    client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
+
     modified_user =
       id: @stubs.user.id
       name: 'modified_name'
       real_name: @stubs.user.real_name
       profile:
         email: @stubs.user.profile.email
+      client:
+        client
 
     @slackbot.userChange(modified_user)
 
@@ -288,6 +293,7 @@ describe 'Users data', ->
     should.equal user.real_name, @stubs.user.real_name
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, undefined
+    should.equal user.slack.client, undefined
 
   it 'Should ignore user data which have no id', ->
     invalid_user =
