@@ -211,9 +211,6 @@ class SlackBot extends Adapter
     for id, user of res.members
       @userChange user
 
-    for id, user of @robot.brain.data.users
-      if id is user.name then delete @robot.brain.data.users[user.id]
-
   userChange: (user) =>
     return unless user?.id?
     newUser =
