@@ -261,6 +261,7 @@ describe 'Users data', ->
     @slackbot.userChange(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
     should.equal user.name, @stubs.user.name
     should.equal user.real_name, @stubs.user.real_name
     should.equal user.email_address, @stubs.user.profile.email
@@ -270,6 +271,7 @@ describe 'Users data', ->
     @slackbot.userChange(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
     should.equal user.name, @stubs.user.name
     should.equal user.real_name, @stubs.user.real_name
     should.equal user.email_address, @stubs.user.profile.email
@@ -289,17 +291,15 @@ describe 'Users data', ->
     @slackbot.userChange(modified_user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
     should.equal user.name, modified_user.name
     should.equal user.real_name, @stubs.user.real_name
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, undefined
     should.equal user.slack.client, undefined
 
-  it 'Should ignore user data which have no id', ->
-    invalid_user =
-      name: 'username'
-
-    @slackbot.userChange(invalid_user)
+  it 'Should ignore user data which is undefined', ->
+    @slackbot.userChange(undefined)
     users = @slackbot.robot.brain.data.users
     should.equal Object.keys(users).length, 0
 
@@ -307,12 +307,14 @@ describe 'Users data', ->
     @slackbot.loadUsers(null, @stubs.responseUsersList)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
     should.equal user.name, @stubs.user.name
     should.equal user.real_name, @stubs.user.real_name
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, @stubs.user.misc
 
     userperiod = @slackbot.robot.brain.data.users[@stubs.userperiod.id]
+    should.equal userperiod.id, @stubs.userperiod.id
     should.equal userperiod.name, @stubs.userperiod.name
     should.equal userperiod.real_name, @stubs.userperiod.real_name
     should.equal userperiod.email_address, @stubs.userperiod.profile.email

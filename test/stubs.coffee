@@ -133,10 +133,10 @@ beforeEach ->
       @stubs._topic = topic
 
   @stubs.responseUsersList =
-    ok: 'ok'
+    ok: true
     members: [@stubs.user, @stubs.userperiod]
   @stubs.wrongResponseUsersList =
-    members: [@stubs.user, @stubs.userperiod]
+    ok: false
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter

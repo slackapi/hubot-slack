@@ -51,7 +51,7 @@ class SlackBot extends Adapter
     @client.on 'reaction_added', @reaction
     @client.on 'reaction_removed', @reaction
     @client.on 'authenticated', @authenticated
-    @client.on 'userChange', @userChange
+    @client.on 'user_change', @userChange
 
     @client.web.users.list @loadUsers
     @robot.brain.on 'loaded', () =>
@@ -209,12 +209,12 @@ class SlackBot extends Adapter
       @robot.logger.error "Can't fetch users"
       return
 
-    for id, user of res.members
-      @userChange user
+    @userChange member for member in res.members
 
   userChange: (user) =>
-    return unless user?.id?
+    return unless user
     newUser =
+      id: user.id
       name: user.name
       real_name: user.real_name
       email_address: user.profile.email
