@@ -40,9 +40,11 @@ beforeEach ->
     getType: -> 'group'
   @stubs.user =
     name: 'name'
+    real_name: 'real_name'
     id: 'U123'
     profile:
       email: 'email@example.com'
+    misc: 'misc'
   @stubs.bot =
     name: 'testbot'
     id: 'B123'
@@ -129,6 +131,12 @@ beforeEach ->
   @stubs.channelsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
+
+  @stubs.responseUsersList =
+    ok: true
+    members: [@stubs.user, @stubs.userperiod]
+  @stubs.wrongResponseUsersList =
+    ok: false
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter
