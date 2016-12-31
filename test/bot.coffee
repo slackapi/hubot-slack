@@ -319,6 +319,21 @@ describe 'Users data', ->
     should.equal userperiod.real_name, @stubs.userperiod.real_name
     should.equal userperiod.email_address, @stubs.userperiod.profile.email
 
+  it 'Should merge with user data which is stored by other program', ->
+    originalUser =
+      something: 'something'
+
+    @slackbot.robot.brain.userForId @stubs.user.id, originalUser
+    @slackbot.loadUsers(null, @stubs.responseUsersList)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+    should.equal user.something, originalUser.something
+
   it 'Should detect wrong response from web api', ->
     @slackbot.loadUsers(null, @stubs.wrongResponseUsersList)
     should.equal @slackbot.robot.brain.data.users[@stubs.user.id], undefined
