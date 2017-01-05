@@ -51,6 +51,11 @@ class SlackBot extends Adapter
     @client.on 'reaction_added', @reaction
     @client.on 'reaction_removed', @reaction
     @client.on 'authenticated', @authenticated
+    @client.on 'user_change', @userChange
+
+    @client.web.users.list @loadUsers
+    @robot.brain.on 'loaded', () =>
+      @client.web.users.list @loadUsers
 
     # Start logging in
     @client.connect()
@@ -182,7 +187,7 @@ class SlackBot extends Adapter
         @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{topic}"
         @receive new TopicMessage user, message.topic, message.ts
 
-      else        
+      else
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, subtype: #{subtype}"
         message.user = user
         @receive new CatchAllMessage(message)
@@ -198,5 +203,33 @@ class SlackBot extends Adapter
     user.room = item.channel
     item_user = @client.rtm.dataStore.getUserById(item_user)
     @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
+
+  loadUsers: (err, res) =>
+    if err || !res.ok
+      @robot.logger.error "Can't fetch users"
+      return
+
+    @userChange member for member in res.members
+
+  userChange: (user) =>
+    return unless user
+    newUser =
+      id: user.id
+      name: user.name
+      real_name: user.real_name
+      email_address: user.profile.email
+      slack: {}
+    for key, value of user
+      # don't store the SlackClient, because it'd cause a circular reference
+      # (it contains users and channels), and because it has sensitive information like the token
+      continue if value instanceof SlackClient
+      newUser.slack[key] = value
+
+    if user.id of @robot.brain.data.users
+      for key, value of @robot.brain.data.users[user.id]
+        unless key of newUser
+          newUser[key] = value
+    delete @robot.brain.data.users[user.id]
+    @robot.brain.userForId user.id, newUser
 
 module.exports = SlackBot

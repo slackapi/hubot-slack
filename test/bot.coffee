@@ -1,6 +1,7 @@
 should = require 'should'
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
 ReactionMessage = require '../src/reaction-message'
+SlackClient = require '../src/client'
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -254,3 +255,85 @@ describe 'Robot.react', ->
     @slackbot.robot.react matcher, @handleReaction
     listener = @slackbot.robot.listeners.shift()
     listener.matcher(@reactionMessage).should.be.false
+
+describe 'Users data', ->
+  it 'Should add a user data', ->
+    @slackbot.userChange(@stubs.user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+  it 'Should modify a user data', ->
+    @slackbot.userChange(@stubs.user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+    client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
+
+    modified_user =
+      id: @stubs.user.id
+      name: 'modified_name'
+      real_name: @stubs.user.real_name
+      profile:
+        email: @stubs.user.profile.email
+      client:
+        client
+
+    @slackbot.userChange(modified_user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, modified_user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, undefined
+    should.equal user.slack.client, undefined
+
+  it 'Should ignore user data which is undefined', ->
+    @slackbot.userChange(undefined)
+    users = @slackbot.robot.brain.data.users
+    should.equal Object.keys(users).length, 0
+
+  it 'Should load users data from web api', ->
+    @slackbot.loadUsers(null, @stubs.responseUsersList)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+    userperiod = @slackbot.robot.brain.data.users[@stubs.userperiod.id]
+    should.equal userperiod.id, @stubs.userperiod.id
+    should.equal userperiod.name, @stubs.userperiod.name
+    should.equal userperiod.real_name, @stubs.userperiod.real_name
+    should.equal userperiod.email_address, @stubs.userperiod.profile.email
+
+  it 'Should merge with user data which is stored by other program', ->
+    originalUser =
+      something: 'something'
+
+    @slackbot.robot.brain.userForId @stubs.user.id, originalUser
+    @slackbot.loadUsers(null, @stubs.responseUsersList)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+    should.equal user.something, originalUser.something
+
+  it 'Should detect wrong response from web api', ->
+    @slackbot.loadUsers(null, @stubs.wrongResponseUsersList)
+    should.equal @slackbot.robot.brain.data.users[@stubs.user.id], undefined
