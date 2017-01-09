@@ -63,6 +63,13 @@ beforeEach ->
     real_name: 'real_name'
     id: 'U126'
     misc: 'misc'
+  @stubs.usernoemail =
+    name: 'name'
+    real_name: 'real_name'
+    id: 'U126'
+    profile:
+      foo: 'bar'
+    misc: 'misc'
   @stubs.self =
     name: 'self'
     id: 'U456'

@@ -218,7 +218,7 @@ class SlackBot extends Adapter
       name: user.name
       real_name: user.real_name
       slack: {}
-    newUser.email_address = user.profile.email if user.profile
+    newUser.email_address = user.profile.email if user.profile and user.profile.email
     for key, value of user
       # don't store the SlackClient, because it'd cause a circular reference
       # (it contains users and channels), and because it has sensitive information like the token
