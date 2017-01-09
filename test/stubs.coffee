@@ -58,6 +58,11 @@ beforeEach ->
     id: 'U125'
     profile:
       email: 'name-lname@example.com'
+  @stubs.usernoprofile =
+    name: 'name'
+    real_name: 'real_name'
+    id: 'U126'
+    misc: 'misc'
   @stubs.self =
     name: 'self'
     id: 'U456'
