@@ -267,6 +267,26 @@ describe 'Users data', ->
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, @stubs.user.misc
 
+  it 'Should add a user data (user with no profile)', ->
+    @slackbot.userChange(@stubs.usernoprofile)
+
+    user = @slackbot.robot.brain.data.users[@stubs.usernoprofile.id]
+    should.equal user.id, @stubs.usernoprofile.id
+    should.equal user.name, @stubs.usernoprofile.name
+    should.equal user.real_name, @stubs.usernoprofile.real_name
+    should.equal user.slack.misc, @stubs.usernoprofile.misc
+    (user).should.not.have.ownProperty('email_address')
+
+  it 'Should add a user data (user with no email in profile)', ->
+    @slackbot.userChange(@stubs.usernoemail)
+
+    user = @slackbot.robot.brain.data.users[@stubs.usernoemail.id]
+    should.equal user.id, @stubs.usernoemail.id
+    should.equal user.name, @stubs.usernoemail.name
+    should.equal user.real_name, @stubs.usernoemail.real_name
+    should.equal user.slack.misc, @stubs.usernoemail.misc
+    (user).should.not.have.ownProperty('email_address')
+
   it 'Should modify a user data', ->
     @slackbot.userChange(@stubs.user)
 
