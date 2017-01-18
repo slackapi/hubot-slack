@@ -209,9 +209,9 @@ class SlackBot extends Adapter
       @robot.logger.error "Can't fetch users"
       return
 
-    @userChange member for member in res.members
+    @changeUser member for member in res.members
 
-  userChange: (user) =>
+  changeUser: (user) =>
     return unless user
     newUser =
       id: user.id
@@ -231,5 +231,12 @@ class SlackBot extends Adapter
           newUser[key] = value
     delete @robot.brain.data.users[user.id]
     @robot.brain.userForId user.id, newUser
+
+  ###
+  Handle user_change event
+  ###
+  userChange: (event) =>
+    return unless event.type == 'user_change'
+    @changeUser event.user
 
 module.exports = SlackBot

@@ -258,7 +258,7 @@ describe 'Robot.react', ->
 
 describe 'Users data', ->
   it 'Should add a user data', ->
-    @slackbot.userChange(@stubs.user)
+    @slackbot.changeUser(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -268,7 +268,7 @@ describe 'Users data', ->
     should.equal user.slack.misc, @stubs.user.misc
 
   it 'Should add a user data (user with no profile)', ->
-    @slackbot.userChange(@stubs.usernoprofile)
+    @slackbot.changeUser(@stubs.usernoprofile)
 
     user = @slackbot.robot.brain.data.users[@stubs.usernoprofile.id]
     should.equal user.id, @stubs.usernoprofile.id
@@ -278,7 +278,7 @@ describe 'Users data', ->
     (user).should.not.have.ownProperty('email_address')
 
   it 'Should add a user data (user with no email in profile)', ->
-    @slackbot.userChange(@stubs.usernoemail)
+    @slackbot.changeUser(@stubs.usernoemail)
 
     user = @slackbot.robot.brain.data.users[@stubs.usernoemail.id]
     should.equal user.id, @stubs.usernoemail.id
@@ -288,7 +288,7 @@ describe 'Users data', ->
     (user).should.not.have.ownProperty('email_address')
 
   it 'Should modify a user data', ->
-    @slackbot.userChange(@stubs.user)
+    @slackbot.changeUser(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -308,7 +308,7 @@ describe 'Users data', ->
       client:
         client
 
-    @slackbot.userChange(modified_user)
+    @slackbot.changeUser(modified_user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -319,7 +319,7 @@ describe 'Users data', ->
     should.equal user.slack.client, undefined
 
   it 'Should ignore user data which is undefined', ->
-    @slackbot.userChange(undefined)
+    @slackbot.changeUser(undefined)
     users = @slackbot.robot.brain.data.users
     should.equal Object.keys(users).length, 0
 
