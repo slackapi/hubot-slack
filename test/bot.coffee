@@ -357,3 +357,27 @@ describe 'Users data', ->
   it 'Should detect wrong response from web api', ->
     @slackbot.loadUsers(null, @stubs.wrongResponseUsersList)
     should.equal @slackbot.robot.brain.data.users[@stubs.user.id], undefined
+
+  it 'Should handle user_changed events as envisioned', ->
+    payload = {
+      type: 'user_change',
+      user: @stubs.user
+    }
+    @slackbot.userChange payload
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+  it 'Should ignore user_changed events that are invalid', ->
+    payload = {
+      type: 'emoji_changed',
+      user: @stubs.user
+    }
+    @slackbot.userChange payload
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user, undefined
