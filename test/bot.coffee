@@ -258,7 +258,7 @@ describe 'Robot.react', ->
 
 describe 'Users data', ->
   it 'Should add a user data', ->
-    @slackbot.userChange(@stubs.user)
+    @slackbot.changeUser(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -268,7 +268,7 @@ describe 'Users data', ->
     should.equal user.slack.misc, @stubs.user.misc
 
   it 'Should add a user data (user with no profile)', ->
-    @slackbot.userChange(@stubs.usernoprofile)
+    @slackbot.changeUser(@stubs.usernoprofile)
 
     user = @slackbot.robot.brain.data.users[@stubs.usernoprofile.id]
     should.equal user.id, @stubs.usernoprofile.id
@@ -278,7 +278,7 @@ describe 'Users data', ->
     (user).should.not.have.ownProperty('email_address')
 
   it 'Should add a user data (user with no email in profile)', ->
-    @slackbot.userChange(@stubs.usernoemail)
+    @slackbot.changeUser(@stubs.usernoemail)
 
     user = @slackbot.robot.brain.data.users[@stubs.usernoemail.id]
     should.equal user.id, @stubs.usernoemail.id
@@ -288,7 +288,7 @@ describe 'Users data', ->
     (user).should.not.have.ownProperty('email_address')
 
   it 'Should modify a user data', ->
-    @slackbot.userChange(@stubs.user)
+    @slackbot.changeUser(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -308,7 +308,7 @@ describe 'Users data', ->
       client:
         client
 
-    @slackbot.userChange(modified_user)
+    @slackbot.changeUser(modified_user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -319,7 +319,7 @@ describe 'Users data', ->
     should.equal user.slack.client, undefined
 
   it 'Should ignore user data which is undefined', ->
-    @slackbot.userChange(undefined)
+    @slackbot.changeUser(undefined)
     users = @slackbot.robot.brain.data.users
     should.equal Object.keys(users).length, 0
 
@@ -357,3 +357,27 @@ describe 'Users data', ->
   it 'Should detect wrong response from web api', ->
     @slackbot.loadUsers(null, @stubs.wrongResponseUsersList)
     should.equal @slackbot.robot.brain.data.users[@stubs.user.id], undefined
+
+  it 'Should handle user_changed events as envisioned', ->
+    payload = {
+      type: 'user_change',
+      user: @stubs.user
+    }
+    @slackbot.userChange payload
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+  it 'Should ignore user_changed events that are invalid', ->
+    payload = {
+      type: 'emoji_changed',
+      user: @stubs.user
+    }
+    @slackbot.userChange payload
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user, undefined
