@@ -299,20 +299,22 @@ describe 'Users data', ->
 
     client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
 
-    modified_user =
-      id: @stubs.user.id
-      name: 'modified_name'
-      real_name: @stubs.user.real_name
-      profile:
-        email: @stubs.user.profile.email
-      client:
-        client
+    user_change_event =
+      type: 'user_change'
+      user:
+        id: @stubs.user.id
+        name: 'modified_name'
+        real_name: @stubs.user.real_name
+        profile:
+          email: @stubs.user.profile.email
+        client:
+          client
 
-    @slackbot.userChange(modified_user)
+    @slackbot.userChange(user_change_event)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
-    should.equal user.name, modified_user.name
+    should.equal user.name, user_change_event.user.name
     should.equal user.real_name, @stubs.user.real_name
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, undefined

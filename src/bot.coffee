@@ -211,8 +211,11 @@ class SlackBot extends Adapter
 
     @userChange member for member in res.members
 
-  userChange: (user) =>
-    return unless user
+  # when invoked as an event handler, this method takes an event. but when invoked from loadUsers,
+  # this method takes a user
+  userChange: (event_or_user) =>
+    return unless event_or_user
+    user = if event_or_user.type == 'user_change' then event_or_user.user else event_or_user
     newUser =
       id: user.id
       name: user.name
