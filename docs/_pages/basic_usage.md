@@ -45,6 +45,11 @@ If you want to specifically listen for messages that mention your bot, again the
 for any other Hubot. You define a regex to match against. Any message that matches your regex _and_ either includes
 an @-mention of your bot, or occurs within a DM with your bot will trigger the callback you assign to that regex.
 
+Note that Slack has the concept of [Threaded messages](https://api.slack.com/docs/message-threading) and in order 
+to allow for your bot to respond in the context of those threaded messages the `thread_ts` field is available on 
+the `res.message` object provided.  This field will automatically be passed along for you, as a result your bot 
+will automatically reply in the context of the thread, if the message to your bot originated from one.
+
 ```coffeescript
 module.exports = (robot) ->
 
