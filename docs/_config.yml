@@ -1,0 +1,26 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely need to edit after that.
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'jekyll serve'. If you change this file, please restart the server process.
+
+# Site settings
+product_name: &product_name Slack Developer Kit for Hubot
+title: *product_name
+email: opensource@slack.com
+description: >
+  Write Hubot scripts to run in your Slack team.
+baseurl: /hubot-slack
+url: http://slackapi.github.io
+repo_name: hubot-slack
+dev4slack_channel: sdk-hubot-slack
+twitter_username: SlackAPI
+github_username:  SlackAPI
+
+include: ['_pages']
+
+# Build settings
+markdown: kramdown
+gems:
+  - jemoji
