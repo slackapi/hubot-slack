@@ -7,6 +7,7 @@ SLACK_CLIENT_OPTIONS =
 
 
 class SlackClient
+  @MAX_MESSAGE_LENGTH = 8000
 
   constructor: (options, robot) ->
     _.merge SLACK_CLIENT_OPTIONS, options
@@ -99,6 +100,7 @@ class SlackClient
       else
         @robot.logger.debug "Sending to #{envelope.room}: #{text}"
         {text: text, mrkdwn_in: ['text'], fallback: text}
+    text = text.substring(0, SlackClient.MAX_MESSAGE_LENGTH)
 
     options = { as_user: true, link_names: 1, thread_ts: envelope.message?.thread_ts, attachments: [attachment] }
 
