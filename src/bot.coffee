@@ -3,6 +3,18 @@
 SlackClient = require './client'
 ReactionMessage = require './reaction-message'
 
+# Taken from hubot-slack prior to
+# https://github.com/slackapi/hubot-slack/commit/900402ea254b0fdf5a819fd3073325c68f1692a9
+class SlackTextMessage extends TextMessage
+  # Represents a TextMessage created from the Slack adapter
+  #
+  # user       - The User object
+  # text       - The parsed message text
+  # rawText    - The unparsed message text
+  # rawMessage - The Slack Message object
+  constructor: (@user, @text, @rawText, @rawMessage) ->
+    super @user, @text, @rawMessage.ts
+
 # Public: Adds a Listener for ReactionMessages with the provided matcher,
 # options, and callback
 #
@@ -148,8 +160,7 @@ class SlackBot extends Adapter
   Message received from Slack
   ###
   message: (message) =>
-    {text, user, channel, subtype, topic, bot} = message
-    rawText = text
+    {text, rawText, user, channel, subtype, topic, bot} = message
 
     return if user && (user.id == @self.id) #Ignore anything we sent
     return if bot && (bot.id == @self.bot_id) #Ignore anything we sent
@@ -174,8 +185,7 @@ class SlackBot extends Adapter
 
       when 'message', 'bot_message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        textMessage = new TextMessage(user, text, message.ts)
-        textMessage.rawText = rawText
+        textMessage = new SlackTextMessage(user, text, rawText, message)
         textMessage.thread_ts = message.thread_ts
         @receive textMessage
 
