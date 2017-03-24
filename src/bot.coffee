@@ -2,6 +2,7 @@
 
 SlackClient = require './client'
 ReactionMessage = require './reaction-message'
+SlackTextMessage = require './slack-message'
 
 # Public: Adds a Listener for ReactionMessages with the provided matcher,
 # options, and callback
@@ -148,7 +149,7 @@ class SlackBot extends Adapter
   Message received from Slack
   ###
   message: (message) =>
-    {text, user, channel, subtype, topic, bot} = message
+    {text, rawText, user, channel, subtype, topic, bot} = message
 
     return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
     return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
@@ -173,7 +174,7 @@ class SlackBot extends Adapter
 
       when 'message', 'bot_message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        textMessage = new TextMessage(user, text, message.ts)
+        textMessage = new SlackTextMessage(user, text, rawText, message)
         textMessage.thread_ts = message.thread_ts
         @receive textMessage
 

@@ -43,6 +43,7 @@ class SlackClient
       @rtm.on name, (message) =>
         {user, channel, bot_id} = message
 
+        message.rawText = message.text
         message.text = @format.incoming(message)
         message.user = @rtm.dataStore.getUserById(user) if user
         message.bot = @rtm.dataStore.getBotById(bot_id) if bot_id
