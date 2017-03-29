@@ -7,6 +7,7 @@ SLACK_CLIENT_OPTIONS =
 
 
 class SlackClient
+  @MAX_MESSAGE_LENGTH = 8000
 
   constructor: (options, robot) ->
     _.merge SLACK_CLIENT_OPTIONS, options
@@ -43,6 +44,7 @@ class SlackClient
       @rtm.on name, (message) =>
         {user, channel, bot_id} = message
 
+        message.rawText = message.text || ""
         message.text = @format.incoming(message)
         message.user = @rtm.dataStore.getUserById(user) if user
         message.bot = @rtm.dataStore.getBotById(bot_id) if bot_id
@@ -90,12 +92,23 @@ class SlackClient
 
     @robot.logger.debug "Sending to #{room}: #{message}"
 
-    options = { as_user: true, link_names: 1, thread_ts: envelope.message?.thread_ts }
+    text = if typeof message is 'string' then message else message.text
+    attachment = if (text.match(/^https?:\/\/\S+\.(?:jpg|jpe|jpeg|png|gif|bmp|dib)/) or
+                   text.match(/^https?:\/\/images.duckduckgo.com\//)) and
+                   !text.match(/https:\/\/files\.slack\.com/)
+        @robot.logger.debug "Sending to #{envelope.room} as image: #{text}"
+        {image_url: text, fallback: text}
+      else
+        @robot.logger.debug "Sending to #{envelope.room}: #{text}"
+        {text: text, mrkdwn_in: ['text'], fallback: text}
+    text = text.substring(0, SlackClient.MAX_MESSAGE_LENGTH)
+
+    options = { as_user: true, link_names: 1, thread_ts: envelope.message?.thread_ts, attachments: [attachment] }
 
     if typeof message isnt 'string'
-      @web.chat.postMessage(room, message.text, _.defaults(message, options))
+      @web.chat.postMessage(room, "", _.defaults(message, options))
     else
-      @web.chat.postMessage(room, message, options)
+      @web.chat.postMessage(room, "", options)
 
 
 module.exports = SlackClient
