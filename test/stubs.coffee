@@ -86,11 +86,6 @@ beforeEach ->
     id: 'W123'
     profile:
       email: 'org_not_in_workspace@example.com'
-  @stubs.org_bot_not_in_workspace =
-    name: 'name'
-    id: 'W123'
-    profile:
-      email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
   # Slack client
