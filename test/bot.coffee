@@ -209,6 +209,21 @@ describe 'Handling incoming messages', ->
     @slackbot.reaction reactionMessage
     should.equal @stubs._received, undefined
 
+  it 'Should ignore reaction events from users who are not in the dataStore', ->
+    reactionMessage = { type: 'reaction_added', user: @stubs.org_user_not_in_workspace, reaction: 'thumbsup', event_ts: '1360782804.083113' }
+    @slackbot.reaction reactionMessage
+    should.equal @stubs._received, undefined
+
+  it 'Should ignore reaction events whose item user is not in the dataStore', ->
+    reactionMessage = {
+      type: 'reaction_added', user: @stubs.user.id, item_user: @stubs.org_user_not_in_workspace
+      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
+      },
+      reaction: 'thumbsup', event_ts: '1360782804.083113'
+    }
+    @slackbot.reaction reactionMessage
+    should.equal @stubs._received, undefined
+
 describe 'Robot.react', ->
   before ->
     user = { id: @stubs.user.id, room: @stubs.channel.id }

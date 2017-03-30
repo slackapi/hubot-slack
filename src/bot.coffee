@@ -150,8 +150,8 @@ class SlackBot extends Adapter
   message: (message) =>
     {text, user, channel, subtype, topic, bot} = message
 
-    return if user && (user.id == @self.id) #Ignore anything we sent
-    return if bot && (bot.id == @self.bot_id) #Ignore anything we sent
+    return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
+    return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
 
     subtype = subtype || 'message'
 
@@ -202,8 +202,10 @@ class SlackBot extends Adapter
     return if (user == @self.id) || (user == @self.bot_id) #Ignore anything we sent
 
     user = @client.rtm.dataStore.getUserById(user)
-    user.room = item.channel
     item_user = @client.rtm.dataStore.getUserById(item_user)
+    return unless user && item_user
+
+    user.room = item.channel
     @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
 
   loadUsers: (err, res) =>
