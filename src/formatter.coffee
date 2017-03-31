@@ -10,7 +10,7 @@ class SlackFormatter
   ###
   Formats links and ids
   ###
-  links: (text) ->    
+  links: (text) ->
     regex = ///
       <              # opening angle bracket
       ([@#!])?       # link type
@@ -66,7 +66,7 @@ class SlackFormatter
 
     # append all attachments
     for attachment in message.attachments or []
-      text.push(attachment.fallback)    
+      text.push(attachment.fallback)
 
     # flatten array
     text.join('\n')

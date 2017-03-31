@@ -7,8 +7,6 @@ describe 'incoming()', ->
     foo.should.equal 'foo'
 
 
-    
-
 
 describe 'links()', ->
 
