@@ -35,6 +35,10 @@ class SlackBot extends Adapter
   constructor: (@robot, @options) ->
     @client = new SlackClient(@options, @robot)
 
+  ###
+  Slackbot reload users timeout (reloads every 1 hour)
+  ###
+  setLastTimeUsersUpdated: (@lastTimeUsersUpdated) ->
 
   ###
   Slackbot initialization
@@ -54,8 +58,12 @@ class SlackBot extends Adapter
     @client.on 'user_change', @userChange
 
     @client.web.users.list @loadUsers
+
     @robot.brain.on 'loaded', () =>
-      @client.web.users.list @loadUsers
+      if not @lastTimeUsersUpdated or (((new Date) - @lastTimeUsersUpdated) > (60 * 60 * 1000))
+        @client.web.users.list @loadUsers
+        this.setLastTimeUpdated(new Date)
+
 
     # Start logging in
     @client.connect()
