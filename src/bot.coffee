@@ -149,7 +149,7 @@ class SlackBot extends Adapter
   Message received from Slack
   ###
   message: (message) =>
-    {text, rawText, user, channel, subtype, topic, bot} = message
+    {text, rawText, returnRawText, user, channel, subtype, topic, bot} = message
 
     return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
     return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
@@ -174,7 +174,10 @@ class SlackBot extends Adapter
 
       when 'message', 'bot_message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        textMessage = new SlackTextMessage(user, text, rawText, message)
+        if returnRawText
+          textMessage = new SlackTextMessage(user, text, rawText, message)
+        else
+          textMessage = new TextMessage(user, text, message.ts)
         textMessage.thread_ts = message.thread_ts
         @receive textMessage
 

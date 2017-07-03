@@ -25,6 +25,8 @@ class SlackClient
     # Track listeners for easy clean-up
     @listeners = []
 
+    @returnRawText = !options.noRawText
+
   ###
   Open connection to the Slack RTM API
   ###
@@ -44,6 +46,7 @@ class SlackClient
         {user, channel, bot_id} = message
 
         message.rawText = message.text
+        message.returnRawText = @returnRawText
         message.text = @format.incoming(message)
         message.user = @rtm.dataStore.getUserById(user) if user
         message.bot = @rtm.dataStore.getBotById(bot_id) if bot_id

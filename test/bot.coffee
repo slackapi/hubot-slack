@@ -130,7 +130,8 @@ describe 'Handling incoming messages', ->
       user: @stubs.user,
       channel: @stubs.channel,
       text: 'foo http://www.example.com bar',
-      rawText: 'foo <http://www.example.com> bar'
+      rawText: 'foo <http://www.example.com> bar',
+      returnRawText: true
     }
     @slackbot.message messageData
     should.equal (@stubs._received instanceof SlackTextMessage), true
@@ -203,7 +204,7 @@ describe 'Handling incoming messages', ->
     should.equal (@stubs._received instanceof CatchAllMessage), true
 
   it 'Should not crash with bot messages', ->
-    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer' }
+    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
     should.equal (@stubs._received instanceof SlackTextMessage), true
 
   it 'Should ignore messages it sent itself', ->
