@@ -156,9 +156,8 @@ class SlackBot extends Adapter
     subtype = subtype || 'message'
 
     # Hubot expects this format for TextMessage Listener
-    user = bot if bot
-    user = user if user
-    user = {} if !user && !bot
+    user = bot if !user
+    user = {} if !user
     user.room = channel.id
 
 
