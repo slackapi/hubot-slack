@@ -38,7 +38,7 @@ class SlackBot extends Adapter
   ###
   Slackbot reload users timeout (reloads every 1 hour)
   ###
-  setLastTimeUsersUpdated: (@lastTimeUsersUpdated) ->
+  setIsLoaded: (@isLoaded) ->
 
   ###
   Slackbot initialization
@@ -60,9 +60,9 @@ class SlackBot extends Adapter
     @client.web.users.list @loadUsers
 
     @robot.brain.on 'loaded', () =>
-      if not @lastTimeUsersUpdated or (((new Date) - @lastTimeUsersUpdated) > (60 * 60 * 1000))
+      if not @isLoaded
         @client.web.users.list @loadUsers
-        this.setLastTimeUpdated(new Date)
+        this.setIsLoaded(true)
 
 
     # Start logging in
