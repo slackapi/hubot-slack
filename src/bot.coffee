@@ -36,6 +36,12 @@ class SlackBot extends Adapter
   constructor: (@robot, @options) ->
     @client = new SlackClient(@options, @robot)
 
+  ###
+  Slackbot loads full user list on the first brain load
+  QUESTION: why do brain adapters trigger a brain 'loaded' event each time a key
+  is set?
+  ###
+  setIsLoaded: (@isLoaded) ->
 
   ###
   Slackbot initialization
@@ -55,8 +61,12 @@ class SlackBot extends Adapter
     @client.on 'user_change', @userChange
 
     @client.web.users.list @loadUsers
+
     @robot.brain.on 'loaded', () =>
-      @client.web.users.list @loadUsers
+      if not @isLoaded
+        @client.web.users.list @loadUsers
+        this.setIsLoaded(true)
+
 
     # Start logging in
     @client.connect()
