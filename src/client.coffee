@@ -31,6 +31,7 @@ class SlackClient
   Open connection to the Slack RTM API
   ###
   connect: ->
+    # QUESTION: why do we throw away the login data?
     @rtm.login()
 
 

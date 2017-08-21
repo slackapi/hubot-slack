@@ -37,7 +37,9 @@ class SlackBot extends Adapter
     @client = new SlackClient(@options, @robot)
 
   ###
-  Slackbot reload users timeout (reloads every 1 hour)
+  Slackbot loads full user list on the first brain load
+  QUESTION: why do brain adapters trigger a brain 'loaded' event each time a key
+  is set?
   ###
   setIsLoaded: (@isLoaded) ->
 
