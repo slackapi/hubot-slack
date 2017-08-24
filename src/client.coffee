@@ -1,23 +1,22 @@
-{RtmClient, WebClient, MemoryDataStore} = require '@slack/client'
+{RtmClient, WebClient} = require '@slack/client'
 SlackFormatter = require './formatter'
 _ = require 'lodash'
-
-SLACK_CLIENT_OPTIONS =
-  dataStore: new MemoryDataStore()
-
 
 class SlackClient
 
   constructor: (options, robot) ->
-    _.merge SLACK_CLIENT_OPTIONS, options
 
     @robot = robot
 
+    @robot.logger.debug "slack rtm client options: #{JSON.stringify(options.rtm)}"
+
     # RTM is the default communication client
-    @rtm = new RtmClient options.token, options
+    @rtm = new RtmClient options.token, options.rtm
+
+    @rtmStartOpts = options.rtmStart || {}
 
     # Web is the fallback for complex messages
-    @web = new WebClient options.token, options
+    @web = new WebClient options.token
 
     # Message formatter
     @format = new SlackFormatter(@rtm.dataStore)
@@ -31,8 +30,8 @@ class SlackClient
   Open connection to the Slack RTM API
   ###
   connect: ->
-    # QUESTION: why do we throw away the login data?
-    @rtm.login()
+    @robot.logger.debug "slack rtm start with options: #{JSON.stringify(@rtmStartOpts)}"
+    @rtm.start(@rtmStartOpts)
 
 
   ###
