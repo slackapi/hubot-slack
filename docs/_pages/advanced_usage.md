@@ -18,7 +18,7 @@ variable. The variable is called `HUBOT_SLACK_RTM_START_OPTS`, and its value sho
 the additional parameters as key-value pairs. Here is an example of running hubot with that environment variable set:
 
 ```
-$ HUBOT_SLACK_TOKEN=xoxb-xxxxx HUBOT_SLACK_RTM_OPTIONS='{ "mpim_aware": true }' bin/hubot --adapter slack
+$ HUBOT_SLACK_TOKEN=xoxb-xxxxx HUBOT_SLACK_RTM_START_OPTS='{ "mpim_aware": true }' bin/hubot --adapter slack
 ```
 
 ## Customizing the RTM Client
