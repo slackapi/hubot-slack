@@ -2,6 +2,7 @@
 
 SlackClient = require './client'
 ReactionMessage = require './reaction-message'
+PresenceMessage = require './presence-message'
 SlackTextMessage = require './slack-message'
 
 # Public: Adds a Listener for ReactionMessages with the provided matcher,
@@ -59,6 +60,7 @@ class SlackBot extends Adapter
     @client.on 'reaction_removed', @reaction
     @client.on 'authenticated', @authenticated
     @client.on 'user_change', @userChange
+    @client.on 'presence_change', @presence
 
     @client.web.users.list @loadUsers
 
@@ -221,6 +223,19 @@ class SlackBot extends Adapter
 
     user.room = item.channel
     @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
+
+  ###
+  presence changed event received from Slack
+  ###
+  presence: (message) =>
+    {user} = message
+    return if (user == @self.id) || (user == @self.bot_id) #Ignore anything from the bot
+
+    user = @client.rtm.dataStore.getUserById(user)
+    console.log('USER': user)
+
+    return unless user
+    @receive new PresenceMessage(user)
 
   loadUsers: (err, res) =>
     if err || !res.ok
