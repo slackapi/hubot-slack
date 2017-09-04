@@ -89,6 +89,20 @@ module.exports = (robot) ->
 
 ```
 
+## Presence changes
+
+Everytime a user goes online slack triggers an event. You can listen for these and act according to the status of the user.
+
+```coffeescript
+module.exports = (robot) ->
+
+  robot.presenceChange (res) ->
+    channelId = robot.adapter.client.rtm.dataStore.getChannelByName("general").id
+    name = res.message.user.name
+    message = if res.message.user.presence is 'away' then "Bye bye #{name}" else "Glad you are back #{name}"
+    robot.messageRoom channelId, message
+```
+
 --------
 
 ## General Web API patterns
