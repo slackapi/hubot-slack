@@ -1,6 +1,7 @@
 should = require 'should'
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
 ReactionMessage = require '../src/reaction-message'
+PresenceMessage = require '../src/presence-message'
 SlackClient = require '../src/client'
 SlackTextMessage = require '../src/slack-message'
 
@@ -14,6 +15,13 @@ describe 'Adapter', ->
     # This is a sanity check to ensure the @slackbot.robot stub is proper.
     @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
     @slackbot.robot.react.should.be.an.instanceOf(Function).with.lengthOf(3)
+
+  it 'Should add the `presenceChange` method to the hubot `Robot` prototype', ->
+    Robot.prototype.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
+
+    # This is a sanity check to ensure the @slackbot.robot stub is proper.
+    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
+    @slackbot.robot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
 
 describe 'Login', ->
   it 'Should set the robot name', ->
@@ -199,6 +207,12 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.type, 'removed'
     should.equal @stubs._received.reaction, 'thumbsup'
 
+  it 'Should handle presence_change events as envisioned', ->
+    presenceMessage = {user: @stubs.user.id}
+    @slackbot.presenceChange presenceMessage
+    should.equal (@stubs._received instanceof PresenceMessage), true
+    should.equal @stubs._received.user.id, @stubs.user.id
+
   it 'Should handle unknown events as catchalls', ->
     @slackbot.message {subtype: 'hidey_ho', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof CatchAllMessage), true
@@ -238,6 +252,16 @@ describe 'Handling incoming messages', ->
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     }
     @slackbot.reaction reactionMessage
+    should.equal @stubs._received, undefined
+
+  it 'Should ignore presence events that it generated itself', ->
+    presenceMessage = { user: @stubs.self.id }
+    @slackbot.presenceChange presenceMessage
+    should.equal @stubs._received, undefined
+
+  it 'Should ignore presence events that it generated itself as a botuser', ->
+    presenceMessage = { user: @stubs.self_bot }
+    @slackbot.presenceChange presenceMessage
     should.equal @stubs._received, undefined
 
 describe 'Robot.react', ->
