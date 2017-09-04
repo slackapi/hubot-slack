@@ -259,7 +259,6 @@ class SlackBot extends Adapter
     return if (user == @self.id) || (user == @self.bot_id) #Ignore anything from the bot
 
     user = @client.rtm.dataStore.getUserById(user)
-    console.log('USER': user)
 
     return unless user
     @receive new PresenceMessage(user)
