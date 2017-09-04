@@ -106,7 +106,7 @@ describe 'Setting the channel topic', ->
     should.not.exists(@stubs._topic)
 
 describe 'Receiving an error event', ->
-  it 'Should propogate that error', ->
+  it 'Should propagate that error', ->
     @hit = false
     @slackbot.robot.on 'error', (error) =>
       error.msg.should.equal 'ohno'
