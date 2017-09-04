@@ -44,7 +44,7 @@ Robot::react = (matcher, options, callback) ->
 #            matcher function returns true.
 #
 # Returns nothing.
-Robot::presence = (matcher, options, callback) ->
+Robot::presenceChange = (matcher, options, callback) ->
   matchPresence = (msg) -> msg instanceof PresenceMessage
 
   if arguments.length == 1
@@ -87,7 +87,7 @@ class SlackBot extends Adapter
     @client.on 'reaction_removed', @reaction
     @client.on 'authenticated', @authenticated
     @client.on 'user_change', @userChange
-    @client.on 'presence_change', @presence
+    @client.on 'presence_change', @presenceChange
 
     @client.web.users.list @loadUsers
 
@@ -254,7 +254,7 @@ class SlackBot extends Adapter
   ###
   presence changed event received from Slack
   ###
-  presence: (message) =>
+  presenceChange: (message) =>
     {user} = message
     return if (user == @self.id) || (user == @self.bot_id) #Ignore anything from the bot
 
