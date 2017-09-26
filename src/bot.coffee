@@ -3,6 +3,7 @@
 SlackClient = require './client'
 ReactionMessage = require './reaction-message'
 SlackTextMessage = require './slack-message'
+Promise = global.Promise || require('es6-promise');
 
 # Public: Adds a Listener for ReactionMessages with the provided matcher,
 # options, and callback
@@ -126,10 +127,15 @@ class SlackBot extends Adapter
   Hubot is sending a message to Slack
   ###
   send: (envelope, messages...) ->
+    callback = ->
+    if typeof(messages[messages.length - 1]) == 'function'
+      callback = messages.pop()
+
     sent_messages = []
     for message in messages
       if message isnt ''
         sent_messages.push @client.send(envelope, message)
+    Promise.all(messages).then(callback.bind(null, null), callback)
     return sent_messages
 
 
@@ -137,12 +143,16 @@ class SlackBot extends Adapter
   Hubot is replying to a Slack message
   ###
   reply: (envelope, messages...) ->
+    callback = ->
+    if typeof(messages[messages.length - 1]) == 'function'
+      callback = messages.pop()
     sent_messages = []
     for message in messages
       if message isnt ''
         message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
         @robot.logger.debug "Sending to #{envelope.room}: #{message}"
         sent_messages.push @client.send(envelope, message)
+    Promise.all(messages).then(callback.bind(null, null), callback)
     return sent_messages
 
 
