@@ -2,6 +2,7 @@ should = require 'should'
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
 ReactionMessage = require '../src/reaction-message'
 SlackClient = require '../src/client'
+SlackTextMessage = require '../src/slack-message'
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -123,6 +124,21 @@ describe 'Handling incoming messages', ->
     @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.DM}
     @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
 
+  it 'Should return a message object with raw text and message', ->
+    messageData = {
+      subtype: 'message',
+      user: @stubs.user,
+      channel: @stubs.channel,
+      text: 'foo http://www.example.com bar',
+      rawText: 'foo <http://www.example.com> bar',
+      returnRawText: true
+    }
+    @slackbot.message messageData
+    should.equal (@stubs._received instanceof SlackTextMessage), true
+    should.equal @stubs._received.text, "foo http://www.example.com bar"
+    should.equal @stubs._received.rawText, "foo <http://www.example.com> bar"
+    should.equal @stubs._received.rawMessage, messageData
+
   it 'Should handle channel_join events as envisioned', ->
     @slackbot.message {subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof EnterMessage), true
@@ -188,8 +204,8 @@ describe 'Handling incoming messages', ->
     should.equal (@stubs._received instanceof CatchAllMessage), true
 
   it 'Should not crash with bot messages', ->
-    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer' }
-    should.equal (@stubs._received instanceof TextMessage), true
+    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
+    should.equal (@stubs._received instanceof SlackTextMessage), true
 
   it 'Should ignore messages it sent itself', ->
     @slackbot.message { subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
