@@ -108,7 +108,7 @@ module.exports = (robot) ->
 ## General Web API patterns
 
 You can access much of the [Slack Web API](https://api.slack.com/bot-users#api_usage) with your bot. The `robot`
-object uses [Slack Developer Kit for Node.js](slackapi.github.io/node-slack-sdk/) to access the Slack API, and an instance of the
+object uses [Slack Developer Kit for Node.js](https://slackapi.github.io/node-slack-sdk/) to access the Slack API, and an instance of the
 Web API wrapper is available in `robot.client.web`. So, you can call API endpoints in the following way:
 
 ```coffeescript
