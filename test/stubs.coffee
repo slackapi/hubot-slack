@@ -118,6 +118,8 @@ beforeEach ->
   @stubs.rtm =
     login: =>
       @stubs._connected = true
+    start: =>
+      @stubs._connected = true
     on: (name, callback) =>
       console.log("#####")
       console.log(name)
