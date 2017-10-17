@@ -31,7 +31,7 @@
   "devDependencies": {
     "coffee-coverage": "~1.0.1",
     "coffee-script": "~1.7.1",
-    "codecov": "~1.0.1",
+    "codecov": "^2.3.1",
     "grunt": "~0.4.1",
     "grunt-cli": "^0.1.13",
     "grunt-contrib-watch": "~0.5.3",
@@ -75,6 +75,10 @@
     {
       "email": "jagan@slack-corp.com",
       "name": "John Agan"
+    },
+    {
+      "email": "aoberoi@gmail.com",
+      "name": "Ankur Oberoi"
     }
   ]
 }
