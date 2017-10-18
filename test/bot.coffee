@@ -1,4 +1,5 @@
 should = require 'should'
+chai = require 'chai'
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
 ReactionMessage = require '../src/reaction-message'
 SlackClient = require '../src/client'
@@ -47,6 +48,9 @@ describe 'Send Messages', ->
   it 'Should not send empty messages', ->
     sentMessages = @slackbot.send {room: 'general'}, 'Hello', '', '', 'world!'
     sentMessages.length.should.equal 2
+
+  it 'Should not fail for inexistant user', ->
+    chai.expect(() => @slackbot.send {room: 'inexistant'}, 'Hello').to.not.throw()
 
   it 'Should open a DM channel if needed', ->
     msg = 'Test'
