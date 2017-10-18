@@ -2,6 +2,7 @@
 
 SlackClient = require './client'
 ReactionMessage = require './reaction-message'
+SlackTextMessage = require './slack-message'
 
 # Public: Adds a Listener for ReactionMessages with the provided matcher,
 # options, and callback
@@ -35,6 +36,12 @@ class SlackBot extends Adapter
   constructor: (@robot, @options) ->
     @client = new SlackClient(@options, @robot)
 
+  ###
+  Slackbot loads full user list on the first brain load
+  QUESTION: why do brain adapters trigger a brain 'loaded' event each time a key
+  is set?
+  ###
+  setIsLoaded: (@isLoaded) ->
 
   ###
   Slackbot initialization
@@ -54,8 +61,12 @@ class SlackBot extends Adapter
     @client.on 'user_change', @userChange
 
     @client.web.users.list @loadUsers
+
     @robot.brain.on 'loaded', () =>
-      @client.web.users.list @loadUsers
+      if not @isLoaded
+        @client.web.users.list @loadUsers
+        this.setIsLoaded(true)
+
 
     # Start logging in
     @client.connect()
@@ -148,17 +159,16 @@ class SlackBot extends Adapter
   Message received from Slack
   ###
   message: (message) =>
-    {text, user, channel, subtype, topic, bot} = message
+    {text, rawText, returnRawText, user, channel, subtype, topic, bot} = message
 
-    return if user && (user.id == @self.id) #Ignore anything we sent
-    return if bot && (bot.id == @self.bot_id) #Ignore anything we sent
+    return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
+    return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
 
     subtype = subtype || 'message'
 
     # Hubot expects this format for TextMessage Listener
-    user = bot if bot
-    user = user if user
-    user = {} if !user && !bot
+    user = bot if !user
+    user = {} if !user
     user.room = channel.id
 
 
@@ -173,7 +183,12 @@ class SlackBot extends Adapter
 
       when 'message', 'bot_message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        @receive new TextMessage(user, text, message.ts)
+        if returnRawText
+          textMessage = new SlackTextMessage(user, text, rawText, message)
+        else
+          textMessage = new TextMessage(user, text, message.ts)
+        textMessage.thread_ts = message.thread_ts
+        @receive textMessage
 
       when 'channel_join', 'group_join'
         @robot.logger.debug "#{user.name} has joined #{channel.name}"
@@ -200,8 +215,10 @@ class SlackBot extends Adapter
     return if (user == @self.id) || (user == @self.bot_id) #Ignore anything we sent
 
     user = @client.rtm.dataStore.getUserById(user)
-    user.room = item.channel
     item_user = @client.rtm.dataStore.getUserById(item_user)
+    return unless user && item_user
+
+    user.room = item.channel
     @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
 
   loadUsers: (err, res) =>
@@ -211,14 +228,17 @@ class SlackBot extends Adapter
 
     @userChange member for member in res.members
 
-  userChange: (user) =>
-    return unless user
+  # when invoked as an event handler, this method takes an event. but when invoked from loadUsers,
+  # this method takes a user
+  userChange: (event_or_user) =>
+    return unless event_or_user
+    user = if event_or_user.type == 'user_change' then event_or_user.user else event_or_user
     newUser =
       id: user.id
       name: user.name
       real_name: user.real_name
-      email_address: user.profile.email
       slack: {}
+    newUser.email_address = user.profile.email if user.profile and user.profile.email
     for key, value of user
       # don't store the SlackClient, because it'd cause a circular reference
       # (it contains users and channels), and because it has sensitive information like the token

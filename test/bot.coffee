@@ -3,6 +3,7 @@ chai = require 'chai'
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
 ReactionMessage = require '../src/reaction-message'
 SlackClient = require '../src/client'
+SlackTextMessage = require '../src/slack-message'
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -127,6 +128,21 @@ describe 'Handling incoming messages', ->
     @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.DM}
     @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
 
+  it 'Should return a message object with raw text and message', ->
+    messageData = {
+      subtype: 'message',
+      user: @stubs.user,
+      channel: @stubs.channel,
+      text: 'foo http://www.example.com bar',
+      rawText: 'foo <http://www.example.com> bar',
+      returnRawText: true
+    }
+    @slackbot.message messageData
+    should.equal (@stubs._received instanceof SlackTextMessage), true
+    should.equal @stubs._received.text, "foo http://www.example.com bar"
+    should.equal @stubs._received.rawText, "foo <http://www.example.com> bar"
+    should.equal @stubs._received.rawMessage, messageData
+
   it 'Should handle channel_join events as envisioned', ->
     @slackbot.message {subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof EnterMessage), true
@@ -192,8 +208,8 @@ describe 'Handling incoming messages', ->
     should.equal (@stubs._received instanceof CatchAllMessage), true
 
   it 'Should not crash with bot messages', ->
-    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer' }
-    should.equal (@stubs._received instanceof TextMessage), true
+    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
+    should.equal (@stubs._received instanceof SlackTextMessage), true
 
   it 'Should ignore messages it sent itself', ->
     @slackbot.message { subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
@@ -210,6 +226,21 @@ describe 'Handling incoming messages', ->
 
   it 'Should ignore reaction events that it generated itself as a botuser', ->
     reactionMessage = { type: 'reaction_added', user: @stubs.self_bot.id, reaction: 'thumbsup', event_ts: '1360782804.083113' }
+    @slackbot.reaction reactionMessage
+    should.equal @stubs._received, undefined
+
+  it 'Should ignore reaction events from users who are not in the dataStore', ->
+    reactionMessage = { type: 'reaction_added', user: @stubs.org_user_not_in_workspace, reaction: 'thumbsup', event_ts: '1360782804.083113' }
+    @slackbot.reaction reactionMessage
+    should.equal @stubs._received, undefined
+
+  it 'Should ignore reaction events whose item user is not in the dataStore', ->
+    reactionMessage = {
+      type: 'reaction_added', user: @stubs.user.id, item_user: @stubs.org_user_not_in_workspace
+      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
+      },
+      reaction: 'thumbsup', event_ts: '1360782804.083113'
+    }
     @slackbot.reaction reactionMessage
     should.equal @stubs._received, undefined
 
@@ -271,6 +302,26 @@ describe 'Users data', ->
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, @stubs.user.misc
 
+  it 'Should add a user data (user with no profile)', ->
+    @slackbot.userChange(@stubs.usernoprofile)
+
+    user = @slackbot.robot.brain.data.users[@stubs.usernoprofile.id]
+    should.equal user.id, @stubs.usernoprofile.id
+    should.equal user.name, @stubs.usernoprofile.name
+    should.equal user.real_name, @stubs.usernoprofile.real_name
+    should.equal user.slack.misc, @stubs.usernoprofile.misc
+    (user).should.not.have.ownProperty('email_address')
+
+  it 'Should add a user data (user with no email in profile)', ->
+    @slackbot.userChange(@stubs.usernoemail)
+
+    user = @slackbot.robot.brain.data.users[@stubs.usernoemail.id]
+    should.equal user.id, @stubs.usernoemail.id
+    should.equal user.name, @stubs.usernoemail.name
+    should.equal user.real_name, @stubs.usernoemail.real_name
+    should.equal user.slack.misc, @stubs.usernoemail.misc
+    (user).should.not.have.ownProperty('email_address')
+
   it 'Should modify a user data', ->
     @slackbot.userChange(@stubs.user)
 
@@ -283,20 +334,22 @@ describe 'Users data', ->
 
     client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
 
-    modified_user =
-      id: @stubs.user.id
-      name: 'modified_name'
-      real_name: @stubs.user.real_name
-      profile:
-        email: @stubs.user.profile.email
-      client:
-        client
+    user_change_event =
+      type: 'user_change'
+      user:
+        id: @stubs.user.id
+        name: 'modified_name'
+        real_name: @stubs.user.real_name
+        profile:
+          email: @stubs.user.profile.email
+        client:
+          client
 
-    @slackbot.userChange(modified_user)
+    @slackbot.userChange(user_change_event)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
-    should.equal user.name, modified_user.name
+    should.equal user.name, user_change_event.user.name
     should.equal user.real_name, @stubs.user.real_name
     should.equal user.email_address, @stubs.user.profile.email
     should.equal user.slack.misc, undefined

@@ -58,6 +58,18 @@ beforeEach ->
     id: 'U125'
     profile:
       email: 'name-lname@example.com'
+  @stubs.usernoprofile =
+    name: 'name'
+    real_name: 'real_name'
+    id: 'U126'
+    misc: 'misc'
+  @stubs.usernoemail =
+    name: 'name'
+    real_name: 'real_name'
+    id: 'U126'
+    profile:
+      foo: 'bar'
+    misc: 'misc'
   @stubs.self =
     name: 'self'
     id: 'U456'
@@ -69,6 +81,11 @@ beforeEach ->
     id: 'B456'
     profile:
       email: 'self@example.com'
+  @stubs.org_user_not_in_workspace =
+    name: 'name'
+    id: 'W123'
+    profile:
+      email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
   # Slack client
@@ -100,6 +117,8 @@ beforeEach ->
       ]
   @stubs.rtm =
     login: =>
+      @stubs._connected = true
+    start: =>
       @stubs._connected = true
     on: (name, callback) =>
       console.log("#####")

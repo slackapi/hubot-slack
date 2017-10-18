@@ -45,6 +45,11 @@ If you want to specifically listen for messages that mention your bot, again the
 for any other Hubot. You define a regex to match against. Any message that matches your regex _and_ either includes
 an @-mention of your bot, or occurs within a DM with your bot will trigger the callback you assign to that regex.
 
+Note that Slack has the concept of [Threaded messages](https://api.slack.com/docs/message-threading) and in order 
+to allow for your bot to respond in the context of those threaded messages the `thread_ts` field is available on 
+the `res.message` object provided.  This field will automatically be passed along for you, as a result your bot 
+will automatically reply in the context of the thread, if the message to your bot originated from one.
+
 ```coffeescript
 module.exports = (robot) ->
 
@@ -89,7 +94,7 @@ module.exports = (robot) ->
 ## General Web API patterns
 
 You can access much of the [Slack Web API](https://api.slack.com/bot-users#api_usage) with your bot. The `robot`
-object uses [Slack Developer Kit for Node.js](slackapi.github.io/node-slack-sdk/) to access the Slack API, and an instance of the
+object uses [Slack Developer Kit for Node.js](https://slackapi.github.io/node-slack-sdk/) to access the Slack API, and an instance of the
 Web API wrapper is available in `robot.client.web`. So, you can call API endpoints in the following way:
 
 ```coffeescript
@@ -100,6 +105,6 @@ module.exports = (robot) ->
     
     # There are better ways to post messages of course
     # Notice the _required_ arguments `channel` and `text`, and the _optional_ arguments `as_user`, and `unfurl_links`
-    robot.adapter.client.chat.postMessage(res.user.room, "This is a message!", {as_user: true, unfurl_links: false})
+    robot.adapter.client.web.chat.postMessage(res.message.room, "This is a message!", {as_user: true, unfurl_links: false})
 
 ```
