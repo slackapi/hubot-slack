@@ -89,10 +89,11 @@ class SlackBot extends Adapter
     {@self, team} = identity
 
     # Find out bot_id
-    for user in identity.users
-      if user.id == @self.id
-        @self.bot_id = user.profile.bot_id
-        break
+    if identity.users
+      for user in identity.users
+        if user.id == @self.id
+          @self.bot_id = user.profile.bot_id
+          break
 
     # Provide our name to Hubot
     @robot.name = @self.name
