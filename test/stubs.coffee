@@ -150,6 +150,26 @@ beforeEach ->
   @stubs.channelsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
+  @stubs.usersMock =
+    list: (opts, cb) =>
+      # @stubs._listCount = @stubs._listCount + 1 if @stubs._listCount?
+      @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
+      if opts?.cursor == 'mock_cursor'
+        cb(null, @stubs.userListPageLast)
+      else
+        cb(null, @stubs.userListPageWithNextCursor)
+  @stubs.userListPageWithNextCursor = {
+    members: [{ id: 1 }, { id: 2 }]
+    response_metadata: {
+      next_cursor: 'mock_cursor'
+    }
+  }
+  @stubs.userListPageLast = {
+    members: [{ id: 3 }]
+    response_metadata: {
+      next_cursor: ''
+    }
+  }
 
   @stubs.responseUsersList =
     ok: true
@@ -204,3 +224,4 @@ beforeEach ->
   _.merge @client.rtm, @stubs.rtm
   _.merge @client.web.chat, @stubs.chatMock
   _.merge @client.web.channels, @stubs.channelsMock
+  _.merge @client.web.users, @stubs.usersMock

@@ -102,3 +102,10 @@ describe 'send()', ->
     @client.send @stubs.user, 'DM Message'
     @stubs._dmmsg.should.equal 'DM Message'
     @stubs._room.should.equal @stubs.user.id
+
+describe 'loadUsers()', ->
+  it 'should make successive calls to users.list', ->
+    @client.loadUsers (err, result) =>
+      @stubs?._listCount.should.equal 2
+      result.members.length.should.equal 3
+

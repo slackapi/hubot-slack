@@ -60,12 +60,12 @@ class SlackBot extends Adapter
     @client.on 'authenticated', @authenticated
     @client.on 'user_change', @userChange
 
-    @client.web.users.list @loadUsers
+    @client.loadUsers @loadUsers
 
     @robot.brain.on 'loaded', () =>
       if not @isLoaded
-        @client.web.users.list @loadUsers
-        this.setIsLoaded(true)
+        @client.loadUsers @loadUsers
+        @setIsLoaded(true)
 
 
     # Start logging in

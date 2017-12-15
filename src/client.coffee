@@ -3,6 +3,7 @@ SlackFormatter = require './formatter'
 _ = require 'lodash'
 
 class SlackClient
+  @PAGE_SIZE = 100
 
   constructor: (options, robot) ->
 
@@ -100,6 +101,25 @@ class SlackClient
       @web.chat.postMessage(room, message.text, _.defaults(message, options))
     else
       @web.chat.postMessage(room, message, options)
+
+  loadUsers: (callback) ->
+    # paginated call to users.list
+    # some properties of the real results are left out because they are not used
+    combinedResults = { members: [] }
+    pageLoaded = (error, results) =>
+      return callback(error) if error
+      # merge results into combined results
+      combinedResults.members.push(member) for member in results.members
+      if results?.response_metadata?.next_cursor
+        # fetch next page
+        @web.users.list({
+          limit: SlackClient.PAGE_SIZE,
+          cursor: results.response_metadata.next_cursor
+        }, pageLoaded)
+      else
+        # pagination complete, run callback with results
+        callback(null, combinedResults)
+    @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
 
 
 module.exports = SlackClient
