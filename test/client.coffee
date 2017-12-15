@@ -109,3 +109,7 @@ describe 'loadUsers()', ->
       @stubs?._listCount.should.equal 2
       result.members.length.should.equal 3
 
+  it 'should handle errors', ->
+    @stubs._listError = true
+    @client.loadUsers (err, result) =>
+      err.should.be.an.Error

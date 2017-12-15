@@ -152,8 +152,8 @@ beforeEach ->
       @stubs._topic = topic
   @stubs.usersMock =
     list: (opts, cb) =>
-      # @stubs._listCount = @stubs._listCount + 1 if @stubs._listCount?
       @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
+      return cb(new Error('mock error')) if @stubs?._listError
       if opts?.cursor == 'mock_cursor'
         cb(null, @stubs.userListPageLast)
       else
