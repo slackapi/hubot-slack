@@ -16,8 +16,12 @@ describe 'Adapter', ->
     @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
     @slackbot.robot.react.should.be.an.instanceOf(Function).with.lengthOf(3)
 
-describe 'Login', ->
+describe 'Connect', ->
+  it 'Should connect successfully', ->
+    @slackbot.run()
+    @stubs._connected.should.be.true
   it 'Should set the robot name', ->
+    @slackbot.run()
     @slackbot.robot.name.should.equal 'bot'
 
 describe 'Logger', ->
