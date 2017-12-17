@@ -116,16 +116,10 @@ beforeEach ->
         id: 'D5432'
       ]
   @stubs.rtm =
-    login: =>
-      @stubs._connected = true
     start: =>
       @stubs._connected = true
-    on: (name, callback) =>
-      console.log("#####")
-      console.log(name)
-      console.log(callback)
-      callback(name)
-    removeListener: (name) =>
+    disconnect: =>
+      @stubs._connected = false
     sendMessage: (msg, room) =>
       @stubs.send room, msg
     dataStore:
@@ -191,6 +185,8 @@ beforeEach ->
         @log('debug', message)
       error: (message) ->
         @log('error', message)
+      warning: (message) ->
+        @log('warning', message)
     # record all received messages
     robot.received = []
     robot.receive = (msg) ->
