@@ -11,8 +11,8 @@ class SlackClient
   # @param {string} options.token - Slack API token for authentication
   # @param {Object} [options.rtm={}] - Configuration options for owned RtmClient instance
   # @param {Object} [options.rtmStart={}] - Configuration options for RtmClient#start() method
-  # @param {boolean} [options.noRawText=false] - Whether or not message objects should contain a `rawText` property with
-  # the unformatted message text
+  # @param {boolean} [options.noRawText=false] - Deprecated: All SlackTextMessages (subtype of TextMessage) will contain
+  # both the formatted text property and the rawText property
   # @param {Robot} robot - Hubot robot instance
   ###
   constructor: (options, robot) ->
@@ -37,8 +37,6 @@ class SlackClient
     # Message handler
     @rtm.on 'message', @messageWrapper, this
     @messageHandler = undefined
-
-    @returnRawText = !options.noRawText
 
   ###*
   # Open connection to the Slack RTM API
@@ -68,8 +66,6 @@ class SlackClient
       fetches.bot = @web.bots.info(bot_id) if message_event.bot_id
 
       Promise.props(fetches).then((fetched) ->
-        message_event.returnRawText = @returnRawText
-
         # messages sent from human users, apps with a bot user and using the xoxb token, and
         # slackbot have the user property
         message_event.user = fetched.user if fetched.user

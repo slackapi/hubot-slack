@@ -158,7 +158,7 @@ class SlackBot extends Adapter
   Message received from Slack
   ###
   message: (message) =>
-    {returnRawText, user, channel, subtype, topic, bot} = message
+    {user, channel, subtype, topic, bot} = message
 
     return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
     return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
@@ -178,13 +178,7 @@ class SlackBot extends Adapter
 
       when 'message', 'bot_message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        # TODO: remove this conditional and always return a SlackTextMessage
-        if returnRawText
-          textMessage = new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
-        else
-          textMessage = new TextMessage(user, undefined, message.ts)
-        # TODO: move the following line into a SlackTextMessage
-        textMessage.thread_ts = message.thread_ts
+        textMessage = new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
         @receive textMessage
 
       when 'channel_join', 'group_join'

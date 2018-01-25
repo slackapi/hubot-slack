@@ -35,8 +35,9 @@ class SlackTextMessage extends TextMessage
   # rawMessage - The Slack Message object
   constructor: (@user, @text, @rawText, @rawMessage, @channel, @robot_name) ->
     super @user, @text, @rawMessage.ts
-    @rawText = @rawMessage.text unless @rawText
-    @buildText unless @text
+    @rawText = @rawMessage.text unless @rawText?
+    @buildText unless @text?
+    @thread_ts = @rawMessage.thread_ts if @rawMessage.thread_ts?
 
   ###*
   # Build the text property, a flat string representation of the contents of this message.
