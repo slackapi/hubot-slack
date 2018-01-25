@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@slack/client": "^3.4.0",
+    "bluebird": "^3.5.1",
     "chai": "^3.5.0",
     "lodash": "^3.10.1"
   },

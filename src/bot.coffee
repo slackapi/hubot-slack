@@ -1,8 +1,6 @@
-{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot} = require.main.require 'hubot'
-
+{ Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
+{ SlackTextMessage, ReactionMessage } = require './message';
 SlackClient = require './client'
-ReactionMessage = require './reaction-message'
-SlackTextMessage = require './slack-message'
 
 # Public: Adds a Listener for ReactionMessages with the provided matcher,
 # options, and callback
@@ -160,7 +158,7 @@ class SlackBot extends Adapter
   Message received from Slack
   ###
   message: (message) =>
-    {text, rawText, returnRawText, user, channel, subtype, topic, bot} = message
+    {returnRawText, user, channel, subtype, topic, bot} = message
 
     return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
     return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
@@ -172,22 +170,20 @@ class SlackBot extends Adapter
     user = {} if !user
     user.room = channel.id
 
-
-    # Direct messages
-    if channel.id[0] is 'D'
-      text = "#{@robot.name} #{text}"     # If this is a DM, pretend it was addressed to us
-      channel.name ?= channel._modelName  # give the channel a name
-
+    # Make sure there's a readable channel name to log
+    channel.name ?= channel.id
 
     # Send to Hubot based on message type
     switch subtype
 
       when 'message', 'bot_message'
         @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
+        # TODO: remove this conditional and always return a SlackTextMessage
         if returnRawText
-          textMessage = new SlackTextMessage(user, text, rawText, message)
+          textMessage = new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
         else
-          textMessage = new TextMessage(user, text, message.ts)
+          textMessage = new TextMessage(user, undefined, message.ts)
+        # TODO: move the following line into a SlackTextMessage
         textMessage.thread_ts = message.thread_ts
         @receive textMessage
 
