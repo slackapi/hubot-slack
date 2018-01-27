@@ -24,10 +24,12 @@ describe 'onMessage()', ->
   it 'should not need to be set', ->
     @client.rtm.emit('message', { fake: 'message' })
     (true).should.be.ok
-  it 'should emit pre-processed messages to the callback', ->
-    @client.onMessage (message) ->
-      # TODO: we can assert a lot more about the structure of the message
+  it 'should emit pre-processed messages to the callback', (done) ->
+    @client.onMessage (message) =>
       message.should.be.ok
+      message.user.real_name.should.equal @stubs.user.real_name
+      message.channel.name.should.equal @stubs.channel.name
+      done()
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
       type: 'message',
@@ -36,6 +38,26 @@ describe 'onMessage()', ->
       text: 'blah',
       ts: '1355517523.000005'
     })
+    # NOTE: the following check does not appear to work as expected
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+  it 'should log an error when expanded info cannot be fetched using the Web API', (done) ->
+    # NOTE: to be certain nothing goes wrong in the rejection handling, the "unhandledRejection" / "rejectionHandled"
+    # global events need to be instrumented
+    @client.onMessage (message) ->
+      done(new Error('A message was emitted'))
+    @client.rtm.emit('message', {
+      type: 'message',
+      user: 'NOT A USER',
+      channel:  @stubs.channel.id,
+      text: 'blah',
+      ts: '1355517523.000005'
+    })
+    setTimeout(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
 
 describe 'on() - DEPRECATED', ->
   it 'Should register events on the RTM stream', ->

@@ -142,11 +142,12 @@ beforeEach ->
   @stubs.channelsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
-    info: (channelId) =>
-      if channelId == @stubs.channel.id
+  @stubs.conversationsMock =
+    info: (conversationId) =>
+      if conversationId == @stubs.channel.id
         return Promise.resolve(@stubs.channel)
       else
-        return Promise.reject(new Error('channelsMock could not match channel ID'))
+        return Promise.reject(new Error('conversationsMock could not match conversation ID'))
   @stubs.usersMock =
     list: (opts, cb) =>
       @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
@@ -219,6 +220,7 @@ beforeEach ->
   _.merge @slackbot.client.rtm, @stubs.rtm
   _.merge @slackbot.client.web.chat, @stubs.chatMock
   _.merge @slackbot.client.web.channels, @stubs.channelsMock
+  _.merge @slackbot.client.web.conversations, @stubs.conversationsMock
   _.merge @slackbot, @stubs.receiveMock
   @slackbot.self = @stubs.self
 
@@ -228,4 +230,5 @@ beforeEach ->
   _.merge @client.rtm, @stubs.rtm
   _.merge @client.web.chat, @stubs.chatMock
   _.merge @client.web.channels, @stubs.channelsMock
+  _.merge @client.web.conversations, @stubs.conversationsMock
   _.merge @client.web.users, @stubs.usersMock

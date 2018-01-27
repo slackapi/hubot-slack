@@ -52,8 +52,6 @@ class SlackClient
   ###
   messageWrapper: (message_event) ->
     if @messageHandler
-      # {user, channel, bot_id} = message_event
-
       # fetch full representations of the user, bot, and channel
       # TODO: implement caching store for this data
       # NOTE: can we delay these fetches until they are actually necessary? for some types of messages, they
@@ -65,8 +63,7 @@ class SlackClient
       fetches.channel = @web.conversations.info(message_event.channel) if message_event.channel
       fetches.bot = @web.bots.info(message_event.bot_id) if message_event.bot_id
 
-      # TODO: need a catch
-      Promise.props(fetches).then((fetched) ->
+      Promise.props(fetches).then((fetched) =>
         # messages sent from human users, apps with a bot user and using the xoxb token, and
         # slackbot have the user property
         message_event.user = fetched.user if fetched.user
@@ -78,6 +75,9 @@ class SlackClient
 
         message_event.channel = fetched.channel if fetched.channel
         @messageHandler(message_event)
+      )
+      .catch((error) =>
+        @robot.logger.error "Incoming RTM message dropped due to error fetching info for a property: #{error.message}."
       )
 
 
