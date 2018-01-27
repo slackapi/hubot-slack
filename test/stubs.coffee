@@ -23,21 +23,16 @@ beforeEach ->
       @stubs._msg = msg
     msg
 
+  # These objects are of conversation shape: https://api.slack.com/types/conversation
   @stubs.channel =
-    name: 'general'
     id: 'C123'
-    sendMessage: (msg) -> msg
-    getType: -> 'channel'
+    name: 'general'
   @stubs.DM =
-    name: 'User'
     id: 'D1232'
-    sendMessage: (msg) -> msg
-    getType: -> 'dm'
+    is_im: true
   @stubs.group =
-    name: 'Group'
     id: 'G12324'
-    sendMessage: (msg) -> msg
-    getType: -> 'group'
+
   @stubs.user =
     name: 'name'
     real_name: 'real_name'

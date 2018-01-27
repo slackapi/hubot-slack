@@ -61,10 +61,11 @@ class SlackClient
       # NOTE: all we ever use from channel is the id and iff its a TextMessage the is_im property
       # NOTE: fetches will likely need to take place later after formatting if any user or channel mentions are found
       fetches = {};
-      fetches.user = @web.users.info(user) if message_event.user
-      fetches.channel = @web.conversations.info(channel) if message_event.channel
-      fetches.bot = @web.bots.info(bot_id) if message_event.bot_id
+      fetches.user = @web.users.info(message_event.user) if message_event.user
+      fetches.channel = @web.conversations.info(message_event.channel) if message_event.channel
+      fetches.bot = @web.bots.info(message_event.bot_id) if message_event.bot_id
 
+      # TODO: need a catch
       Promise.props(fetches).then((fetched) ->
         # messages sent from human users, apps with a bot user and using the xoxb token, and
         # slackbot have the user property
@@ -110,6 +111,7 @@ class SlackClient
   # Set a channel's topic
   ###
   setTopic: (id, topic) ->
+    # TODO: need to remove dataStore
     channel = @rtm.dataStore.getChannelGroupOrDMById(id)
     @robot.logger.debug topic
 

@@ -33,22 +33,22 @@ class SlackTextMessage extends TextMessage
   # text       - The parsed message text
   # rawText    - The unparsed message text
   # rawMessage - The Slack Message object
-  constructor: (@user, @text, @rawText, @rawMessage, @channel, @robot_name) ->
-    super @user, @text, @rawMessage.ts
-    @rawText = @rawMessage.text unless @rawText?
-    @buildText unless @text?
+  constructor: (@user, text, rawText, @rawMessage, @channel, @robot_name) ->
+    @rawText = if rawText? then rawText else @rawMessage.text
+    @text = if text? then text else @buildText()
     @thread_ts = @rawMessage.thread_ts if @rawMessage.thread_ts?
+    super @user, @text, @rawMessage.ts
 
   ###*
   # Build the text property, a flat string representation of the contents of this message.
   ###
   buildText: () ->
     # base text
-    text = message.text
+    text = @rawMessage.text
 
     # flatten any attachments into text
-    if message.attachments
-      attachment_text = message.attachments.map(a => a.fallback).join('\n')
+    if @rawMessage.attachments
+      attachment_text = @rawMessage.attachments.map(a => a.fallback).join('\n')
       text = text + '\n' + attachment_text
 
     # replace links
@@ -85,8 +85,8 @@ class SlackTextMessage extends TextMessage
     text = text.replace /&gt;/g, '>'
     text = text.replace /&amp;/g, '&'
 
-    if channel.is_im
-      text = "#{@robot.name} #{text}"     # If this is a DM, pretend it was addressed to us
+    if @channel?.is_im
+      text = "#{@robot_name} #{text}"     # If this is a DM, pretend it was addressed to us
 
     @text = text
 

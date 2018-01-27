@@ -163,8 +163,6 @@ class SlackBot extends Adapter
     return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
     return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
 
-    subtype = subtype || 'message'
-
     # Hubot expects this format for TextMessage Listener
     user = bot if !user
     user = {} if !user
@@ -174,12 +172,12 @@ class SlackBot extends Adapter
     channel.name ?= channel.id
 
     # Send to Hubot based on message type
+    subtype ?= 'message'
     switch subtype
 
       when 'message', 'bot_message'
-        @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        textMessage = new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
-        @receive textMessage
+        @robot.logger.debug "Received message in channel: #{channel.name}, from: #{user.name}"
+        @receive new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
 
       when 'channel_join', 'group_join'
         @robot.logger.debug "#{user.name} has joined #{channel.name}"
@@ -194,7 +192,7 @@ class SlackBot extends Adapter
         @receive new TopicMessage user, message.topic, message.ts
 
       else
-        @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, subtype: #{subtype}"
+        @robot.logger.debug "Received message in channel: #{channel.name}, subtype: #{subtype}"
         message.user = user
         @receive new CatchAllMessage(message)
 

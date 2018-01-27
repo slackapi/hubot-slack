@@ -1,9 +1,8 @@
 should = require 'should'
 chai = require 'chai'
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
-ReactionMessage = require '../src/reaction-message'
+{ SlackTextMessage, ReactionMessage } = require '../src/message'
 SlackClient = require '../src/client'
-SlackTextMessage = require '../src/slack-message'
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -133,13 +132,12 @@ describe 'Handling incoming messages', ->
     @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
 
   it 'Should return a message object with raw text and message', ->
+    # the shape of this data is an RTM message event passed through SlackClient#messageWrapper
+    # see: https://api.slack.com/events/message
     messageData = {
-      subtype: 'message',
       user: @stubs.user,
       channel: @stubs.channel,
-      text: 'foo http://www.example.com bar',
-      rawText: 'foo <http://www.example.com> bar',
-      returnRawText: true
+      text: 'foo <http://www.example.com> bar'
     }
     @slackbot.message messageData
     should.equal (@stubs._received instanceof SlackTextMessage), true
