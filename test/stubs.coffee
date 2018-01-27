@@ -1,5 +1,6 @@
 # Setup stubs used by the other tests
 
+Promise = require 'bluebird'
 SlackBot = require '../src/bot'
 SlackFormatter = require '../src/formatter'
 SlackClient = require '../src/client'
@@ -33,16 +34,14 @@ beforeEach ->
   @stubs.group =
     id: 'G12324'
 
+  # These objects are of user shape: https://api.slack.com/types/user
   @stubs.user =
-    name: 'name'
-    real_name: 'real_name'
     id: 'U123'
+    name: 'name' # NOTE: this property is dynamic and should only be used for display purposes
+    real_name: 'real_name'
     profile:
       email: 'email@example.com'
     misc: 'misc'
-  @stubs.bot =
-    name: 'testbot'
-    id: 'B123'
   @stubs.userperiod =
     name: 'name.lname'
     id: 'U124'
@@ -65,6 +64,10 @@ beforeEach ->
     profile:
       foo: 'bar'
     misc: 'misc'
+
+  @stubs.bot =
+    name: 'testbot'
+    id: 'B123'
   @stubs.self =
     name: 'self'
     id: 'U456'
@@ -139,6 +142,11 @@ beforeEach ->
   @stubs.channelsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
+    info: (channelId) =>
+      if channelId == @stubs.channel.id
+        return Promise.resolve(@stubs.channel)
+      else
+        return Promise.reject(new Error('channelsMock could not match channel ID'))
   @stubs.usersMock =
     list: (opts, cb) =>
       @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
@@ -147,6 +155,11 @@ beforeEach ->
         cb(null, @stubs.userListPageLast)
       else
         cb(null, @stubs.userListPageWithNextCursor)
+    info: (userId) =>
+      if userId == @stubs.user.id
+        return Promise.resolve(@stubs.user)
+      else
+        return Promise.reject(new Error('usersMock could not match user ID'))
   @stubs.userListPageWithNextCursor = {
     members: [{ id: 1 }, { id: 2 }]
     response_metadata: {

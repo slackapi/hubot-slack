@@ -12,7 +12,7 @@ describe 'Init', ->
     (@client.web instanceof WebClient).should.equal true
     @client.web._token.should.equal 'xoxb-faketoken'
 
-  it 'Should initialize with a SlackFormatter', ->
+  it 'Should initialize with a SlackFormatter - DEPRECATED', ->
     (@client.format instanceof SlackFormatter).should.equal true
 
 describe 'connect()', ->
@@ -28,7 +28,14 @@ describe 'onMessage()', ->
     @client.onMessage (message) ->
       # TODO: we can assert a lot more about the structure of the message
       message.should.be.ok
-    @client.rtm.emit('message', { type: 'message', user: 'U123' , channel: 'C456' , text: 'blah', ts: '1355517523.000005' })
+    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+    @client.rtm.emit('message', {
+      type: 'message',
+      user: @stubs.user.id ,
+      channel: @stubs.channel.id,
+      text: 'blah',
+      ts: '1355517523.000005'
+    })
 
 describe 'on() - DEPRECATED', ->
   it 'Should register events on the RTM stream', ->
