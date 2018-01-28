@@ -139,13 +139,14 @@ beforeEach ->
   @stubs.chatMock =
     postMessage: (msg, room, opts) =>
       @stubs.send(msg, room, opts)
-  @stubs.channelsMock =
+  @stubs.conversationsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
-  @stubs.conversationsMock =
     info: (conversationId) =>
       if conversationId == @stubs.channel.id
         return Promise.resolve(@stubs.channel)
+      else if conversationId == @stubs.DM.id
+        return Promise.resolve(@stubs.DM)
       else
         return Promise.reject(new Error('conversationsMock could not match conversation ID'))
   @stubs.usersMock =
@@ -219,7 +220,6 @@ beforeEach ->
   _.merge @slackbot.client, @stubs.client
   _.merge @slackbot.client.rtm, @stubs.rtm
   _.merge @slackbot.client.web.chat, @stubs.chatMock
-  _.merge @slackbot.client.web.channels, @stubs.channelsMock
   _.merge @slackbot.client.web.conversations, @stubs.conversationsMock
   _.merge @slackbot, @stubs.receiveMock
   @slackbot.self = @stubs.self
@@ -229,6 +229,5 @@ beforeEach ->
   @client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
   _.merge @client.rtm, @stubs.rtm
   _.merge @client.web.chat, @stubs.chatMock
-  _.merge @client.web.channels, @stubs.channelsMock
   _.merge @client.web.conversations, @stubs.conversationsMock
   _.merge @client.web.users, @stubs.usersMock

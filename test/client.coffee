@@ -76,9 +76,26 @@ describe 'disconnect()', ->
     @client.rtm.listeners('some_event', true).should.not.be.ok
 
 describe 'setTopic()', ->
-  it "Should set the topic in a channel", ->
-    @client.setTopic 'C123', 'iAmTopic'
-    @stubs._topic.should.equal 'iAmTopic'
+  it "Should set the topic in a channel", (done) ->
+    @client.setTopic @stubs.channel.id, 'iAmTopic'
+    setTimeout(() =>
+      @stubs._topic.should.equal 'iAmTopic'
+      done()
+    , 0)
+  it "should not set the topic in a DM", (done) ->
+    @client.setTopic @stubs.DM.id, 'iAmTopic'
+    setTimeout(() =>
+      @stubs.should.not.have.property('_topic')
+      # NOTE: no good way to assert that debug log was output
+      done()
+    , 0)
+  it "should log an error if the setTopic web API method fails", (done) ->
+    @client.setTopic 'NOT A CONVERSATION', 'iAmTopic'
+    setTimeout(() =>
+      @stubs.should.not.have.property('_topic')
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    , 0)
 
 describe 'send()', ->
   it 'Should send a plain string message to room', ->

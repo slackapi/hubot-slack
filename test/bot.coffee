@@ -104,9 +104,12 @@ describe 'Reply to Messages', ->
     sentMessages[0].should.equal "message"
 
 describe 'Setting the channel topic', ->
-  it 'Should set the topic in channels', ->
+  it 'Should set the topic in channels', (done) ->
     @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
-    @stubs._topic.should.equal 'channel'
+    setTimeout(() =>
+      @stubs._topic.should.equal 'channel'
+      done()
+    , 0)
 
   it 'Should NOT set the topic in DMs', ->
     @slackbot.setTopic {room: 'D1232'}, 'DM'

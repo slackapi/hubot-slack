@@ -111,19 +111,17 @@ class SlackClient
   # Set a channel's topic
   ###
   setTopic: (id, topic) ->
-    # TODO: need to remove dataStore
-    channel = @rtm.dataStore.getChannelGroupOrDMById(id)
+    # NOTE: if channel cache is implemented, then this query should hit the cache
     @robot.logger.debug topic
-
-    type = channel.getType()
-    switch type
-      when "channel" then @web.channels.setTopic(id, topic)
-      # some groups are private channels which have a topic
-      # some groups are MPIMs which do not
-      when "group"
-          @web.groups.setTopic id, topic, (err,res) =>
-            if (err || !res.ok) then @robot.logger.debug "Cannot set topic in MPIM"
-      else @robot.logger.debug "Cannot set topic in "+type
+    @web.conversations.info(id).then((conversation) =>
+      if !conversation.is_im && !conversation.is_mpim
+        return @web.conversations.setTopic(id, topic)
+      else
+        @robot.logger.debug "Cannot set topic in DM or MPIM"
+    )
+    .catch((error) =>
+      @robot.logger.error "Error setting topic in conversation #{id}: #{error.message}"
+    )
 
   ###*
   # Send a message to Slack using the best client for the message type
