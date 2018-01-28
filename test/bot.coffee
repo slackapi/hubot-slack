@@ -1,6 +1,6 @@
 should = require 'should'
 chai = require 'chai'
-{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
+{ EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
 { SlackTextMessage, ReactionMessage } = require '../src/message'
 SlackClient = require '../src/client'
 
@@ -19,9 +19,6 @@ describe 'Connect', ->
   it 'Should connect successfully', ->
     @slackbot.run()
     @stubs._connected.should.be.true
-  it 'Should set the robot name', ->
-    @slackbot.run()
-    @slackbot.robot.name.should.equal 'bot'
 
 describe 'Logger', ->
   it 'It should log missing token error', ->

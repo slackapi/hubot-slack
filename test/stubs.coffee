@@ -86,9 +86,9 @@ beforeEach ->
       email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
+
   # Slack client
   @stubs.client =
-
     dataStore:
       getUserById: (id) =>
         for user in @stubs.client.dataStore.users
@@ -176,6 +176,7 @@ beforeEach ->
     members: [@stubs.user, @stubs.userperiod]
   @stubs.wrongResponseUsersList =
     ok: false
+
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter

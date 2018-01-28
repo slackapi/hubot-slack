@@ -31,18 +31,28 @@ Robot::react = (matcher, options, callback) ->
 
 class SlackBot extends Adapter
 
+  ###*
+  # Slackbot is an adapter for connecting Hubot to Slack
+  # @constructor
+  # @param {Robot} robot - the Hubot robot
+  # @param {Object} options - configuration options for the adapter
+  # @param {string} options.token - authentication token for Slack APIs
+  # @param {Object} options.rtm - RTM configuration options for SlackClient
+  # @param {Object} options.rtmStart - options for `rtm.start` Web API method
+  ###
   constructor: (@robot, @options) ->
+    super
     @client = new SlackClient(@options, @robot)
 
-  ###
-  Slackbot loads full user list on the first brain load
-  QUESTION: why do brain adapters trigger a brain 'loaded' event each time a key
-  is set?
-  ###
-  setIsLoaded: (@isLoaded) ->
+
 
   ###
-  Slackbot initialization
+  # Hubot Adapter methods
+  ###
+
+  ###*
+  # Slackbot initialization
+  # @public
   ###
   run: ->
     return @robot.logger.error "No service token provided to Hubot" unless @options.token
@@ -56,22 +66,66 @@ class SlackBot extends Adapter
     @client.rtm.on 'reaction_removed', @reaction
     @client.rtm.on 'authenticated', @authenticated
     @client.rtm.on 'user_change', @userChange
-
-    @client.loadUsers @loadUsers
     @client.onMessage @message
 
+    # TODO: set this to false as soon as RTM connection closes (even if reconnect will happen later)
+    # TODO: check this value when connection finishes (even if its a reconnection)
+    # TODO: build a map of enterprise users and local users
+    @needsUserListSync = true
+    @client.loadUsers @usersLoaded
     @robot.brain.on 'loaded', () =>
+      # Hubot Brain emits 'loaded' event each time a key is set, but we only want to synchonize the users list on
+      # the first load after a connection completes
       if not @isLoaded
         @client.loadUsers @loadUsers
-        @setIsLoaded(true)
-
+        @isLoaded = true
 
     # Start logging in
     @client.connect()
 
+  ###*
+  # Hubot is sending a message to Slack
+  # @public
+  ###
+  send: (envelope, messages...) ->
+    for message in messages
+      # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
+      @client.send(envelope, message) unless message is ''
+
+  ###*
+  # Hubot is replying to a Slack message
+  # @public
+  ###
+  reply: (envelope, messages...) ->
+    for message in messages
+      if message isnt ''
+        # TODO: channel prefix matching should be removed
+        message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
+        @client.send(envelope, message)
+
+  ###*
+  # Hubot is setting the Slack channel topic
+  # @public
+  ###
+  topic: (envelope, strings...) ->
+    @client.setTopic envelope.room, strings.join "\n"
+
+  ###*
+  # Hubot is sending a reaction
+  # NOTE: the super class implementation is just an alias for send, but potentially, we can detect
+  # if the envelope has a specific message and send a reactji. the fallback would be to just send the
+  # emoji as a message in the channel
+  ###
+  # emote: (envelope, strings...) ->
+
 
   ###
-  Slack client has opened the connection
+  # SlackClient event handlers
+  ###
+
+  ###*
+  # Slack client has opened the connection
+  # @private
   ###
   open: =>
     @robot.logger.info 'Slack client now connected'
@@ -79,14 +133,15 @@ class SlackBot extends Adapter
     # Tell Hubot we're connected so it can load scripts
     @emit "connected"
 
-
-  ###
-  Slack client has authenticated
+  ###*
+  # Slack client has authenticated
+  # @private
   ###
   authenticated: (identity) =>
     {@self, team} = identity
 
     # Find out bot_id
+    # NOTE: this could be done with a call to `bots.info`, and that would allow for transition to `rtm.connect`
     for user in identity.users
       if user.id == @self.id
         @self.bot_id = user.profile.bot_id
@@ -97,9 +152,9 @@ class SlackBot extends Adapter
 
     @robot.logger.info "Logged in as #{@robot.name} of #{team.name}"
 
-
-  ###
-  Slack client has closed the connection
+  ###*
+  # Slack client has closed the connection
+  # @private
   ###
   close: =>
     # NOTE: not confident that @options.autoReconnect has intended effect as currently implemented
@@ -110,52 +165,18 @@ class SlackBot extends Adapter
       @client.disconnect()
       process.exit 1
 
-
-  ###
-  Slack client received an error
+  ###*
+  # Slack client received an error
+  # @private
   ###
   error: (error) =>
     if error.code is -1
       return @robot.logger.warning "Received rate limiting error #{JSON.stringify error}"
-
     @robot.emit 'error', error
 
-
-  ###
-  Hubot is sending a message to Slack
-  ###
-  send: (envelope, messages...) ->
-    sent_messages = []
-    for message in messages
-      if message isnt ''
-        sent_messages.push @client.send(envelope, message)
-    return sent_messages
-
-
-  ###
-  Hubot is replying to a Slack message
-  ###
-  reply: (envelope, messages...) ->
-    sent_messages = []
-    for message in messages
-      if message isnt ''
-        message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
-        @robot.logger.debug "Sending to #{envelope.room}: #{message}"
-        sent_messages.push @client.send(envelope, message)
-    return sent_messages
-
-
-  ###
-  Hubot is setting the Slack channel topic
-  ###
-  setTopic: (envelope, strings...) ->
-    return if envelope.room[0] is 'D' # ignore DMs
-
-    @client.setTopic envelope.room, strings.join "\n"
-
-
-  ###
-  Message received from Slack
+  ###*
+  # Message received from Slack
+  # @private
   ###
   message: (message) =>
     {user, channel, subtype, topic, bot} = message
@@ -196,8 +217,9 @@ class SlackBot extends Adapter
         message.user = user
         @receive new CatchAllMessage(message)
 
-  ###
-  Reaction added/removed event received from Slack
+  ###*
+  # Reaction added/removed event received from Slack
+  # @private
   ###
   reaction: (message) =>
     {type, user, reaction, item_user, item, event_ts} = message
@@ -210,17 +232,24 @@ class SlackBot extends Adapter
     user.room = item.channel
     @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
 
-  loadUsers: (err, res) =>
+  ###*
+  # @private
+  ###
+  usersLoaded: (err, res) =>
     if err || !res.ok
       @robot.logger.error "Can't fetch users"
       return
 
-    @userChange member for member in res.members
+    @updateUserInBrain member for member in res.members
 
-  # when invoked as an event handler, this method takes an event. but when invoked from loadUsers,
-  # this method takes a user
-  userChange: (event_or_user) =>
+  ###*
+  # Update user record in the Hubot Brain
+  # @private
+  ###
+  updateUserInBrain: (event_or_user) =>
     return unless event_or_user
+    # when invoked as an event handler, this method takes an event.
+    # but when invoked from loadUsers, this method takes a user.
     user = if event_or_user.type == 'user_change' then event_or_user.user else event_or_user
     newUser =
       id: user.id
@@ -240,5 +269,6 @@ class SlackBot extends Adapter
           newUser[key] = value
     delete @robot.brain.data.users[user.id]
     @robot.brain.userForId user.id, newUser
+
 
 module.exports = SlackBot
