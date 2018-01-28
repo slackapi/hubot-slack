@@ -128,10 +128,6 @@ beforeEach ->
           when @stubs.self.id then @stubs.self
           when @stubs.self_bot.id then @stubs.self_bot
           else undefined
-      getChannelByName: (name) =>
-        switch name
-          when 'known_room' then {id: 'C00000004'}
-          else undefined
       getChannelGroupOrDMById: (id) =>
         switch id
           when @stubs.channel.id then @stubs.channel

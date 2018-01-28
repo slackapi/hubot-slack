@@ -108,32 +108,6 @@ describe 'send()', ->
     @stubs._msg.should.equal 'textMessage'
     @stubs._room.should.equal 'room2'
 
-  it 'Should send an object message to room', ->
-    @client.send {room: 'room3'}, '<test|test>'
-    @stubs._msg.should.equal '<test|test>'
-    @stubs._room.should.equal 'room3'
-
-  # This case and the following are cool. You can post a message to a channel as a name
-  it 'Should not translate known room names to a channel id', ->
-    @client.send {room: 'known_room'}, 'Message'
-    @stubs._msg.should.equal 'Message'
-    @stubs._room.should.equal 'known_room'
-
-  it 'Should not translate an unknown room', ->
-    @client.send {room: 'unknown_room'}, 'Message'
-    @stubs._msg.should.equal 'Message'
-    @stubs._room.should.equal 'unknown_room'
-
-  it 'Should be able to send a DM to a user by id', ->
-    @client.send {room: @stubs.user.id}, 'DM Message'
-    @stubs._dmmsg.should.equal 'DM Message'
-    @stubs._room.should.equal @stubs.user.id
-
-  it 'Should be able to send a DM to a user by username', ->
-    @client.send {room: "@"+@stubs.user.name}, 'DM Message'
-    @stubs._dmmsg.should.equal 'DM Message'
-    @stubs._room.should.equal "@"+@stubs.user.name
-
   it 'Should be able to send a DM to a user object', ->
     @client.send @stubs.user, 'DM Message'
     @stubs._dmmsg.should.equal 'DM Message'
