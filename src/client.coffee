@@ -98,6 +98,15 @@ class SlackClient
   # @public
   ###
   send: (envelope, message) ->
+    # NOTE: potentially lost functionality:
+    # channel = @client.getChannelGroupOrDMByName envelope.room
+    # channel = @client.getChannelGroupOrDMByID(envelope.room) unless channel
+    #
+    # if not channel and @client.getUserByName(envelope.room)
+    #   user_id = @client.getUserByName(envelope.room).id
+    #   @client.openDM user_id, =>
+    #     this.send envelope, messages...
+    #   return
     if envelope.room
       room = envelope.room
     else if envelope.id # Maybe we were sent a user object or channel object. Use the id, in that case.

@@ -33,10 +33,16 @@ class SlackTextMessage extends TextMessage
   # text       - The parsed message text
   # rawText    - The unparsed message text
   # rawMessage - The Slack Message object
-  constructor: (@user, text, rawText, @rawMessage, @channel, @robot_name) ->
+  constructor: (@user, text, rawText, @rawMessage, channel, robot_name) ->
+    # private instance properties (not trying to expand API contract)
+    @_channel = channel
+    @_robot_name = robot_name
+
+    # public instance property initialization
     @rawText = if rawText? then rawText else @rawMessage.text
     @text = if text? then text else @buildText()
     @thread_ts = @rawMessage.thread_ts if @rawMessage.thread_ts?
+
     super @user, @text, @rawMessage.ts
 
   ###*

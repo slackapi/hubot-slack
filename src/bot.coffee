@@ -2,33 +2,6 @@
 { SlackTextMessage, ReactionMessage } = require './message';
 SlackClient = require './client'
 
-# Public: Adds a Listener for ReactionMessages with the provided matcher,
-# options, and callback
-#
-# matcher  - A Function that determines whether to call the callback.
-#            Expected to return a truthy value if the callback should be
-#            executed (optional).
-# options  - An Object of additional parameters keyed on extension name
-#            (optional).
-# callback - A Function that is called with a Response object if the
-#            matcher function returns true.
-#
-# Returns nothing.
-Robot::react = (matcher, options, callback) ->
-  matchReaction = (msg) -> msg instanceof ReactionMessage
-
-  if arguments.length == 1
-    return @listen matchReaction, matcher
-
-  else if matcher instanceof Function
-    matchReaction = (msg) -> msg instanceof ReactionMessage && matcher(msg)
-
-  else
-    callback = options
-    options = matcher
-
-  @listen matchReaction, options, callback
-
 class SlackBot extends Adapter
 
   ###*
@@ -43,7 +16,6 @@ class SlackBot extends Adapter
   constructor: (@robot, @options) ->
     super
     @client = new SlackClient(@options, @robot)
-
 
 
   ###
@@ -148,6 +120,11 @@ class SlackBot extends Adapter
         break
 
     # Provide our name to Hubot
+    # NOTE: this value is used to match incoming TextMessages that are directed to the robot. investigate
+    # if this is effective with mentions formatted as "<@U12345|name>", "<@U12345>", "<@W12345|name>", "<@W12345>".
+    # the matching criteria:
+    #   1. prepend any special characters (from "-[]{}()*+?.,\^$|# ") in name and alias with a "\"
+    #   2. optionally start with "@", followed by alias or name, optionally followed by any from ":,", optionally followed by whitespace
     @robot.name = @self.name
 
     @robot.logger.info "Logged in as #{@robot.name} of #{team.name}"
@@ -181,41 +158,40 @@ class SlackBot extends Adapter
   message: (message) =>
     {user, channel, subtype, topic, bot} = message
 
-    return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
-    return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
+    # Ignore anything we sent
+    # NOTE: coupled to getting `rtm.start` data
+    return if (user && (user.id === @self.id)) || (bot && (bot.id === @self.bot_id))
 
     # Hubot expects this format for TextMessage Listener
-    user = bot if !user
-    user = {} if !user
-    user.room = channel.id
-
-    # Make sure there's a readable channel name to log
-    channel.name ?= channel.id
+    # NOTE: use robot.brain.userForId(id, options) to initialize the user object
+    # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
+    bot.room = channel.id if bot
+    user.room = channel.id if user
 
     # Send to Hubot based on message type
-    subtype ?= 'message'
+    # NOTE: because of the limited set of subtypes, there's no way to listen for raw messages that are not covered here
+    # some other subtypes may not have user or user.room defined
     switch subtype
 
-      when 'message', 'bot_message'
-        @robot.logger.debug "Received message in channel: #{channel.name}, from: #{user.name}"
-        @receive new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
+      when 'bot_message'
+        @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
+        @receive new SlackTextMessage(user || bot, undefined, undefined, message, channel, @robot.name)
 
       when 'channel_join', 'group_join'
-        @robot.logger.debug "#{user.name} has joined #{channel.name}"
+        @robot.logger.debug "#{user.name} has joined #{channel.name || channel.id}"
         @receive new EnterMessage user
 
       when 'channel_leave', 'group_leave'
-        @robot.logger.debug "#{user.name} has left #{channel.name}"
+        @robot.logger.debug "#{user.name} has left #{channel.name || channel.id}"
         @receive new LeaveMessage user
 
       when 'channel_topic', 'group_topic'
-        @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{topic}"
+        @robot.logger.debug "#{user.name} set the topic in #{channel.name || channel.id} to #{topic}"
         @receive new TopicMessage user, message.topic, message.ts
 
-      else
-        @robot.logger.debug "Received message in channel: #{channel.name}, subtype: #{subtype}"
-        message.user = user
-        @receive new CatchAllMessage(message)
+      when undefined
+        @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
+        @receive new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
 
   ###*
   # Reaction added/removed event received from Slack
@@ -272,3 +248,11 @@ class SlackBot extends Adapter
 
 
 module.exports = SlackBot
+
+# Open question:
+# What is a `room` for this adapter? There needs to be a contract about what is and is not a valid `room`?
+# The most basic contract would be a room is a string that is a Slack conversationId.
+# There's also precidence (from documentation) that the value in `user.name` should be used as a room. If we could
+# detect a `user.name`, then maybe its possible to find the user ID and then open a DM to retreive a conversationId. We
+# should only do this if its supported already, because Slack's latest guidance is to not use display names for any
+# programmatic purpose.
