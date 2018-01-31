@@ -34,11 +34,9 @@ class SlackBot extends Adapter
     @client.rtm.on 'open', @open
     @client.rtm.on 'close', @close
     @client.rtm.on 'error', @error
-    @client.rtm.on 'reaction_added', @reaction
-    @client.rtm.on 'reaction_removed', @reaction
     @client.rtm.on 'authenticated', @authenticated
     @client.rtm.on 'user_change', @userChange
-    @client.onMessage @message
+    @client.onEvent @eventHandler
 
     # TODO: set this to false as soon as RTM connection closes (even if reconnect will happen later)
     # TODO: check this value when connection finishes (even if its a reconnection)
@@ -152,15 +150,15 @@ class SlackBot extends Adapter
     @robot.emit 'error', error
 
   ###*
-  # Message received from Slack
+  # Event received from Slack
   # @private
   ###
-  message: (message) =>
-    {user, channel, subtype, topic, bot} = message
+  eventHandler: (event) =>
+    {user, channel, subtype, topic, bot} = event
 
     # Ignore anything we sent
     # NOTE: coupled to getting `rtm.start` data
-    return if (user && (user.id === @self.id)) || (bot && (bot.id === @self.bot_id))
+    return if (user && (user.id is @self.id)) || (bot && (bot.id is @self.bot_id))
 
     # Hubot expects this format for TextMessage Listener
     # NOTE: use robot.brain.userForId(id, options) to initialize the user object
@@ -169,44 +167,39 @@ class SlackBot extends Adapter
     user.room = channel.id if user
 
     # Send to Hubot based on message type
-    # NOTE: because of the limited set of subtypes, there's no way to listen for raw messages that are not covered here
-    # some other subtypes may not have user or user.room defined
-    switch subtype
-
-      when 'bot_message'
-        @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
-        @receive new SlackTextMessage(user || bot, undefined, undefined, message, channel, @robot.name)
-
-      when 'channel_join', 'group_join'
-        @robot.logger.debug "#{user.name} has joined #{channel.name || channel.id}"
-        @receive new EnterMessage user
-
-      when 'channel_leave', 'group_leave'
-        @robot.logger.debug "#{user.name} has left #{channel.name || channel.id}"
-        @receive new LeaveMessage user
-
-      when 'channel_topic', 'group_topic'
-        @robot.logger.debug "#{user.name} set the topic in #{channel.name || channel.id} to #{topic}"
-        @receive new TopicMessage user, message.topic, message.ts
-
-      when undefined
-        @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
-        @receive new SlackTextMessage(user, undefined, undefined, message, channel, @robot.name)
-
-  ###*
-  # Reaction added/removed event received from Slack
-  # @private
-  ###
-  reaction: (message) =>
-    {type, user, reaction, item_user, item, event_ts} = message
-    return if (user == @self.id) || (user == @self.bot_id) #Ignore anything we sent
-
-    user = @client.rtm.dataStore.getUserById(user)
-    item_user = @client.rtm.dataStore.getUserById(item_user)
-    return unless user && item_user
-
-    user.room = item.channel
-    @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
+    if event.type is 'message'
+      switch subtype
+        when 'bot_message'
+          @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
+          # prefer user over bot.
+          # if both are set in the slack event, it represents an app or integration sending a message on behalf of a
+          # user, so the user is the more appropriate value.
+          @receive new SlackTextMessage(user || bot, undefined, undefined, event, channel, @robot.name)
+        # NOTE: channel_join should be replaced with a member_joined_channel event
+        when 'channel_join', 'group_join'
+          @robot.logger.debug "#{user.name} has joined #{channel.name || channel.id}"
+          @receive new EnterMessage user
+        # NOTE: channel_leave should be replaced with a member_left_channel event
+        when 'channel_leave', 'group_leave'
+          @robot.logger.debug "#{user.name} has left #{channel.name || channel.id}"
+          @receive new LeaveMessage user
+        when 'channel_topic', 'group_topic'
+          @robot.logger.debug "#{user.name} set the topic in #{channel.name || channel.id} to #{topic}"
+          @receive new TopicMessage user, event.topic, event.ts
+        when undefined
+          @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
+          @receive new SlackTextMessage(user, undefined, undefined, event, channel, @robot.name)
+        # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
+        # else
+        #   # other subtypes may not have user or user.room defined
+    else if event.type is 'reaction_added' or event.type is 'reaction_removed'
+      # If the reaction is to a message, then the item.channel property will contain a conversation ID
+      # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
+      user.room = item.channel # when the item is not a message this will be undefined
+      # prefer user over bot.
+      # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
+      # user is the more appropriate value.
+      @receive new ReactionMessage(event.type, user || bot, event.reaction, event.item_user, event.item, event.event_ts)
 
   ###*
   # @private
@@ -256,3 +249,6 @@ module.exports = SlackBot
 # detect a `user.name`, then maybe its possible to find the user ID and then open a DM to retreive a conversationId. We
 # should only do this if its supported already, because Slack's latest guidance is to not use display names for any
 # programmatic purpose.
+
+# NOTE: should 'room' describe a thread_ts too for messages that are a part of a thread, so that a response.send()
+# (or other variant) can continue interacting in the thread? is there a way to respond to the "parent" room?

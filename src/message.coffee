@@ -91,8 +91,8 @@ class SlackTextMessage extends TextMessage
     text = text.replace /&gt;/g, '>'
     text = text.replace /&amp;/g, '&'
 
-    if @channel?.is_im
-      text = "#{@robot_name} #{text}"     # If this is a DM, pretend it was addressed to us
+    if @_channel?.is_im
+      text = "#{@_robot_name} #{text}"     # If this is a DM, pretend it was addressed to us
 
     @text = text
 

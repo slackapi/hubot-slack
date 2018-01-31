@@ -35,9 +35,12 @@ class SlackClient
     # Leaving the @format property here for backwards compatibility, but it is no longer used internally.
     @format = new SlackFormatter(@rtm.dataStore, @robot)
 
-    # Message handler
-    @rtm.on 'message', @messageWrapper, this
-    @messageHandler = undefined
+    # Event handler
+    # NOTE: add channel join and leave events
+    @rtm.on 'message', @eventWrapper, this
+    @rtm.on 'reaction_added', @eventWrapper, this
+    @rtm.on 'reaction_added', @eventWrapper, this
+    @eventHandler = undefined
 
   ###*
   # Open connection to the Slack RTM API
@@ -48,11 +51,11 @@ class SlackClient
     @rtm.start(@rtmStartOpts)
 
   ###*
-  # Set message handler
+  # Set event handler
   # @public
   ###
-  onMessage: (callback) ->
-    @messageHandler = callback if @messageHandler != callback
+  onEvent: (callback) ->
+    @eventHandler = callback if @eventHandler != callback
 
   ###*
   # Attach event handlers to the RTM stream
@@ -149,12 +152,12 @@ class SlackClient
     @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
 
   ###*
-  # Event handler for Slack RTM events with "message" type
+  # Event handler for Slack RTM events
   # @private
-  # @param {Object} message_event - A Slack event of type `message`. See <https://api.slack.com/events/message>
+  # @param {Object} event - A Slack event. See <https://api.slack.com/events>
   ###
-  messageWrapper: (message_event) ->
-    if @messageHandler
+  eventWrapper: (event) ->
+    if @eventHandler
       # fetch full representations of the user, bot, and channel
       # TODO: implement caching store for this data
       # NOTE: can we delay these fetches until they are actually necessary? for some types of messages, they
@@ -163,22 +166,32 @@ class SlackClient
       # NOTE: can we update the user entry in the brain?
       # NOTE: fetches will likely need to take place later after formatting if any user or channel mentions are found
       fetches = {};
-      fetches.user = @web.users.info(message_event.user) if message_event.user
-      fetches.channel = @web.conversations.info(message_event.channel) if message_event.channel
-      fetches.bot = @web.bots.info(message_event.bot_id) if message_event.bot_id
+      fetches.user = @web.users.info(event.user) if event.user
+      fetches.channel = @web.conversations.info(event.channel) if event.channel
+      fetches.bot = @web.bots.info(event.bot_id) if event.bot_id
+      fetches.item_user = @web.users.info(event.item_user) if event.item_user
 
       Promise.props(fetches).then((fetched) =>
+        event.channel = fetched.channel if fetched.channel
+
         # messages sent from human users, apps with a bot user and using the xoxb token, and
         # slackbot have the user property
-        message_event.user = fetched.user if fetched.user
+        event.user = fetched.user if fetched.user
 
         # bot_id exists on all messages with subtype bot_message
         # these messages only have a user property if sent from a bot user (xoxb token). therefore
         # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-        message_event.bot = fetched.bot if fetched.bot
+        event.bot = fetched.bot if fetched.bot
 
-        message_event.channel = fetched.channel if fetched.channel
-        @messageHandler(message_event)
+        # this property is for reaction_added and reaction_removed events
+        # previous behavior was to ignore this event entirely if the user and item_user were not in the local workspace
+        event.item_user = fetched.item_user if fetched.item_user
+
+        try {
+          @eventHandler(event)
+        } catch (error) {
+          @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
+        }
       )
       .catch((error) =>
         @robot.logger.error "Incoming RTM message dropped due to error fetching info for a property: #{error.message}."

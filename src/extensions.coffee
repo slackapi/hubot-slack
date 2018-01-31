@@ -23,3 +23,5 @@ Robot::react = (matcher, options, callback) ->
     options = matcher
 
   @listen matchReaction, options, callback
+
+# NOTE: extend Response type with a method for creating a new thread from the incoming message
