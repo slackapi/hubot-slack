@@ -79,22 +79,22 @@ class SlackBot extends Adapter
     return @robot.logger.error "Invalid service token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ['xoxb-', 'xoxp-'])
 
     # Setup client event handlers
-    @client.on 'open', @open
-    @client.on 'close', @close
-    @client.on 'error', @error
-    @client.on 'message', @message
-    @client.on 'reaction_added', @reaction
-    @client.on 'reaction_removed', @reaction
-    @client.on 'authenticated', @authenticated
-    @client.on 'user_change', @userChange
-    @client.on 'presence_change', @presenceChange
+    @client.rtm.on 'open', @open
+    @client.rtm.on 'close', @close
+    @client.rtm.on 'error', @error
+    @client.rtm.on 'reaction_added', @reaction
+    @client.rtm.on 'reaction_removed', @reaction
+    @client.rtm.on 'authenticated', @authenticated
+    @client.rtm.on 'user_change', @userChange
+    @client.rtm.on 'presence_change', @presenceChange
 
-    @client.web.users.list @loadUsers
+    @client.loadUsers @loadUsers
+    @client.onMessage @message
 
     @robot.brain.on 'loaded', () =>
       if not @isLoaded
-        @client.web.users.list @loadUsers
-        this.setIsLoaded(true)
+        @client.loadUsers @loadUsers
+        @setIsLoaded(true)
 
 
     # Start logging in
@@ -133,6 +133,7 @@ class SlackBot extends Adapter
   Slack client has closed the connection
   ###
   close: =>
+    # NOTE: not confident that @options.autoReconnect has intended effect as currently implemented
     if @options.autoReconnect
       @robot.logger.info 'Slack client closed, waiting for reconnect'
     else
