@@ -267,13 +267,16 @@ class SlackBot extends Adapter
   presence changed event received from Slack
   ###
   presenceChange: (message) =>
-    {user} = message
-    return if (user == @self.id) || (user == @self.bot_id) #Ignore anything from the bot
+    # prepare for the removal of the deprecated single presence change updates
+    userIds = if message.user then [message.user] else message.users
 
-    user = @client.rtm.dataStore.getUserById(user)
+    users = []
+    for id in userIds
+      user = @client.rtm.dataStore.getUserById(id)
+      if user then users.push user
 
-    return unless user
-    @receive new PresenceMessage(user)
+    return unless users
+    @receive new PresenceMessage(users, message.presence)
 
   # Callback for SlackClient.loadUsers()
   loadUsers: (err, res) =>
