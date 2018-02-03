@@ -263,8 +263,9 @@ class SlackBot extends Adapter
     return unless user
     @receive new PresenceMessage(user)
 
+  # Callback for SlackClient.loadUsers()
   loadUsers: (err, res) =>
-    if err || !res.ok
+    if err || !res.members.length
       @robot.logger.error "Can't fetch users"
       return
 
