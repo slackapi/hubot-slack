@@ -216,10 +216,10 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.reaction, 'thumbsup'
 
   it 'Should handle presence_change events as envisioned', ->
-    presenceMessage = {user: @stubs.user.id}
+    presenceMessage = {users: [@stubs.user.id], presence: 'away'}
     @slackbot.presenceChange presenceMessage
     should.equal (@stubs._received instanceof PresenceMessage), true
-    should.equal @stubs._received.user.id, @stubs.user.id
+    should.equal @stubs._received.users[0].id, @stubs.user.id
 
   it 'Should handle unknown events as catchalls', ->
     @slackbot.message {subtype: 'hidey_ho', user: @stubs.user, channel: @stubs.channel}
