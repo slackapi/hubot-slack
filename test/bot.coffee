@@ -262,16 +262,6 @@ describe 'Handling incoming messages', ->
     @slackbot.reaction reactionMessage
     should.equal @stubs._received, undefined
 
-  it 'Should ignore presence events that it generated itself', ->
-    presenceMessage = { user: @stubs.self.id }
-    @slackbot.presenceChange presenceMessage
-    should.equal @stubs._received, undefined
-
-  it 'Should ignore presence events that it generated itself as a botuser', ->
-    presenceMessage = { user: @stubs.self_bot }
-    @slackbot.presenceChange presenceMessage
-    should.equal @stubs._received, undefined
-
 describe 'Robot.react', ->
   before ->
     user = { id: @stubs.user.id, room: @stubs.channel.id }
