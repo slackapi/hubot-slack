@@ -95,7 +95,7 @@ class SlackBot extends Adapter
       if not @isLoaded
         @client.loadUsers @loadUsers
         @setIsLoaded(true)
-
+        @presence_sub()
 
     # Start logging in
     @client.connect()
@@ -128,6 +128,18 @@ class SlackBot extends Adapter
 
     @robot.logger.info "Logged in as #{@robot.name} of #{team.name}"
 
+    
+  ###
+  Subscribes for presence change updates for all active non bot users
+  This is necessary since January 2018 see https://api.slack.com/changelog/2018-01-presence-present-and-future
+  ###
+  presence_sub: () =>
+    usersArray = Object.values @robot.brain.data.users
+    # Only status changes from active users are relevant
+    members = usersArray.filter (user) => not user.is_bot and not user.deleted
+    ids = members.map (user) => user.id
+
+    @client.rtm.subscribePresence ids
 
   ###
   Slack client has closed the connection
