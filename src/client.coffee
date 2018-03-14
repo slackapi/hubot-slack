@@ -187,11 +187,8 @@ class SlackClient
         # previous behavior was to ignore this event entirely if the user and item_user were not in the local workspace
         event.item_user = fetched.item_user if fetched.item_user
 
-        try {
-          @eventHandler(event)
-        } catch (error) {
-          @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
-        }
+        try @eventHandler(event)
+        catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
       )
       .catch((error) =>
         @robot.logger.error "Incoming RTM message dropped due to error fetching info for a property: #{error.message}."

@@ -33,7 +33,7 @@ describe 'onMessage()', ->
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
       type: 'message',
-      user: @stubs.user.id ,
+      user: @stubs.user.id,
       channel: @stubs.channel.id,
       text: 'blah',
       ts: '1355517523.000005'

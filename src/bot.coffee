@@ -1,5 +1,6 @@
-{ Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
+{ Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage } = require.main.require 'hubot'
 { SlackTextMessage, ReactionMessage } = require './message';
+{ Robot } = require './extensions';
 SlackClient = require './client'
 
 class SlackBot extends Adapter
@@ -36,6 +37,7 @@ class SlackBot extends Adapter
     @client.rtm.on 'error', @error
     @client.rtm.on 'authenticated', @authenticated
     @client.rtm.on 'user_change', @userChange
+
     @client.onEvent @eventHandler
 
     # TODO: set this to false as soon as RTM connection closes (even if reconnect will happen later)
@@ -77,7 +79,7 @@ class SlackBot extends Adapter
   # Hubot is setting the Slack channel topic
   # @public
   ###
-  topic: (envelope, strings...) ->
+  setTopic: (envelope, strings...) ->
     @client.setTopic envelope.room, strings.join "\n"
 
   ###*
@@ -154,20 +156,30 @@ class SlackBot extends Adapter
   # @private
   ###
   eventHandler: (event) =>
-    {user, channel, subtype, topic, bot} = event
-
-    # Ignore anything we sent
-    # NOTE: coupled to getting `rtm.start` data
-    return if (user && (user.id is @self.id)) || (bot && (bot.id is @self.bot_id))
-
-    # Hubot expects this format for TextMessage Listener
-    # NOTE: use robot.brain.userForId(id, options) to initialize the user object
-    # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
-    bot.room = channel.id if bot
-    user.room = channel.id if user
+    {text, rawText, user, channel, subtype, topic, bot, item} = event
 
     # Send to Hubot based on message type
     if event.type is 'message'
+      # Ignore anything we sent
+      # NOTE: coupled to getting `rtm.start` data
+      return if (user && (user.id is @self.id)) || (bot && (bot.id is @self.bot_id))
+
+      # Hubot expects this format for TextMessage Listener
+      # NOTE: use robot.brain.userForId(id, options) to initialize the user object
+      # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
+      bot.room = channel.id if bot
+      user.room = channel.id if user
+
+      # Direct messages
+      if channel.id[0] is 'D'
+        text = "#{@robot.name} #{text}"     # If this is a DM, pretend it was addressed to us
+        channel.name ?= channel._modelName  # give the channel a name
+
+      # Hubot expects this format for TextMessage Listener
+      user = bot if !user
+      user = {} if !user
+      user.room = channel.id
+
       switch subtype
         when 'bot_message'
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
@@ -193,9 +205,11 @@ class SlackBot extends Adapter
         # else
         #   # other subtypes may not have user or user.room defined
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'
+      return if (user.id == @self.id) || (user.id == @self.bot_id)
+
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
-      user.room = item.channel # when the item is not a message this will be undefined
+      user.room = item.channel.id # when the item is not a message this will be undefined
       # prefer user over bot.
       # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
       # user is the more appropriate value.
@@ -204,7 +218,7 @@ class SlackBot extends Adapter
   ###*
   # @private
   ###
-  usersLoaded: (err, res) =>
+  loadUsers: (err, res) =>
     if err || !res.ok
       @robot.logger.error "Can't fetch users"
       return
