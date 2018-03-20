@@ -1,9 +1,10 @@
 should = require 'should'
 chai = require 'chai'
-{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot, Listener} = require.main.require 'hubot'
-ReactionMessage = require '../src/reaction-message'
+{ EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
+{ SlackTextMessage, ReactionMessage } = require '../src/message'
 SlackClient = require '../src/client'
-SlackTextMessage = require '../src/slack-message'
+_ = require 'lodash'
+
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -20,9 +21,6 @@ describe 'Connect', ->
   it 'Should connect successfully', ->
     @slackbot.run()
     @stubs._connected.should.be.true
-  it 'Should set the robot name', ->
-    @slackbot.run()
-    @slackbot.robot.name.should.equal 'bot'
 
 describe 'Logger', ->
   it 'It should log missing token error', ->
@@ -105,9 +103,12 @@ describe 'Reply to Messages', ->
     sentMessages[0].should.equal "message"
 
 describe 'Setting the channel topic', ->
-  it 'Should set the topic in channels', ->
+  it 'Should set the topic in channels', (done) ->
     @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
-    @stubs._topic.should.equal 'channel'
+    setTimeout(() =>
+      @stubs._topic.should.equal 'channel'
+      done()
+    , 0)
 
   it 'Should NOT set the topic in DMs', ->
     @slackbot.setTopic {room: 'D1232'}, 'DM'
@@ -124,67 +125,76 @@ describe 'Receiving an error event', ->
     @hit.should.equal true
 
 describe 'Handling incoming messages', ->
-  it 'Should handle regular messages as hoped and dreamed', ->
-    @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.channel}
-    @stubs._received.text.should.equal 'foo'
+  it 'Should handle regular messages as hoped and dreamed', (done) ->
+    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
+    setTimeout(() =>
+      @stubs._received.text.should.equal 'foo'
+      done()
+    , 0)
 
-  it 'Should prepend our name to a message addressed to us in a DM', ->
-    @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.DM}
-    @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
+  it 'Should prepend our name to a message addressed to us in a DM', (done) ->
+    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.DM}
+    setTimeout(() =>
+      @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
+      done()
+    , 0)
 
-  it 'Should return a message object with raw text and message', ->
+  it 'Should return a message object with raw text and message', (done) ->
+    #the shape of this data is an RTM message event passed through SlackClient#messageWrapper
+    #see: https://api.slack.com/events/message
     messageData = {
-      subtype: 'message',
+      type: 'message'
       user: @stubs.user,
       channel: @stubs.channel,
-      text: 'foo http://www.example.com bar',
-      rawText: 'foo <http://www.example.com> bar',
-      returnRawText: true
+      text: 'foo <http://www.example.com> bar',
     }
-    @slackbot.message messageData
-    should.equal (@stubs._received instanceof SlackTextMessage), true
-    should.equal @stubs._received.text, "foo http://www.example.com bar"
-    should.equal @stubs._received.rawText, "foo <http://www.example.com> bar"
-    should.equal @stubs._received.rawMessage, messageData
+    @slackbot.eventHandler messageData
+    setTimeout(() =>
+      should.equal (@stubs._received instanceof SlackTextMessage), true
+      should.equal @stubs._received.text, "foo http://www.example.com bar"
+      should.equal @stubs._received.rawText, "foo <http://www.example.com> bar"
+      should.equal @stubs._received.rawMessage, messageData
+      done()
+    , 0)
 
   it 'Should handle channel_join events as envisioned', ->
-    @slackbot.message {subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
+    @slackbot.eventHandler {type: 'message', subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof EnterMessage), true
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle channel_leave events as envisioned', ->
-    @slackbot.message {subtype: 'channel_leave', user: @stubs.user, channel: @stubs.channel}
+    @slackbot.eventHandler {type: 'message', subtype: 'channel_leave', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof LeaveMessage), true
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle channel_topic events as envisioned', ->
-    @slackbot.message {subtype: 'channel_topic', user: @stubs.user, channel: @stubs.channel}
+    @slackbot.eventHandler {type: 'message', subtype: 'channel_topic', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof TopicMessage), true
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle group_join events as envisioned', ->
-    @slackbot.message {subtype: 'group_join', user: @stubs.user, channel: @stubs.channel}
+    @slackbot.eventHandler {type: 'message', subtype: 'group_join', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof EnterMessage), true
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle group_leave events as envisioned', ->
-    @slackbot.message {subtype: 'group_leave', user: @stubs.user, channel: @stubs.channel}
+    @slackbot.eventHandler {type: 'message', subtype: 'group_leave', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof LeaveMessage), true
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle group_topic events as envisioned', ->
-    @slackbot.message {subtype: 'group_topic', user: @stubs.user, channel: @stubs.channel}
+    @slackbot.eventHandler {type: 'message', subtype: 'group_topic', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof TopicMessage), true
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle reaction_added events as envisioned', ->
     reactionMessage = {
-      type: 'reaction_added', user: @stubs.user.id, item_user: @stubs.self.id
-      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
+      type: 'reaction_added', user: @stubs.user, item_user: @stubs.self
+      item: { type: 'message', channel: @stubs.channel, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     }
-    @slackbot.reaction reactionMessage
+    @slackbot.eventHandler reactionMessage
     should.equal (@stubs._received instanceof ReactionMessage), true
     should.equal @stubs._received.user.id, @stubs.user.id
     should.equal @stubs._received.user.room, @stubs.channel.id
@@ -194,12 +204,12 @@ describe 'Handling incoming messages', ->
 
   it 'Should handle reaction_removed events as envisioned', ->
     reactionMessage = {
-      type: 'reaction_removed', user: @stubs.user.id, item_user: @stubs.self.id
-      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
+      type: 'reaction_removed', user: @stubs.user, item_user: @stubs.self
+      item: { type: 'message', channel: @stubs.channel, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     }
-    @slackbot.reaction reactionMessage
+    @slackbot.eventHandler reactionMessage
     should.equal (@stubs._received instanceof ReactionMessage), true
     should.equal @stubs._received.user.id, @stubs.user.id
     should.equal @stubs._received.user.room, @stubs.channel.id
@@ -208,45 +218,51 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.reaction, 'thumbsup'
 
   it 'Should handle unknown events as catchalls', ->
-    @slackbot.message {subtype: 'hidey_ho', user: @stubs.user, channel: @stubs.channel}
+    @slackbot.eventHandler {type: 'message', subtype: 'hidey_ho', user: @stubs.user, channel: @stubs.channel}
     should.equal (@stubs._received instanceof CatchAllMessage), true
 
-  it 'Should not crash with bot messages', ->
-    @slackbot.message { subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
-    should.equal (@stubs._received instanceof SlackTextMessage), true
+  it 'Should not crash with bot messages', (done) ->
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
+    
+    setTimeout(() =>
+      should.equal (@stubs._received instanceof SlackTextMessage), true
+      done()
+    , 0)
 
   it 'Should ignore messages it sent itself', ->
-    @slackbot.message { subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
     should.equal @stubs._received, undefined
 
   it 'Should ignore messages it sent itself, if sent as a botuser', ->
-    @slackbot.message { subtype: 'bot_message', bot: @stubs.self_bot, channel: @stubs.channel, text: 'Ignore me' }
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.self_bot, channel: @stubs.channel, text: 'Ignore me' }
     should.equal @stubs._received, undefined
 
   it 'Should ignore reaction events that it generated itself', ->
-    reactionMessage = { type: 'reaction_removed', user: @stubs.self.id, reaction: 'thumbsup', event_ts: '1360782804.083113' }
-    @slackbot.reaction reactionMessage
+    reactionMessage = { type: 'reaction_removed', user: @stubs.self, reaction: 'thumbsup', event_ts: '1360782804.083113' }
+    @slackbot.eventHandler reactionMessage
     should.equal @stubs._received, undefined
 
   it 'Should ignore reaction events that it generated itself as a botuser', ->
-    reactionMessage = { type: 'reaction_added', user: @stubs.self_bot.id, reaction: 'thumbsup', event_ts: '1360782804.083113' }
-    @slackbot.reaction reactionMessage
+    reactionMessage = { type: 'reaction_added', user: @stubs.self_bot, reaction: 'thumbsup', event_ts: '1360782804.083113' }
+    @slackbot.eventHandler reactionMessage
     should.equal @stubs._received, undefined
 
-  it 'Should ignore reaction events from users who are not in the dataStore', ->
-    reactionMessage = { type: 'reaction_added', user: @stubs.org_user_not_in_workspace, reaction: 'thumbsup', event_ts: '1360782804.083113' }
-    @slackbot.reaction reactionMessage
-    should.equal @stubs._received, undefined
+  #TODO
+  # it 'Should ignore reaction events from users who are in different workspace', ->
+  #   reactionMessage = { type: 'reaction_added', user: @stubs.org_user_not_in_workspace, reaction: 'thumbsup', event_ts: '1360782804.083113' }
+  #   @slackbot.eventHandler reactionMessage
+  #   should.equal @stubs._received, undefined
 
-  it 'Should ignore reaction events whose item user is not in the dataStore', ->
-    reactionMessage = {
-      type: 'reaction_added', user: @stubs.user.id, item_user: @stubs.org_user_not_in_workspace
-      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
-      },
-      reaction: 'thumbsup', event_ts: '1360782804.083113'
-    }
-    @slackbot.reaction reactionMessage
-    should.equal @stubs._received, undefined
+  #TODO
+  # it 'Should ignore reaction events whose item user is in different workspace', ->
+  #   reactionMessage = {
+  #     type: 'reaction_added', user: @stubs.user, item_user: @stubs.org_user_not_in_workspace
+  #     item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
+  #     },
+  #     reaction: 'thumbsup', event_ts: '1360782804.083113'
+  #   }
+  #   @slackbot.eventHandler reactionMessage
+  #   should.equal @stubs._received, undefined
 
 describe 'Robot.react', ->
   before ->
@@ -297,7 +313,7 @@ describe 'Robot.react', ->
 
 describe 'Users data', ->
   it 'Should add a user data', ->
-    @slackbot.userChange(@stubs.user)
+    @slackbot.updateUserInBrain(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -307,7 +323,7 @@ describe 'Users data', ->
     should.equal user.slack.misc, @stubs.user.misc
 
   it 'Should add a user data (user with no profile)', ->
-    @slackbot.userChange(@stubs.usernoprofile)
+    @slackbot.updateUserInBrain(@stubs.usernoprofile)
 
     user = @slackbot.robot.brain.data.users[@stubs.usernoprofile.id]
     should.equal user.id, @stubs.usernoprofile.id
@@ -317,7 +333,7 @@ describe 'Users data', ->
     (user).should.not.have.ownProperty('email_address')
 
   it 'Should add a user data (user with no email in profile)', ->
-    @slackbot.userChange(@stubs.usernoemail)
+    @slackbot.updateUserInBrain(@stubs.usernoemail)
 
     user = @slackbot.robot.brain.data.users[@stubs.usernoemail.id]
     should.equal user.id, @stubs.usernoemail.id
@@ -327,7 +343,7 @@ describe 'Users data', ->
     (user).should.not.have.ownProperty('email_address')
 
   it 'Should modify a user data', ->
-    @slackbot.userChange(@stubs.user)
+    @slackbot.updateUserInBrain(@stubs.user)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -349,7 +365,7 @@ describe 'Users data', ->
         client:
           client
 
-    @slackbot.userChange(user_change_event)
+    @slackbot.updateUserInBrain(user_change_event)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -360,7 +376,7 @@ describe 'Users data', ->
     should.equal user.slack.client, undefined
 
   it 'Should ignore user data which is undefined', ->
-    @slackbot.userChange(undefined)
+    @slackbot.updateUserInBrain(undefined)
     users = @slackbot.robot.brain.data.users
     should.equal Object.keys(users).length, 0
 

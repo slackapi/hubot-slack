@@ -1,5 +1,6 @@
 # Setup stubs used by the other tests
 
+Promise = require 'bluebird'
 SlackBot = require '../src/bot'
 SlackFormatter = require '../src/formatter'
 SlackClient = require '../src/client'
@@ -23,31 +24,24 @@ beforeEach ->
       @stubs._msg = msg
     msg
 
+  # These objects are of conversation shape: https://api.slack.com/types/conversation
   @stubs.channel =
-    name: 'general'
     id: 'C123'
-    sendMessage: (msg) -> msg
-    getType: -> 'channel'
+    name: 'general'
   @stubs.DM =
-    name: 'User'
     id: 'D1232'
-    sendMessage: (msg) -> msg
-    getType: -> 'dm'
+    is_im: true
   @stubs.group =
-    name: 'Group'
     id: 'G12324'
-    sendMessage: (msg) -> msg
-    getType: -> 'group'
+
+  # These objects are of user shape: https://api.slack.com/types/user
   @stubs.user =
-    name: 'name'
-    real_name: 'real_name'
     id: 'U123'
+    name: 'name' # NOTE: this property is dynamic and should only be used for display purposes
+    real_name: 'real_name'
     profile:
       email: 'email@example.com'
     misc: 'misc'
-  @stubs.bot =
-    name: 'testbot'
-    id: 'B123'
   @stubs.userperiod =
     name: 'name.lname'
     id: 'U124'
@@ -70,6 +64,10 @@ beforeEach ->
     profile:
       foo: 'bar'
     misc: 'misc'
+
+  @stubs.bot =
+    name: 'testbot'
+    id: 'B123'
   @stubs.self =
     name: 'self'
     id: 'U456'
@@ -88,9 +86,9 @@ beforeEach ->
       email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
+
   # Slack client
   @stubs.client =
-
     dataStore:
       getUserById: (id) =>
         for user in @stubs.client.dataStore.users
@@ -130,10 +128,6 @@ beforeEach ->
           when @stubs.self.id then @stubs.self
           when @stubs.self_bot.id then @stubs.self_bot
           else undefined
-      getChannelByName: (name) =>
-        switch name
-          when 'known_room' then {id: 'C00000004'}
-          else undefined
       getChannelGroupOrDMById: (id) =>
         switch id
           when @stubs.channel.id then @stubs.channel
@@ -141,9 +135,16 @@ beforeEach ->
   @stubs.chatMock =
     postMessage: (msg, room, opts) =>
       @stubs.send(msg, room, opts)
-  @stubs.channelsMock =
+  @stubs.conversationsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
+    info: (conversationId) =>
+      if conversationId == @stubs.channel.id
+        return Promise.resolve(@stubs.channel)
+      else if conversationId == @stubs.DM.id
+        return Promise.resolve(@stubs.DM)
+      else
+        return Promise.reject(new Error('conversationsMock could not match conversation ID'))
   @stubs.usersMock =
     list: (opts, cb) =>
       @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
@@ -152,6 +153,11 @@ beforeEach ->
         cb(null, @stubs.userListPageLast)
       else
         cb(null, @stubs.userListPageWithNextCursor)
+    info: (userId) =>
+      if userId == @stubs.user.id
+        return Promise.resolve(@stubs.user)
+      else
+        return Promise.reject(new Error('usersMock could not match user ID'))
   @stubs.userListPageWithNextCursor = {
     members: [{ id: 1 }, { id: 2 }]
     response_metadata: {
@@ -170,6 +176,7 @@ beforeEach ->
     members: [@stubs.user, @stubs.userperiod]
   @stubs.wrongResponseUsersList =
     ok: false
+
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter
@@ -210,8 +217,9 @@ beforeEach ->
   _.merge @slackbot.client, @stubs.client
   _.merge @slackbot.client.rtm, @stubs.rtm
   _.merge @slackbot.client.web.chat, @stubs.chatMock
-  _.merge @slackbot.client.web.channels, @stubs.channelsMock
+  _.merge @slackbot.client.web.conversations, @stubs.conversationsMock
   _.merge @slackbot, @stubs.receiveMock
+  _.merge @slackbot.client.web.users, @stubs.usersMock
   @slackbot.self = @stubs.self
 
   @formatter = new SlackFormatter @stubs.client.dataStore
@@ -219,5 +227,5 @@ beforeEach ->
   @client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
   _.merge @client.rtm, @stubs.rtm
   _.merge @client.web.chat, @stubs.chatMock
-  _.merge @client.web.channels, @stubs.channelsMock
+  _.merge @client.web.conversations, @stubs.conversationsMock
   _.merge @client.web.users, @stubs.usersMock

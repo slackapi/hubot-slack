@@ -1,5 +1,5 @@
 node_modules/
+package-lock.json
 .idea
 coverage/
 *.log
-.DS_Store

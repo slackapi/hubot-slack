@@ -1,4 +1,5 @@
 SlackBot = require './src/bot'
+require './src/extensions'
 
 exports.use = (robot) ->
   options = token: process.env.HUBOT_SLACK_TOKEN
