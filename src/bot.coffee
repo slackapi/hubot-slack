@@ -2,6 +2,7 @@
 { SlackTextMessage, ReactionMessage } = require './message';
 { Robot } = require './extensions';
 SlackClient = require './client'
+Promise = require 'bluebird'
 
 class SlackBot extends Adapter
 
@@ -44,7 +45,7 @@ class SlackBot extends Adapter
     # TODO: check this value when connection finishes (even if its a reconnection)
     # TODO: build a map of enterprise users and local users
     @needsUserListSync = true
-    @client.loadUsers @usersLoaded
+    @client.loadUsers @loadUsers
     @robot.brain.on 'loaded', () =>
       # Hubot Brain emits 'loaded' event each time a key is set, but we only want to synchonize the users list on
       # the first load after a connection completes
@@ -60,20 +61,25 @@ class SlackBot extends Adapter
   # @public
   ###
   send: (envelope, messages...) ->
+    sent_messages = []
     for message in messages
       # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
-      @client.send(envelope, message) unless message is ''
+      if message isnt ''
+        sent_messages.push @client.send(envelope, message)
+    return sent_messages
 
   ###*
   # Hubot is replying to a Slack message
   # @public
   ###
   reply: (envelope, messages...) ->
+    sent_messages = []
     for message in messages
       if message isnt ''
         # TODO: channel prefix matching should be removed
         message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
-        @client.send(envelope, message)
+        sent_messages.push @client.send(envelope, message)
+    return sent_messages
 
   ###*
   # Hubot is setting the Slack channel topic
@@ -158,22 +164,17 @@ class SlackBot extends Adapter
   eventHandler: (event) =>
     {text, rawText, user, channel, subtype, topic, bot, item} = event
 
+    # Ignore anything we sent
+    # NOTE: coupled to getting `rtm.start` data
+    return if (user && (user.id is @self.id)) || (bot && (bot.id is @self.bot_id))
+
     # Send to Hubot based on message type
     if event.type is 'message'
-      # Ignore anything we sent
-      # NOTE: coupled to getting `rtm.start` data
-      return if (user && (user.id is @self.id)) || (bot && (bot.id is @self.bot_id))
-
       # Hubot expects this format for TextMessage Listener
       # NOTE: use robot.brain.userForId(id, options) to initialize the user object
       # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
       bot.room = channel.id if bot
       user.room = channel.id if user
-
-      # Direct messages
-      if channel.id[0] is 'D'
-        text = "#{@robot.name} #{text}"     # If this is a DM, pretend it was addressed to us
-        channel.name ?= channel._modelName  # give the channel a name
 
       # Hubot expects this format for TextMessage Listener
       user = bot if !user
@@ -183,10 +184,16 @@ class SlackBot extends Adapter
       switch subtype
         when 'bot_message'
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
+
           # prefer user over bot.
           # if both are set in the slack event, it represents an app or integration sending a message on behalf of a
           # user, so the user is the more appropriate value.
-          @receive new SlackTextMessage(user || bot, undefined, undefined, event, channel, @robot.name)
+          SlackTextMessage.makeSlackTextMessage(user || bot, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+            @receive message
+          )
+          .catch((error) =>
+            @robot.logger.error "Error constructing SlackTextMessage"
+          )
         # NOTE: channel_join should be replaced with a member_joined_channel event
         when 'channel_join', 'group_join'
           @robot.logger.debug "#{user.name} has joined #{channel.name || channel.id}"
@@ -200,16 +207,25 @@ class SlackBot extends Adapter
           @receive new TopicMessage user, event.topic, event.ts
         when undefined
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
-          @receive new SlackTextMessage(user, undefined, undefined, event, channel, @robot.name)
+          
+          SlackTextMessage.makeSlackTextMessage(user || bot, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+            @receive message
+          )
+          .catch((error) =>
+            @robot.logger.error "Error constructing SlackTextMessage"
+          )
+        else
+          @receive new CatchAllMessage {user}
         # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
         # else
         #   # other subtypes may not have user or user.room defined
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'
-      return if (user.id == @self.id) || (user.id == @self.bot_id)
+      return unless event.user && event.item_user
 
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
       user.room = item.channel.id # when the item is not a message this will be undefined
+
       # prefer user over bot.
       # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
       # user is the more appropriate value.

@@ -1,7 +1,6 @@
 {RtmClient, WebClient} = require '@slack/client'
 SlackFormatter = require './formatter'
 _ = require 'lodash'
-Promise = require 'bluebird'
 
 class SlackClient
   @PAGE_SIZE = 100
@@ -172,6 +171,7 @@ class SlackClient
       fetches.item_user = @web.users.info(event.item_user) if event.item_user
 
       Promise.props(fetches).then((fetched) =>
+
         event.channel = fetched.channel if fetched.channel
 
         # messages sent from human users, apps with a bot user and using the xoxb token, and
