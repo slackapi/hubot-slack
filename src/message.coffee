@@ -39,6 +39,8 @@ class SlackTextMessage extends TextMessage
     # private instance properties (not trying to expand API contract)
     @_channel = channel
     @_robot_name = robot_name
+
+    # Slack client is needed to get user and conversation info
     @_client = client
 
     # public instance property initialization
@@ -145,8 +147,11 @@ class SlackTextMessage extends TextMessage
     message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, client)
 
     if not message.text? then message.buildText(() =>
+      message._client = undefined
       cb(message)
-    ) else cb(message)
+    ) else 
+      message._client = undefined
+      cb(message)
 
 exports.SlackTextMessage = SlackTextMessage
 exports.ReactionMessage = ReactionMessage
