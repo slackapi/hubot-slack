@@ -216,12 +216,15 @@ class SlackBot extends Adapter
           )
         else
           @receive new CatchAllMessage {user}
-        # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
-        # else
-        #   # other subtypes may not have user or user.room defined
+
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'
       return unless event.user && event.item_user
 
+      # If the reaction is from a stranger or on a stranger's message, then the event will be ignored
+      # Strangers have no shared channel in common, external members have shared channel membership
+      # External member reactions should function normally
+      return if event.item_user.is_stranger || event.user.is_stranger
+      
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
       user.room = item.channel.id # when the item is not a message this will be undefined

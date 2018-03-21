@@ -84,6 +84,13 @@ beforeEach ->
     id: 'W123'
     profile:
       email: 'org_not_in_workspace@example.com'
+    is_stranger: true
+  @stubs.org_user_not_in_workspace_in_channel =
+    name: 'name'
+    id: 'W123'
+    profile:
+      email: 'org_not_in_workspace@example.com'
+    is_stranger: false
   @stubs.team =
     name: 'Example Team'
 
@@ -156,6 +163,8 @@ beforeEach ->
     info: (userId) =>
       if userId == @stubs.user.id
         return Promise.resolve(@stubs.user)
+      else if userId == @stubs.org_user_not_in_workspace.id
+        return Promise.resolve(@stubs.org_user_not_in_workspace)
       else
         return Promise.reject(new Error('usersMock could not match user ID'))
   @stubs.userListPageWithNextCursor = {

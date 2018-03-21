@@ -247,22 +247,31 @@ describe 'Handling incoming messages', ->
     @slackbot.eventHandler reactionMessage
     should.equal @stubs._received, undefined
 
-  #TODO
-  # it 'Should ignore reaction events from users who are in different workspace', ->
-  #   reactionMessage = { type: 'reaction_added', user: @stubs.org_user_not_in_workspace, reaction: 'thumbsup', event_ts: '1360782804.083113' }
-  #   @slackbot.eventHandler reactionMessage
-  #   should.equal @stubs._received, undefined
+  it 'Should handle reaction events from users who are in different workspace in shared channel', ->
+    reactionMessage = {
+      type: 'reaction_added', user: @stubs.org_user_not_in_workspace_in_channel, item_user: @stubs.self
+      item: { type: 'message', channel: @stubs.channel, ts: '1360782804.083113'
+      },
+      reaction: 'thumbsup', event_ts: '1360782804.083113'
+    }
 
-  #TODO
-  # it 'Should ignore reaction events whose item user is in different workspace', ->
-  #   reactionMessage = {
-  #     type: 'reaction_added', user: @stubs.user, item_user: @stubs.org_user_not_in_workspace
-  #     item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
-  #     },
-  #     reaction: 'thumbsup', event_ts: '1360782804.083113'
-  #   }
-  #   @slackbot.eventHandler reactionMessage
-  #   should.equal @stubs._received, undefined
+    @slackbot.eventHandler reactionMessage 
+    should.equal (@stubs._received instanceof ReactionMessage), true
+    should.equal @stubs._received.user.id, @stubs.org_user_not_in_workspace_in_channel.id
+    should.equal @stubs._received.user.room, @stubs.channel.id
+    should.equal @stubs._received.item_user.id, @stubs.self.id
+    should.equal @stubs._received.type, 'added'
+    should.equal @stubs._received.reaction, 'thumbsup'
+
+  it 'Should ignore reaction events whose item user is in different workspace and not in shared channel', ->
+    reactionMessage = {
+      type: 'reaction_added', user: @stubs.user, item_user: @stubs.org_user_not_in_workspace 
+      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
+      },
+      reaction: 'thumbsup', event_ts: '1360782804.083113'
+    }
+    @slackbot.eventHandler reactionMessage
+    should.equal @stubs._received, undefined
 
 describe 'Robot.react', ->
   before ->
