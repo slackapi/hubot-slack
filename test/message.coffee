@@ -1,8 +1,4 @@
 should = require 'should'
-chai = require 'chai'
-{ EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
-{ SlackTextMessage, ReactionMessage } = require '../src/message'
-SlackClient = require '../src/client'
 
 describe 'buildText()', ->
 

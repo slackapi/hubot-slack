@@ -78,6 +78,8 @@ describe 'disconnect()', ->
     @client.rtm.listeners('some_event', true).should.not.be.ok
 
 describe 'setTopic()', ->
+  this.retries(1)
+
   it "Should set the topic in a channel", (done) ->
     @client.setTopic @stubs.channel.id, 'iAmTopic'
     setTimeout(() =>

@@ -36,6 +36,8 @@ describe 'Logger', ->
     logger.logs["error"][logger.logs["error"].length-1].should.equal 'Invalid service token provided, please follow the upgrade instructions'
 
 describe 'Send Messages', ->
+  this.retries(1)
+
   it 'Should send a message', ->
     sentMessages = @slackbot.send {room: 'general'}, 'message'
     sentMessages.length.should.equal 1
@@ -101,6 +103,8 @@ describe 'Reply to Messages', ->
     sentMessages[0].should.equal "message"
 
 describe 'Setting the channel topic', ->
+  this.retries(1)
+
   it 'Should set the topic in channels', (done) ->
     @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
     setTimeout(() =>
@@ -123,6 +127,8 @@ describe 'Receiving an error event', ->
     @hit.should.equal true
 
 describe 'Handling incoming messages', ->
+  this.retries(1)
+
   it 'Should handle regular messages as hoped and dreamed', (done) ->
     @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
     setTimeout(() =>
