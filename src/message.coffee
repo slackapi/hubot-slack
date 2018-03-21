@@ -39,7 +39,7 @@ class SlackTextMessage extends TextMessage
     # private instance properties (not trying to expand API contract)
     @_channel = channel
     @_robot_name = robot_name
-    @_client = client    
+    @_client = client
 
     # public instance property initialization
     @rawText = if rawText? then rawText else @rawMessage.text
@@ -112,7 +112,7 @@ class SlackTextMessage extends TextMessage
         else
           link = link.replace /^mailto:/, ''
           if label and -1 == link.indexOf label
-            parts.push(text.slice(cursor, res.index), "#{label} #{link}")
+            parts.push(text.slice(cursor, res.index), "#{label} (#{link})")
           else
             parts.push(text.slice(cursor, res.index), link)
 
@@ -130,13 +130,13 @@ class SlackTextMessage extends TextMessage
   # Returns name of user with id
   ###
   replaceUser: (id, client) ->
-    return client.web.users.info(id).then((user) -> user.name)
+    return client.web.users.info(id).then((user) -> "@#{user.name}")
 
   ###*
   # Returns name of channel with id
   ###
   replaceChannel: (id, client) ->
-    return client.web.channel.info(id).then((channel) -> channel.name)
+    return client.web.conversations.info(id).then((channel) -> "\##{channel.name}")
 
   ###*
   # Factory method to construct SlackTextMessage

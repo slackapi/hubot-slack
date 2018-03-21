@@ -20,6 +20,8 @@ describe 'connect()', ->
     @client.connect();
     @stubs._connected.should.be.true
 
+# Deprecated - function no longer exists
+# TODO: Add tests for same functionality
 # describe 'onMessage()', ->
 #   it 'should not need to be set', ->
 #     @client.rtm.emit('message', { fake: 'message' })

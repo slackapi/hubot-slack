@@ -5,6 +5,7 @@ SlackBot = require '../src/bot'
 SlackFormatter = require '../src/formatter'
 SlackClient = require '../src/client'
 {EventEmitter} = require 'events'
+{ SlackTextMessage } = require '../src/message'
 # Use Hubot's brain in our stubs
 {Brain, Robot} = require 'hubot'
 _ = require 'lodash'
@@ -232,6 +233,8 @@ beforeEach ->
   @slackbot.self = @stubs.self
 
   @formatter = new SlackFormatter @stubs.client.dataStore
+
+  @slacktextmessage = new SlackTextMessage @stubs.self, undefined, undefined, {text: undefined}, undefined, undefined, @slackbot.client
 
   @client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
   _.merge @client.rtm, @stubs.rtm

@@ -3,8 +3,6 @@ chai = require 'chai'
 { EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
 { SlackTextMessage, ReactionMessage } = require '../src/message'
 SlackClient = require '../src/client'
-_ = require 'lodash'
-
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
