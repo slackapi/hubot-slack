@@ -1,5 +1,6 @@
 { Message, TextMessage } = require.main.require 'hubot'
 SlackClient = require './client'
+SlackMention = require './mention'
 Promise = require 'bluebird'
 
 class ReactionMessage extends Message
@@ -44,6 +45,7 @@ class SlackTextMessage extends TextMessage
     @rawText = if rawText? then rawText else @rawMessage.text
     @text = if text? then text else undefined
     @thread_ts = @rawMessage.thread_ts if @rawMessage.thread_ts?
+    @mentions = []
 
     super @user, @text, @rawMessage.ts
 
@@ -62,6 +64,8 @@ class SlackTextMessage extends TextMessage
     # Replace links in text async to fetch user and channel info (if present)
     @replaceLinks(client, text).then((replacedText) =>
 
+      
+
       text = replacedText
       text = text.replace /&lt;/g, '<'
       text = text.replace /&gt;/g, '>'
@@ -69,7 +73,7 @@ class SlackTextMessage extends TextMessage
 
       if @_channel?.is_im
         text = "#{@_robot_name} #{text}"     # If this is a DM, pretend it was addressed to us
-
+      
       @text = text
 
       cb()
@@ -84,39 +88,43 @@ class SlackTextMessage extends TextMessage
     cursor = 0
     parts = []
 
-    while (res = regex.exec(text))
-      [m, type, link, label] = res
+    while (result = regex.exec(text))
+      [m, type, link, label] = result
 
       switch type
         when '@'
           if label
-            parts.push(text.slice(cursor, res.index), "@#{label}")
+            parts.push(text.slice(cursor, result.index), "@#{label}")
+            mention = new SlackMention(link, 'user', undefined)
+            @mentions.push(mention)
           else
-            parts.push(text.slice(cursor, res.index), @replaceUser(client, link))
+            parts.push(text.slice(cursor, result.index), @replaceUser(client, link, @mentions))
         
         when '#'
           if label
-            parts.push(text.slice(cursor, res.index), "\##{label}")
+            parts.push(text.slice(cursor, result.index), "\##{label}")
+            mention = new SlackMention(link, 'conversation', undefined)
+            @mentions.push(mention)
           else
-            parts.push(text.slice(cursor, res.index), @replaceChannel(client, link))
+            parts.push(text.slice(cursor, result.index), @replaceChannel(client, link, @mentions))
 
         when '!'
           if link in SlackTextMessage.MESSAGE_RESERVED_KEYWORDS
-            parts.push(text.slice(cursor, res.index), "@#{link}")
+            parts.push(text.slice(cursor, result.index), "@#{link}")
           else if label
-            parts.push(text.slice(cursor, res.index), label)
+            parts.push(text.slice(cursor, result.index), label)
           else
-            parts.push(text.slice(cursor, res.index), m)
+            parts.push(text.slice(cursor, result.index), m)
 
         else
           link = link.replace /^mailto:/, ''
           if label and -1 == link.indexOf label
-            parts.push(text.slice(cursor, res.index), "#{label} (#{link})")
+            parts.push(text.slice(cursor, result.index), "#{label} (#{link})")
           else
-            parts.push(text.slice(cursor, res.index), link)
+            parts.push(text.slice(cursor, result.index), link)
 
       cursor = regex.lastIndex
-      if (res[0].length == 0) 
+      if (result[0].length == 0) 
         regex.lastIndex++
 
     parts.push text.slice(cursor)
@@ -128,14 +136,27 @@ class SlackTextMessage extends TextMessage
   ###*
   # Returns name of user with id
   ###
-  replaceUser: (client, id) ->
-    return client.web.users.info(id).then((user) -> "@#{user.name}")
+  replaceUser: (client, id, mentions) ->
+    client.web.users.info(id).then((user) ->
+      if user
+        mention = new SlackMention(user.id, 'user', user)
+        mentions.push(mention)
+        return "@#{user.name}"
+      else return link
+    )
 
   ###*
   # Returns name of channel with id
   ###
-  replaceChannel: (client, id) ->
-    return client.web.conversations.info(id).then((channel) -> "\##{channel.name}")
+  replaceChannel: (client, id, mentions) ->
+    client.web.conversations.info(id).then((conversation) ->
+      if conversation
+        mention = new SlackMention(conversation.id, 'conversation', conversation)
+        mentions.push(mention)
+        return "\##{conversation.name}"
+      else return link
+    )
+
 
   ###*
   # Factory method to construct SlackTextMessage
@@ -144,10 +165,8 @@ class SlackTextMessage extends TextMessage
     message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, client)
 
     if not message.text? then message.buildText(client, () ->
-      #message._client = undefined
       setImmediate(cb(message))
     ) else 
-      #message._client = undefined
       setImmediate(cb(message))
 
 exports.SlackTextMessage = SlackTextMessage
