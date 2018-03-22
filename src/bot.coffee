@@ -1,8 +1,6 @@
 { Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage } = require.main.require 'hubot'
-{ SlackTextMessage, ReactionMessage } = require './message';
-{ Robot } = require './extensions';
+{ SlackTextMessage, ReactionMessage } = require './message'
 SlackClient = require './client'
-Promise = require 'bluebird'
 
 class SlackBot extends Adapter
 
@@ -45,12 +43,12 @@ class SlackBot extends Adapter
     # TODO: check this value when connection finishes (even if its a reconnection)
     # TODO: build a map of enterprise users and local users
     @needsUserListSync = true
-    @client.loadUsers @loadUsers
+    @client.loadUsers @usersLoaded
     @robot.brain.on 'loaded', () =>
       # Hubot Brain emits 'loaded' event each time a key is set, but we only want to synchonize the users list on
       # the first load after a connection completes
       if not @isLoaded
-        @client.loadUsers @loadUsers
+        @client.loadUsers @usersLoaded
         @isLoaded = true
 
     # Start logging in
@@ -61,25 +59,20 @@ class SlackBot extends Adapter
   # @public
   ###
   send: (envelope, messages...) ->
-    sent_messages = []
     for message in messages
       # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
-      if message isnt ''
-        sent_messages.push @client.send(envelope, message)
-    return sent_messages
+      @client.send(envelope, message) unless message is ''
 
   ###*
   # Hubot is replying to a Slack message
   # @public
   ###
   reply: (envelope, messages...) ->
-    sent_messages = []
     for message in messages
       if message isnt ''
         # TODO: channel prefix matching should be removed
         message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
-        sent_messages.push @client.send(envelope, message)
-    return sent_messages
+        @client.send(envelope, message)
 
   ###*
   # Hubot is setting the Slack channel topic
@@ -162,14 +155,17 @@ class SlackBot extends Adapter
   # @private
   ###
   eventHandler: (event) =>
-    {text, rawText, user, channel, subtype, topic, bot, item} = event
+    {user, channel, bot} = event
 
     # Ignore anything we sent
     # NOTE: coupled to getting `rtm.start` data
-    return if (user && (user.id is @self.id)) || (bot && (bot.id is @self.bot_id))
+    return if (user && (user.id is @self.id || user.id is @self.bot_id)) || (bot && (bot.id is @self.bot_id))
+
+    
 
     # Send to Hubot based on message type
     if event.type is 'message'
+      
       # Hubot expects this format for TextMessage Listener
       # NOTE: use robot.brain.userForId(id, options) to initialize the user object
       # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
@@ -181,7 +177,7 @@ class SlackBot extends Adapter
       user = {} if !user
       user.room = channel.id
 
-      switch subtype
+      switch event.subtype
         when 'bot_message'
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
 
@@ -203,7 +199,7 @@ class SlackBot extends Adapter
           @robot.logger.debug "#{user.name} has left #{channel.name || channel.id}"
           @receive new LeaveMessage user
         when 'channel_topic', 'group_topic'
-          @robot.logger.debug "#{user.name} set the topic in #{channel.name || channel.id} to #{topic}"
+          @robot.logger.debug "#{user.name} set the topic in #{channel.name || channel.id} to #{event.topic}"
           @receive new TopicMessage user, event.topic, event.ts
         when undefined
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
@@ -215,19 +211,18 @@ class SlackBot extends Adapter
             @robot.logger.error "Error constructing SlackTextMessage"
           )
         else
-          @receive new CatchAllMessage {user}
 
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'
-      return unless event.user && event.item_user
-
+      #return unless event.user && event.item_user
+      console.log(@self.bot_id)
       # If the reaction is from a stranger or on a stranger's message, then the event will be ignored
       # Strangers have no shared channel in common, external members have shared channel membership
       # External member reactions should function normally
-      return if event.item_user.is_stranger || event.user.is_stranger
+      return if event.item_user?.is_stranger || event.user.is_stranger
       
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
-      user.room = item.channel.id # when the item is not a message this will be undefined
+      user.room = event.item?.channel.id # when the item is not a message this will be undefined
 
       # prefer user over bot.
       # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
@@ -237,7 +232,7 @@ class SlackBot extends Adapter
   ###*
   # @private
   ###
-  loadUsers: (err, res) =>
+  usersLoaded: (err, res) =>
     if err || !res.ok
       @robot.logger.error "Can't fetch users"
       return

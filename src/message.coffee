@@ -35,17 +35,14 @@ class SlackTextMessage extends TextMessage
   # text       - The parsed message text
   # rawText    - The unparsed message text
   # rawMessage - The Slack Message object
-  constructor: (@user, text, rawText, @rawMessage, channel, robot_name, client) ->
+  constructor: (@user, text, rawText, @rawMessage, channel, robot_name) ->
     # private instance properties (not trying to expand API contract)
     @_channel = channel
     @_robot_name = robot_name
 
-    # Slack client is needed to get user and conversation info
-    @_client = client
-
     # public instance property initialization
     @rawText = if rawText? then rawText else @rawMessage.text
-    @text = if text? then text else undefined # else @buildText()
+    @text = if text? then text else undefined
     @thread_ts = @rawMessage.thread_ts if @rawMessage.thread_ts?
 
     super @user, @text, @rawMessage.ts
@@ -53,7 +50,7 @@ class SlackTextMessage extends TextMessage
   ###*
   # Build the text property, a flat string representation of the contents of this message.
   ###
-  buildText: (cb) ->
+  buildText: (client, cb) ->
     # base text
     text = @rawMessage.text
 
@@ -63,7 +60,7 @@ class SlackTextMessage extends TextMessage
       text = text + '\n' + attachment_text
 
     # Replace links in text async to fetch user and channel info (if present)
-    @replaceLinks(text).then((replacedText) =>
+    @replaceLinks(client, text).then((replacedText) =>
 
       text = replacedText
       text = text.replace /&lt;/g, '<'
@@ -81,11 +78,11 @@ class SlackTextMessage extends TextMessage
   ###*
   # Replace links inside of text
   ###
-  replaceLinks: (text) ->
-    parts = []
-    cursor = 0
+  replaceLinks: (client, text) ->
     regex = SlackTextMessage.MESSAGE_REGEX
     regex.lastIndex = 0
+    cursor = 0
+    parts = []
 
     while (res = regex.exec(text))
       [m, type, link, label] = res
@@ -95,13 +92,13 @@ class SlackTextMessage extends TextMessage
           if label
             parts.push(text.slice(cursor, res.index), "@#{label}")
           else
-            parts.push(text.slice(cursor, res.index), @replaceUser.apply(null, [link, @_client]))
+            parts.push(text.slice(cursor, res.index), @replaceUser(client, link))
         
         when '#'
           if label
             parts.push(text.slice(cursor, res.index), "\##{label}")
           else
-            parts.push(text.slice(cursor, res.index), @replaceChannel.apply(null, [link, @_client]))
+            parts.push(text.slice(cursor, res.index), @replaceChannel(client, link))
 
         when '!'
           if link in SlackTextMessage.MESSAGE_RESERVED_KEYWORDS
@@ -131,13 +128,13 @@ class SlackTextMessage extends TextMessage
   ###*
   # Returns name of user with id
   ###
-  replaceUser: (id, client) ->
+  replaceUser: (client, id) ->
     return client.web.users.info(id).then((user) -> "@#{user.name}")
 
   ###*
   # Returns name of channel with id
   ###
-  replaceChannel: (id, client) ->
+  replaceChannel: (client, id) ->
     return client.web.conversations.info(id).then((channel) -> "\##{channel.name}")
 
   ###*
@@ -146,12 +143,12 @@ class SlackTextMessage extends TextMessage
   @makeSlackTextMessage: (@user, text, rawText, @rawMessage, channel, robot_name, client, cb) ->
     message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, client)
 
-    if not message.text? then message.buildText(() =>
-      message._client = undefined
-      cb(message)
+    if not message.text? then message.buildText(client, () ->
+      #message._client = undefined
+      setImmediate(cb(message))
     ) else 
-      message._client = undefined
-      cb(message)
+      #message._client = undefined
+      setImmediate(cb(message))
 
 exports.SlackTextMessage = SlackTextMessage
 exports.ReactionMessage = ReactionMessage

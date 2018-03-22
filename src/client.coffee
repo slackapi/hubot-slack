@@ -1,6 +1,7 @@
 {RtmClient, WebClient} = require '@slack/client'
 SlackFormatter = require './formatter'
 _ = require 'lodash'
+Promise = require 'bluebird'
 
 class SlackClient
   @PAGE_SIZE = 100

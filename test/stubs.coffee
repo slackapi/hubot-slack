@@ -9,6 +9,7 @@ SlackClient = require '../src/client'
 # Use Hubot's brain in our stubs
 {Brain, Robot} = require 'hubot'
 _ = require 'lodash'
+require '../src/extensions'
 
 # Stub a few interfaces to grease the skids for tests. These are intentionally
 # as minimal as possible and only provide enough to make the tests possible.

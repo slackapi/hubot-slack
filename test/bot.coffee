@@ -3,6 +3,7 @@ chai = require 'chai'
 { EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
 { SlackTextMessage, ReactionMessage } = require '../src/message'
 SlackClient = require '../src/client'
+_ = require 'lodash'
 
 describe 'Adapter', ->
   it 'Should initialize with a robot', ->
@@ -36,7 +37,6 @@ describe 'Logger', ->
     logger.logs["error"][logger.logs["error"].length-1].should.equal 'Invalid service token provided, please follow the upgrade instructions'
 
 describe 'Send Messages', ->
-  this.retries(1)
 
   it 'Should send a message', ->
     sentMessages = @slackbot.send {room: 'general'}, 'message'
@@ -49,6 +49,8 @@ describe 'Send Messages', ->
 
   it 'Should not send empty messages', ->
     sentMessages = @slackbot.send {room: 'general'}, 'Hello', '', '', 'world!'
+    # Removes undefined (or unsent) messages from sentMessages
+    _.remove(sentMessages, _.isUndefined)
     sentMessages.length.should.equal 2
 
   it 'Should not fail for inexistant user', ->
@@ -95,6 +97,8 @@ describe 'Reply to Messages', ->
 
   it 'Should send nothing if messages are empty', ->
     sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, ''
+    # Removes undefined (or unsent) messages from sentMessages
+    _.remove(sentMessages, _.isUndefined)
     sentMessages.length.should.equal 0
 
   it 'Should NOT mention the user in a reply sent in a DM', ->
@@ -103,7 +107,6 @@ describe 'Reply to Messages', ->
     sentMessages[0].should.equal "message"
 
 describe 'Setting the channel topic', ->
-  this.retries(1)
 
   it 'Should set the topic in channels', (done) ->
     @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
@@ -127,7 +130,6 @@ describe 'Receiving an error event', ->
     @hit.should.equal true
 
 describe 'Handling incoming messages', ->
-  this.retries(1)
 
   it 'Should handle regular messages as hoped and dreamed', (done) ->
     @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
@@ -220,10 +222,6 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.item_user.id, @stubs.self.id
     should.equal @stubs._received.type, 'removed'
     should.equal @stubs._received.reaction, 'thumbsup'
-
-  it 'Should handle unknown events as catchalls', ->
-    @slackbot.eventHandler {type: 'message', subtype: 'hidey_ho', user: @stubs.user, channel: @stubs.channel}
-    should.equal (@stubs._received instanceof CatchAllMessage), true
 
   it 'Should not crash with bot messages', (done) ->
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
@@ -394,7 +392,7 @@ describe 'Users data', ->
     should.equal Object.keys(users).length, 0
 
   it 'Should load users data from web api', ->
-    @slackbot.loadUsers(null, @stubs.responseUsersList)
+    @slackbot.usersLoaded(null, @stubs.responseUsersList)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -414,7 +412,7 @@ describe 'Users data', ->
       something: 'something'
 
     @slackbot.robot.brain.userForId @stubs.user.id, originalUser
-    @slackbot.loadUsers(null, @stubs.responseUsersList)
+    @slackbot.usersLoaded(null, @stubs.responseUsersList)
 
     user = @slackbot.robot.brain.data.users[@stubs.user.id]
     should.equal user.id, @stubs.user.id
@@ -425,5 +423,5 @@ describe 'Users data', ->
     should.equal user.something, originalUser.something
 
   it 'Should detect wrong response from web api', ->
-    @slackbot.loadUsers(null, @stubs.wrongResponseUsersList)
+    @slackbot.usersLoaded(null, @stubs.wrongResponseUsersList)
     should.equal @slackbot.robot.brain.data.users[@stubs.user.id], undefined
