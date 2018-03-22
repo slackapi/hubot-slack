@@ -1,4 +1,5 @@
 should = require 'should'
+SlackMention = require('../src/mention')
 
 describe 'buildText()', ->
 
@@ -61,6 +62,22 @@ describe 'buildText()', ->
     message.rawMessage.text = 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
     message.buildText @client, () ->
       message.text.should.equal 'foo @label bar #general @channel label (https://www.example.com)'
+
+  it 'Should populate mentions with simple SlackMention object', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo <@U123> bar'
+    message.buildText @client, () ->
+      message.mentions.length.should.equal 1
+      should.equal (message.mentions[0] instanceof SlackMention), true
+
+  it 'Should populate mentions with simple SlackMention object with labels', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo <@U123> bar <#C123> baz <@U123|label> qux'
+    message.buildText @client, () ->
+      message.mentions.length.should.equal 3
+      should.equal (message.mentions[0] instanceof SlackMention), true
+      should.equal (message.mentions[1] instanceof SlackMention), true
+      should.equal (message.mentions[2] instanceof SlackMention), true
 
 describe 'replaceLinks()', ->
 
