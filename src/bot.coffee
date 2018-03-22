@@ -213,8 +213,6 @@ class SlackBot extends Adapter
         else
 
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'
-      #return unless event.user && event.item_user
-      console.log(@self.bot_id)
       # If the reaction is from a stranger or on a stranger's message, then the event will be ignored
       # Strangers have no shared channel in common, external members have shared channel membership
       # External member reactions should function normally
