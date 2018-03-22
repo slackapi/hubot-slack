@@ -6,10 +6,6 @@ describe 'incoming()', ->
     foo = @formatter.incoming {text: 'foo'}
     foo.should.equal 'foo'
 
-
-    
-
-
 describe 'links()', ->
 
   it 'Should decode entities', ->
@@ -95,8 +91,6 @@ describe 'links()', ->
   it 'Should change multiple links at once', ->
     foo = @formatter.links 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
     foo.should.equal 'foo @label bar #general @channel label (https://www.example.com)'
-
-
 
 describe 'flatten()', ->
 

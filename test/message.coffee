@@ -68,9 +68,21 @@ describe 'buildText()', ->
     message.rawMessage.text = 'foo <@U123> bar'
     message.buildText @client, () ->
       message.mentions.length.should.equal 1
+      message.mentions[0].type.should.equal 'user'
+      message.mentions[0].id.should.equal 'U123'
       should.equal (message.mentions[0] instanceof SlackMention), true
 
-  it 'Should populate mentions with simple SlackMention object with labels', ->
+  it 'Should populate mentions with simple SlackMention object with label', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo <@U123|label> bar'
+    message.buildText @client, () ->
+      message.mentions.length.should.equal 1
+      message.mentions[0].type.should.equal 'user'
+      message.mentions[0].id.should.equal 'U123'
+      should.equal message.mentions[0].info, undefined
+      should.equal (message.mentions[0] instanceof SlackMention), true
+
+  it 'Should populate mentions with multiple SlackMention objects', ->
     message = @slacktextmessage
     message.rawMessage.text = 'foo <@U123> bar <#C123> baz <@U123|label> qux'
     message.buildText @client, () ->
@@ -78,6 +90,7 @@ describe 'buildText()', ->
       should.equal (message.mentions[0] instanceof SlackMention), true
       should.equal (message.mentions[1] instanceof SlackMention), true
       should.equal (message.mentions[2] instanceof SlackMention), true
+
 
 describe 'replaceLinks()', ->
 
