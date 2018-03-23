@@ -86,13 +86,11 @@ beforeEach ->
     id: 'W123'
     profile:
       email: 'org_not_in_workspace@example.com'
-    is_stranger: true
   @stubs.org_user_not_in_workspace_in_channel =
     name: 'name'
     id: 'W123'
     profile:
       email: 'org_not_in_workspace@example.com'
-    is_stranger: false
   @stubs.team =
     name: 'Example Team'
 

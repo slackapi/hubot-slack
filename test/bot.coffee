@@ -265,16 +265,6 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.type, 'added'
     should.equal @stubs._received.reaction, 'thumbsup'
 
-  it 'Should ignore reaction events whose item user is in different workspace and not in shared channel', ->
-    reactionMessage = {
-      type: 'reaction_added', user: @stubs.user, item_user: @stubs.org_user_not_in_workspace 
-      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
-      },
-      reaction: 'thumbsup', event_ts: '1360782804.083113'
-    }
-    @slackbot.eventHandler reactionMessage
-    should.equal @stubs._received, undefined
-
 describe 'Robot.react', ->
   before ->
     user = { id: @stubs.user.id, room: @stubs.channel.id }
