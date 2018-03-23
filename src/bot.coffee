@@ -210,7 +210,8 @@ class SlackBot extends Adapter
           .catch((error) =>
             @robot.logger.error "Error constructing SlackTextMessage"
           )
-        else
+        # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
+        # else
 
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'
       # If the reaction is from a stranger or on a stranger's message, then the event will be ignored

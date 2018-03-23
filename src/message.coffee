@@ -64,8 +64,6 @@ class SlackTextMessage extends TextMessage
     # Replace links in text async to fetch user and channel info (if present)
     @replaceLinks(client, text).then((replacedText) =>
 
-      
-
       text = replacedText
       text = text.replace /&lt;/g, '<'
       text = text.replace /&gt;/g, '>'
@@ -106,7 +104,7 @@ class SlackTextMessage extends TextMessage
             mention = new SlackMention(link, 'conversation', undefined)
             @mentions.push(mention)
           else
-            parts.push(text.slice(cursor, result.index), @replaceChannel(client, link, @mentions))
+            parts.push(text.slice(cursor, result.index), @replaceConversation(client, link, @mentions))
 
         when '!'
           if link in SlackTextMessage.MESSAGE_RESERVED_KEYWORDS
@@ -144,17 +142,23 @@ class SlackTextMessage extends TextMessage
         return "@#{user.name}"
       else return link
     )
+    .catch((error) =>
+      @robot.logger.error "Error getting user info #{id}: #{error.message}"
+    )
 
   ###*
   # Returns name of channel with id
   ###
-  replaceChannel: (client, id, mentions) ->
+  replaceConversation: (client, id, mentions) ->
     client.web.conversations.info(id).then((conversation) ->
       if conversation
         mention = new SlackMention(conversation.id, 'conversation', conversation)
         mentions.push(mention)
         return "\##{conversation.name}"
       else return link
+    )
+    .catch((error) =>
+      @robot.logger.error "Error getting conversation info #{id}: #{error.message}"
     )
 
 
