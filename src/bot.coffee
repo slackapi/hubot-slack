@@ -184,7 +184,7 @@ class SlackBot extends Adapter
           # prefer user over bot.
           # if both are set in the slack event, it represents an app or integration sending a message on behalf of a
           # user, so the user is the more appropriate value.
-          SlackTextMessage.makeSlackTextMessage(user || bot, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
             @receive message
           )
           .catch((error) =>
@@ -204,7 +204,7 @@ class SlackBot extends Adapter
         when undefined
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
           
-          SlackTextMessage.makeSlackTextMessage(user || bot, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
             @receive message
           )
           .catch((error) =>

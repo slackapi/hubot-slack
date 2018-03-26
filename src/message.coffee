@@ -169,9 +169,9 @@ class SlackTextMessage extends TextMessage
     message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, client)
 
     if not message.text? then message.buildText(client, () ->
-      setImmediate(cb(message))
+      cb(message)
     ) else 
-      setImmediate(cb(message))
+      cb(message)
 
 exports.SlackTextMessage = SlackTextMessage
 exports.ReactionMessage = ReactionMessage
