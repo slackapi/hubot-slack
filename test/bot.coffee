@@ -196,7 +196,7 @@ describe 'Handling incoming messages', ->
   it 'Should handle reaction_added events as envisioned', ->
     reactionMessage = {
       type: 'reaction_added', user: @stubs.user, item_user: @stubs.self
-      item: { type: 'message', channel: @stubs.channel, ts: '1360782804.083113'
+      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     }
@@ -211,7 +211,7 @@ describe 'Handling incoming messages', ->
   it 'Should handle reaction_removed events as envisioned', ->
     reactionMessage = {
       type: 'reaction_removed', user: @stubs.user, item_user: @stubs.self
-      item: { type: 'message', channel: @stubs.channel, ts: '1360782804.083113'
+      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     }
@@ -252,7 +252,7 @@ describe 'Handling incoming messages', ->
   it 'Should handle reaction events from users who are in different workspace in shared channel', ->
     reactionMessage = {
       type: 'reaction_added', user: @stubs.org_user_not_in_workspace_in_channel, item_user: @stubs.self
-      item: { type: 'message', channel: @stubs.channel, ts: '1360782804.083113'
+      item: { type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     }

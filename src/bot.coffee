@@ -216,7 +216,8 @@ class SlackBot extends Adapter
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'      
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
-      user.room = event.item?.channel.id # when the item is not a message this will be undefined
+      user.room = event.item?.channel # when the item is not a message this will be undefined
+
 
       # prefer user over bot.
       # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
