@@ -35,7 +35,7 @@ class SlackBot extends Adapter
     @client.rtm.on 'close', @close
     @client.rtm.on 'error', @error
     @client.rtm.on 'authenticated', @authenticated
-    @client.rtm.on 'user_change', @userChange
+    @client.rtm.on 'user_change', @updateUserInBrain
 
     @client.onEvent @eventHandler
 
@@ -241,7 +241,7 @@ class SlackBot extends Adapter
   updateUserInBrain: (event_or_user) =>
     return unless event_or_user
     # when invoked as an event handler, this method takes an event.
-    # but when invoked from loadUsers, this method takes a user.
+    # but when invoked from usersLoaded, this method takes a user.
     user = if event_or_user.type == 'user_change' then event_or_user.user else event_or_user
     newUser =
       id: user.id
