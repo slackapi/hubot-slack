@@ -221,7 +221,7 @@ class SlackBot extends Adapter
       # prefer user over bot.
       # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
       # user is the more appropriate value.
-      @receive new ReactionMessage(event.type, user || bot, event.reaction, event.item_user, event.item, event.event_ts)
+      @receive new ReactionMessage(event.type, user, event.reaction, event.item_user, event.item, event.event_ts)
 
   ###*
   # @private
