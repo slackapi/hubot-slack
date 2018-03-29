@@ -109,12 +109,12 @@ describe 'Reply to Messages', ->
 describe 'Setting the channel topic', ->
 
   it 'Should set the topic in channels', (done) ->
-    @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
-    setTimeout(() =>
-      @stubs._topic.should.equal 'channel'
+    @stubs.receiveMock.onTopic = (topic) ->
+      topic.should.equal 'channel'
       done()
-    , 0)
-
+    @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
+    return
+    
   it 'Should NOT set the topic in DMs', ->
     @slackbot.setTopic {room: 'D1232'}, 'DM'
     should.not.exists(@stubs._topic)
