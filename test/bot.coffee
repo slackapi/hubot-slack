@@ -114,7 +114,7 @@ describe 'Setting the channel topic', ->
       done()
     @slackbot.setTopic {room: @stubs.channel.id}, 'channel'
     return
-    
+
   it 'Should NOT set the topic in DMs', ->
     @slackbot.setTopic {room: 'D1232'}, 'DM'
     should.not.exists(@stubs._topic)
@@ -128,6 +128,11 @@ describe 'Receiving an error event', ->
     @hit.should.equal false
     @slackbot.error {msg: 'ohno', code: -2}
     @hit.should.equal true
+
+  it 'Should handle rate limit errors', ->
+    {logger} = @slackbot.robot
+    @slackbot.error {msg: 'ratelimit', code: -1}
+    logger.logs["warning"].length.should.be.above(0)
 
 describe 'Handling incoming messages', ->
 
