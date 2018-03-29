@@ -34,7 +34,8 @@ beforeEach ->
     id: 'D1232'
     is_im: true
   @stubs.group =
-    id: 'G12324'
+    id: 'G12324',
+    is_mpim: true
 
   # These objects are of user shape: https://api.slack.com/types/user
   @stubs.user =
@@ -150,6 +151,8 @@ beforeEach ->
         return Promise.resolve(@stubs.channel)
       else if conversationId == @stubs.DM.id
         return Promise.resolve(@stubs.DM)
+      else if conversationId == 'C789'
+        return Promise.resolve()
       else
         return Promise.reject(new Error('conversationsMock could not match conversation ID'))
   @stubs.usersMock =
@@ -165,6 +168,8 @@ beforeEach ->
         return Promise.resolve(@stubs.user)
       else if userId == @stubs.org_user_not_in_workspace.id
         return Promise.resolve(@stubs.org_user_not_in_workspace)
+      else if userId == 'U789'
+        return Promise.resolve()
       else
         return Promise.reject(new Error('usersMock could not match user ID'))
   @stubs.userListPageWithNextCursor = {

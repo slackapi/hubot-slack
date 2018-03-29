@@ -187,9 +187,6 @@ class SlackBot extends Adapter
           SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
             @receive message
           )
-          .catch((error) =>
-            @robot.logger.error "Error constructing SlackTextMessage"
-          )
         # NOTE: channel_join should be replaced with a member_joined_channel event
         when 'channel_join', 'group_join'
           @robot.logger.debug "#{user.name} has joined #{channel.name || channel.id}"
@@ -206,9 +203,6 @@ class SlackBot extends Adapter
           
           SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
             @receive message
-          )
-          .catch((error) =>
-            @robot.logger.error "Error constructing SlackTextMessage"
           )
         # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
         # else

@@ -90,6 +90,13 @@ describe 'setTopic()', ->
       # NOTE: no good way to assert that debug log was output
       done()
     , 0)
+  it "should not set the topic in a MPIM", (done) ->
+    @client.setTopic @stubs.group.id, 'iAmTopic'
+    setTimeout(() =>
+      @stubs.should.not.have.property('_topic')
+      # NOTE: no good way to assert that debug log was output
+      done()
+    , 0)
   it "should log an error if the setTopic web API method fails", (done) ->
     @client.setTopic 'NOT A CONVERSATION', 'iAmTopic'
     setTimeout(() =>

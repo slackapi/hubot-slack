@@ -106,6 +106,10 @@ describe 'replaceLinks()', ->
     @slacktextmessage.replaceLinks @client, 'foo <@U555> bar'
     .then((text) -> text.should.equal 'foo <@U555> bar')
 
+  it 'Should handle empty User API response', ->
+    @slacktextmessage.replaceLinks @client, 'foo <@U789> bar'
+    .then((text) -> text.should.equal 'foo <@U789> bar')
+
   it 'Should change <#C123> links to #general', ->
     @slacktextmessage.replaceLinks @client, 'foo <#C123> bar'
     .then((text) -> text.should.equal 'foo #general bar')
@@ -117,6 +121,10 @@ describe 'replaceLinks()', ->
   it 'Should handle invalid Conversation ID gracefully', ->
     @slacktextmessage.replaceLinks @client, 'foo <#C555> bar'
     .then((text) -> text.should.equal 'foo <#C555> bar')
+
+  it 'Should handle empty Conversation API response', ->
+    @slacktextmessage.replaceLinks @client, 'foo <#C789> bar'
+    .then((text) -> text.should.equal 'foo <#C789> bar')
 
   it 'Should change <!everyone> links to @everyone', ->
     @slacktextmessage.replaceLinks @client, 'foo <!everyone> bar'

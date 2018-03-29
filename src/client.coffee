@@ -39,7 +39,7 @@ class SlackClient
     # NOTE: add channel join and leave events
     @rtm.on 'message', @eventWrapper, this
     @rtm.on 'reaction_added', @eventWrapper, this
-    @rtm.on 'reaction_added', @eventWrapper, this
+    @rtm.on 'reaction_removed', @eventWrapper, this
     @eventHandler = undefined
 
   ###*

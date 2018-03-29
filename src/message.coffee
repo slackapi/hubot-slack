@@ -140,7 +140,7 @@ class SlackTextMessage extends TextMessage
         mention = new SlackMention(user.id, 'user', user)
         mentions.push(mention)
         return "@#{user.name}"
-      else return id
+      else return "<@#{id}>"
     )
     .catch((error) =>
       client.robot.logger.error "Error getting user info #{id}: #{error.message}"
@@ -156,7 +156,7 @@ class SlackTextMessage extends TextMessage
         mention = new SlackMention(conversation.id, 'conversation', conversation)
         mentions.push(mention)
         return "\##{conversation.name}"
-      else return id
+      else return "<\##{id}>"
     )
     .catch((error) =>
       client.robot.logger.error "Error getting conversation info #{id}: #{error.message}"
