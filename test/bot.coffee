@@ -132,18 +132,19 @@ describe 'Receiving an error event', ->
 describe 'Handling incoming messages', ->
 
   it 'Should handle regular messages as hoped and dreamed', (done) ->
-    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
-    setTimeout(() =>
-      @stubs._received.text.should.equal 'foo'
+    @stubs.receiveMock.onReceived = (msg) ->
+      msg.text.should.equal 'foo'
       done()
-    , 0)
+    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
+    return
 
   it 'Should prepend our name to a message addressed to us in a DM', (done) ->
-    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.DM}
-    setTimeout(() =>
-      @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
+    bot_name = @slackbot.robot.name
+    @stubs.receiveMock.onReceived = (msg) ->
+      msg.text.should.equal "#{bot_name} foo"
       done()
-    , 0)
+    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.DM}
+    return
 
   it 'Should return a message object with raw text and message', (done) ->
     #the shape of this data is an RTM message event passed through SlackClient#messageWrapper
@@ -154,14 +155,14 @@ describe 'Handling incoming messages', ->
       channel: @stubs.channel,
       text: 'foo <http://www.example.com> bar',
     }
-    @slackbot.eventHandler messageData
-    setTimeout(() =>
-      should.equal (@stubs._received instanceof SlackTextMessage), true
-      should.equal @stubs._received.text, "foo http://www.example.com bar"
-      should.equal @stubs._received.rawText, "foo <http://www.example.com> bar"
-      should.equal @stubs._received.rawMessage, messageData
+    @stubs.receiveMock.onReceived = (msg) ->
+      should.equal (msg instanceof SlackTextMessage), true
+      should.equal msg.text, "foo http://www.example.com bar"
+      should.equal msg.rawText, "foo <http://www.example.com> bar"
+      should.equal msg.rawMessage, messageData
       done()
-    , 0)
+    @slackbot.eventHandler messageData
+    return
 
   it 'Should handle channel_join events as envisioned', ->
     @slackbot.eventHandler {type: 'message', subtype: 'channel_join', user: @stubs.user, channel: @stubs.channel}
@@ -224,12 +225,11 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.reaction, 'thumbsup'
 
   it 'Should not crash with bot messages', (done) ->
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
-    
-    setTimeout(() =>
-      should.equal (@stubs._received instanceof SlackTextMessage), true
+    @stubs.receiveMock.onReceived = (msg) ->
+      should.equal (msg instanceof SlackTextMessage), true
       done()
-    , 0)
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
+    return
 
   it 'Should ignore messages it sent itself', ->
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }

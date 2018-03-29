@@ -203,10 +203,6 @@ beforeEach ->
         @log('error', message)
       warning: (message) ->
         @log('warning', message)
-    # record all received messages
-    robot.received = []
-    robot.receive = (msg) ->
-      @received.push msg
     # attach a real Brain to the robot
     robot.brain = new Brain robot
     robot.name = 'bot'
@@ -220,6 +216,7 @@ beforeEach ->
   @stubs.receiveMock =
     receive: (message, user) =>
       @stubs._received = message
+      if @stubs.receiveMock.onReceived? then @stubs.receiveMock.onReceived message
 
   # Generate a new slack instance for each test.
   @slackbot = new SlackBot @stubs.robot, token: 'xoxb-faketoken'
