@@ -101,3 +101,10 @@ describe 'flatten()', ->
   it 'Should concatenate attachments', ->
     foo = @formatter.flatten {text: 'foo', attachments: [{fallback: 'bar'}, {fallback: 'baz'}, {fallback: 'qux'}]}
     foo.should.equal 'foo\nbar\nbaz\nqux'
+
+describe 'warnForDeprecation()', ->
+
+  it 'Should warn of deprecation', ->
+    {logger} = @slackbot.robot
+    @formatter.warnForDeprecation()
+    @stubs.robot.logger.logs?.warning.length.should.equal 1

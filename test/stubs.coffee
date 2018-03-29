@@ -234,7 +234,7 @@ beforeEach ->
   _.merge @slackbot.client.web.users, @stubs.usersMock
   @slackbot.self = @stubs.self
 
-  @formatter = new SlackFormatter @stubs.client.dataStore
+  @formatter = new SlackFormatter @stubs.client.dataStore, @stubs.robot
 
   @slacktextmessage = new SlackTextMessage @stubs.self, undefined, undefined, {text: undefined}, undefined, undefined, @slackbot.client
 
