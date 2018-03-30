@@ -40,6 +40,7 @@ class SlackClient
     @rtm.on 'message', @eventWrapper, this
     @rtm.on 'reaction_added', @eventWrapper, this
     @rtm.on 'reaction_removed', @eventWrapper, this
+    @rtm.on 'presence_change', @eventWrapper, this
     @eventHandler = undefined
 
   ###*

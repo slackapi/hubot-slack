@@ -67,6 +67,10 @@ beforeEach ->
     profile:
       foo: 'bar'
     misc: 'misc'
+  @stubs.userdeleted =
+    name: 'name'
+    id: 'U127'
+    deleted: true
 
   @stubs.bot =
     name: 'testbot'
@@ -187,6 +191,7 @@ beforeEach ->
   }
 
   @stubs.responseUsersList =
+    ok: true
     members: [@stubs.user, @stubs.userperiod]
   @stubs.wrongResponseUsersList =
     ok: false
@@ -231,7 +236,7 @@ beforeEach ->
   _.merge @slackbot.client.web.chat, @stubs.chatMock
   _.merge @slackbot.client.web.conversations, @stubs.conversationsMock
   _.merge @slackbot, @stubs.receiveMock
-  _.merge @slackbot.client.web.users, @stubs.usersMock
+  _.merge @slackbot.client.web.users, @stubs.userdsMock
   @slackbot.self = @stubs.self
 
   @formatter = new SlackFormatter @stubs.client.dataStore, @stubs.robot

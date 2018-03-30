@@ -24,4 +24,28 @@ Robot::react = (matcher, options, callback) ->
 
   @listen matchReaction, options, callback
 
+###*
+# Adds a Listener for PresenceMessages with the provided matcher, options, and callback
+# @public
+# @param {Function} [matcher] - A Function that determines whether to call the callback.
+# Expected to return a truthy value if the callback should be executed (optional).
+# @param {Object} [options]  - An Object of additional parameters keyed on extension name (optional).
+# @param {Function} callback - A Function that is called with a Response object if the matcher 
+# function returns true.
+###
+Robot::presenceChange = (matcher, options, callback) ->
+  matchPresence = (msg) -> msg instanceof PresenceMessage
+
+  if arguments.length == 1
+    return @listen matchPresence, matcher
+
+  else if matcher instanceof Function
+    matchPresence = (msg) -> msg instanceof PresenceMessage && matcher(msg)
+
+  else
+    callback = options
+    options = matcher
+
+  @listen matchPresence, options, callback
+
 # NOTE: extend Response type with a method for creating a new thread from the incoming message

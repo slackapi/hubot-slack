@@ -1,8 +1,7 @@
 should = require 'should'
 chai = require 'chai'
 { EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
-{ SlackTextMessage, ReactionMessage } = require '../src/message'
-PresenceMessage = require '../src/presence-message'
+{ SlackTextMessage, ReactionMessage, PresenceMessage } = require '../src/message'
 SlackClient = require '../src/client'
 _ = require 'lodash'
 
@@ -245,10 +244,14 @@ describe 'Handling incoming messages', ->
     return
   
   it 'Should handle presence_change events as envisioned', ->
-    presenceMessage = {users: [@stubs.user.id], presence: 'away'}
-    @slackbot.presenceChange presenceMessage
+    @slackbot.robot.brain.userForId(@stubs.user.id, @stubs.user)
+    presenceMessage = {
+      type: 'presence_change', users: [@stubs.user.id], presence: 'away'
+    }
+    @slackbot.eventHandler presenceMessage
     should.equal (@stubs._received instanceof PresenceMessage), true
     should.equal @stubs._received.users[0].id, @stubs.user.id
+    @stubs._received.users.length.should.equal 1
 
   it 'Should ignore messages it sent itself', ->
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }

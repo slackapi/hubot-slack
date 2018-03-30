@@ -1,34 +1,6 @@
 { Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage } = require.main.require 'hubot'
-{ SlackTextMessage, ReactionMessage } = require './message'
-PresenceMessage = require './presence-message'
+{ SlackTextMessage, ReactionMessage, PresenceMessage } = require './message'
 SlackClient = require './client'
-
-# Public: Adds a Listener for PresenceMessages with the provided matcher,
-# options, and callback
-#
-# matcher  - A Function that determines whether to call the callback.
-#            Expected to return a truthy value if the callback should be
-#            executed (optional).
-# options  - An Object of additional parameters keyed on extension name
-#            (optional).
-# callback - A Function that is called with a Response object if the
-#            matcher function returns true.
-#
-# Returns nothing.
-Robot::presenceChange = (matcher, options, callback) ->
-  matchPresence = (msg) -> msg instanceof PresenceMessage
-
-  if arguments.length == 1
-    return @listen matchPresence, matcher
-
-  else if matcher instanceof Function
-    matchPresence = (msg) -> msg instanceof PresenceMessage && matcher(msg)
-
-  else
-    callback = options
-    options = matcher
-
-  @listen matchPresence, options, callback
 
 class SlackBot extends Adapter
 
@@ -64,7 +36,6 @@ class SlackBot extends Adapter
     @client.rtm.on 'error', @error
     @client.rtm.on 'authenticated', @authenticated
     @client.rtm.on 'user_change', @updateUserInBrain
-    @client.rtm.on 'presence_change', @presenceChange
 
 
     @client.onEvent @eventHandler
@@ -80,7 +51,8 @@ class SlackBot extends Adapter
       if not @isLoaded
         @client.loadUsers @usersLoaded
         @isLoaded = true
-        @presence_sub()
+        @presenceSub()
+        
 
     # Start logging in
     @client.connect()
@@ -164,7 +136,7 @@ class SlackBot extends Adapter
   # Subscribes for presence change updates for all active non bot users
   # This is necessary since January 2018 see https://api.slack.com/changelog/2018-01-presence-present-and-future
   ###
-  presence_sub: () =>
+  presenceSub: =>
     usersArray = Object.values @robot.brain.data.users
     # Only status changes from active users are relevant
     members = usersArray.filter (user) => not user.is_bot and not user.deleted
@@ -256,20 +228,17 @@ class SlackBot extends Adapter
       # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
       # user is the more appropriate value.
       @receive new ReactionMessage(event.type, user, event.reaction, event.item_user, event.item, event.event_ts)
-  ###
-  presence changed event received from Slack
-  ###
-  presenceChange: (message) =>
-    # prepare for the removal of the deprecated single presence change updates
-    userIds = if message.user then [message.user] else message.users
 
-    users = []
-    for id in userIds
-      user = @client.rtm.dataStore.getUserById(id)
-      if user then users.push user
+    else if event.type is 'presence_change'
+      # Prepare for the removal of the deprecated single presence change updates
+      user_ids = if event.user then [event.user] else event.users
 
-    return unless users
-    @receive new PresenceMessage(users, message.presence)
+      users = []
+      for id in user_ids
+        user = @robot.brain.data.users[id]
+        if user then users.push user
+
+      @receive new PresenceMessage(users, event.presence)
     
   ###*
   # @private
@@ -278,7 +247,6 @@ class SlackBot extends Adapter
     if err || !res.ok
       @robot.logger.error "Can't fetch users"
       return
-
     @updateUserInBrain member for member in res.members
 
   ###*
@@ -286,6 +254,7 @@ class SlackBot extends Adapter
   # @private
   ###
   updateUserInBrain: (event_or_user) =>
+    console.log(event_or_user)
     return unless event_or_user
     # when invoked as an event handler, this method takes an event.
     # but when invoked from usersLoaded, this method takes a user.
