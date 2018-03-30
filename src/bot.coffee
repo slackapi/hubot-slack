@@ -1,6 +1,34 @@
 { Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage } = require.main.require 'hubot'
 { SlackTextMessage, ReactionMessage } = require './message'
+PresenceMessage = require './presence-message'
 SlackClient = require './client'
+
+# Public: Adds a Listener for PresenceMessages with the provided matcher,
+# options, and callback
+#
+# matcher  - A Function that determines whether to call the callback.
+#            Expected to return a truthy value if the callback should be
+#            executed (optional).
+# options  - An Object of additional parameters keyed on extension name
+#            (optional).
+# callback - A Function that is called with a Response object if the
+#            matcher function returns true.
+#
+# Returns nothing.
+Robot::presenceChange = (matcher, options, callback) ->
+  matchPresence = (msg) -> msg instanceof PresenceMessage
+
+  if arguments.length == 1
+    return @listen matchPresence, matcher
+
+  else if matcher instanceof Function
+    matchPresence = (msg) -> msg instanceof PresenceMessage && matcher(msg)
+
+  else
+    callback = options
+    options = matcher
+
+  @listen matchPresence, options, callback
 
 class SlackBot extends Adapter
 
@@ -36,6 +64,8 @@ class SlackBot extends Adapter
     @client.rtm.on 'error', @error
     @client.rtm.on 'authenticated', @authenticated
     @client.rtm.on 'user_change', @updateUserInBrain
+    @client.rtm.on 'presence_change', @presenceChange
+
 
     @client.onEvent @eventHandler
 
@@ -50,6 +80,7 @@ class SlackBot extends Adapter
       if not @isLoaded
         @client.loadUsers @usersLoaded
         @isLoaded = true
+        @presence_sub()
 
     # Start logging in
     @client.connect()
@@ -112,11 +143,11 @@ class SlackBot extends Adapter
     {@self, team} = identity
 
     # Find out bot_id
-    # NOTE: this could be done with a call to `bots.info`, and that would allow for transition to `rtm.connect`
-    for user in identity.users
-      if user.id == @self.id
-        @self.bot_id = user.profile.bot_id
-        break
+    if identity.users
+      for user in identity.users
+        if user.id == @self.id
+          @self.bot_id = user.profile.bot_id
+          break
 
     # Provide our name to Hubot
     # NOTE: this value is used to match incoming TextMessages that are directed to the robot. investigate
@@ -127,6 +158,19 @@ class SlackBot extends Adapter
     @robot.name = @self.name
 
     @robot.logger.info "Logged in as #{@robot.name} of #{team.name}"
+
+ 
+  ###*
+  # Subscribes for presence change updates for all active non bot users
+  # This is necessary since January 2018 see https://api.slack.com/changelog/2018-01-presence-present-and-future
+  ###
+  presence_sub: () =>
+    usersArray = Object.values @robot.brain.data.users
+    # Only status changes from active users are relevant
+    members = usersArray.filter (user) => not user.is_bot and not user.deleted
+    ids = members.map (user) => user.id
+
+    @client.rtm.subscribePresence ids
 
   ###*
   # Slack client has closed the connection
@@ -212,7 +256,21 @@ class SlackBot extends Adapter
       # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
       # user is the more appropriate value.
       @receive new ReactionMessage(event.type, user, event.reaction, event.item_user, event.item, event.event_ts)
+  ###
+  presence changed event received from Slack
+  ###
+  presenceChange: (message) =>
+    # prepare for the removal of the deprecated single presence change updates
+    userIds = if message.user then [message.user] else message.users
 
+    users = []
+    for id in userIds
+      user = @client.rtm.dataStore.getUserById(id)
+      if user then users.push user
+
+    return unless users
+    @receive new PresenceMessage(users, message.presence)
+    
   ###*
   # @private
   ###

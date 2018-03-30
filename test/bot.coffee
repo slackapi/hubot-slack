@@ -2,6 +2,7 @@ should = require 'should'
 chai = require 'chai'
 { EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
 { SlackTextMessage, ReactionMessage } = require '../src/message'
+PresenceMessage = require '../src/presence-message'
 SlackClient = require '../src/client'
 _ = require 'lodash'
 
@@ -15,6 +16,13 @@ describe 'Adapter', ->
     # This is a sanity check to ensure the @slackbot.robot stub is proper.
     @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
     @slackbot.robot.react.should.be.an.instanceOf(Function).with.lengthOf(3)
+
+  it 'Should add the `presenceChange` method to the hubot `Robot` prototype', ->
+    Robot.prototype.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
+
+    # This is a sanity check to ensure the @slackbot.robot stub is proper.
+    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
+    @slackbot.robot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
 
 describe 'Connect', ->
   it 'Should connect successfully', ->
@@ -120,7 +128,7 @@ describe 'Setting the channel topic', ->
     should.not.exists(@stubs._topic)
 
 describe 'Receiving an error event', ->
-  it 'Should propogate that error', ->
+  it 'Should propagate that error', ->
     @hit = false
     @slackbot.robot.on 'error', (error) =>
       error.msg.should.equal 'ohno'
@@ -235,6 +243,12 @@ describe 'Handling incoming messages', ->
       done()
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
     return
+  
+  it 'Should handle presence_change events as envisioned', ->
+    presenceMessage = {users: [@stubs.user.id], presence: 'away'}
+    @slackbot.presenceChange presenceMessage
+    should.equal (@stubs._received instanceof PresenceMessage), true
+    should.equal @stubs._received.users[0].id, @stubs.user.id
 
   it 'Should ignore messages it sent itself', ->
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
