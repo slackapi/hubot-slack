@@ -222,8 +222,9 @@ class SlackBot extends Adapter
     user.room = item.channel
     @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
 
+  # Callback for SlackClient.loadUsers()
   loadUsers: (err, res) =>
-    if err || !res.ok
+    if err || !res.members.length
       @robot.logger.error "Can't fetch users"
       return
 
