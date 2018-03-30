@@ -21,10 +21,8 @@ class PresenceMessage extends Message
   #
   # users      - Array of users that changed their status
   # presence   - Status is either 'active' or 'away'
-  constructor: (users, presence) ->
+  constructor: (@users, @presence) ->
     super({ room: '' })
-    @users = users
-    @presence = presence
 
 class SlackTextMessage extends TextMessage
 

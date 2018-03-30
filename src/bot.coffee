@@ -237,6 +237,8 @@ class SlackBot extends Adapter
         user = @robot.brain.data.users[id]
         if user then users.push user
 
+        console.log(new PresenceMessage(users, event.presence))
+
       @receive new PresenceMessage(users, event.presence)
     
   ###*
