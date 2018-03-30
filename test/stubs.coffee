@@ -43,6 +43,7 @@ beforeEach ->
     real_name: 'real_name'
     id: 'U123'
     profile:
+      display_name: 'display_name'
       email: 'email@example.com'
     misc: 'misc'
   @stubs.bot =
@@ -52,22 +53,20 @@ beforeEach ->
     name: 'name.lname'
     id: 'U124'
     profile:
+      display_name: 'display_name.lname'
       email: 'name.lname@example.com'
   @stubs.userhyphen =
     name: 'name-lname'
     id: 'U125'
     profile:
+      display_name: 'display_name.name-lname'
       email: 'name-lname@example.com'
-  @stubs.usernoprofile =
-    name: 'name'
-    real_name: 'real_name'
-    id: 'U126'
-    misc: 'misc'
   @stubs.usernoemail =
     name: 'name'
     real_name: 'real_name'
     id: 'U126'
     profile:
+      display_name: 'display_name'
       foo: 'bar'
     misc: 'misc'
   @stubs.self =
@@ -75,16 +74,19 @@ beforeEach ->
     id: 'U456'
     bot_id: 'B456'
     profile:
+      display_name: 'display_name'
       email: 'self@example.com'
   @stubs.self_bot =
     name: 'self'
     id: 'B456'
     profile:
+      display_name: 'display_name'
       email: 'self@example.com'
   @stubs.org_user_not_in_workspace =
     name: 'name'
     id: 'W123'
     profile:
+      display_name: 'display_name'
       email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'

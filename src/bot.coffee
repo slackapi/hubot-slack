@@ -295,6 +295,7 @@ class SlackBot extends Adapter
     newUser =
       id: user.id
       name: user.name
+      display_name: user.profile.display_name
       real_name: user.real_name
       slack: {}
     newUser.email_address = user.profile.email if user.profile and user.profile.email
