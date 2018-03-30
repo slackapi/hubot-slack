@@ -3,16 +3,15 @@ SlackFormatter = require './formatter'
 _ = require 'lodash'
 
 class SlackClient
+  @PAGE_SIZE = 100
 
   constructor: (options, robot) ->
 
     @robot = robot
 
-    @robot.logger.debug "slack rtm client options: #{JSON.stringify(options.rtm)}"
-
     # RTM is the default communication client
+    @robot.logger.debug "slack rtm client options: #{JSON.stringify(options.rtm)}"
     @rtm = new RtmClient options.token, options.rtm
-
     @rtmStartOpts = options.rtmStart || {}
 
     # Web is the fallback for complex messages
@@ -21,8 +20,9 @@ class SlackClient
     # Message formatter
     @format = new SlackFormatter(@rtm.dataStore)
 
-    # Track listeners for easy clean-up
-    @listeners = []
+    # Message handler
+    @rtm.on 'message', @messageWrapper, this
+    @messageHandler = undefined
 
     @returnRawText = !options.noRawText
 
@@ -33,36 +33,52 @@ class SlackClient
     @robot.logger.debug "slack rtm start with options: #{JSON.stringify(@rtmStartOpts)}"
     @rtm.start(@rtmStartOpts)
 
+  ###
+  Slack RTM message events wrapper
+  ###
+  messageWrapper: (message) ->
+    if @messageHandler
+      {user, channel, bot_id} = message
+
+      message.rawText = message.text
+      message.returnRawText = @returnRawText
+      message.text = @format.incoming(message)
+
+      # messages sent from human users, apps with a bot user and using the xoxb token, and
+      # slackbot have the user property
+      message.user = @rtm.dataStore.getUserById(user) if user
+
+      # bot_id exists on all messages with subtype bot_message
+      # these messages only have a user property if sent from a bot user (xoxb token). therefore
+      # the above assignment will not happen for all custom integrations or apps without a bot user
+      message.bot = @rtm.dataStore.getBotById(bot_id) if bot_id
+
+      message.channel = @rtm.dataStore.getChannelGroupOrDMById(channel) if channel
+      @messageHandler(message)
+
 
   ###
-  Slack RTM event delegates
+  Set message handler
   ###
-  on: (name, callback) ->
-    @listeners.push(name)
-
-    # override message to format text
-    if name is "message"
-      @rtm.on name, (message) =>
-        {user, channel, bot_id} = message
-
-        message.rawText = message.text
-        message.returnRawText = @returnRawText
-        message.text = @format.incoming(message)
-        message.user = @rtm.dataStore.getUserById(user) if user
-        message.bot = @rtm.dataStore.getBotById(bot_id) if bot_id
-        message.channel = @rtm.dataStore.getChannelGroupOrDMById(channel) if channel
-        callback(message)
-
-    else
-      @rtm.on(name, callback)
-
+  onMessage: (callback) ->
+    @messageHandler = callback if @messageHandler != callback
 
   ###
-  Disconnect from the Slack RTM API and remove all listeners
+  Attach event handlers to the RTM stream
+  Deprecated: This API is being removed without a replacement in the next major version.
+  ###
+  on: (type, callback) ->
+    @robot.logger.warning 'SlackClient#on() is a deprecated method and will be removed in the next major version ' +
+      'of hubot-slack. See documentaiton for a migration guide to find alternatives.'
+    @rtm.on(type, callback)
+
+  ###
+  Disconnect from the Slack RTM API
   ###
   disconnect: ->
-    @rtm.removeListener(name) for name in @listeners
-    @listeners = [] # reset
+    @rtm.disconnect()
+    # NOTE: removal of event listeners possibly does not belong in disconnect, because they are not added in connect.
+    @rtm.removeAllListeners()
 
 
   ###
@@ -100,6 +116,25 @@ class SlackClient
       @web.chat.postMessage(room, message.text, _.defaults(message, options))
     else
       @web.chat.postMessage(room, message, options)
+
+  loadUsers: (callback) ->
+    # paginated call to users.list
+    # some properties of the real results are left out because they are not used
+    combinedResults = { members: [] }
+    pageLoaded = (error, results) =>
+      return callback(error) if error
+      # merge results into combined results
+      combinedResults.members.push(member) for member in results.members
+      if results?.response_metadata?.next_cursor
+        # fetch next page
+        @web.users.list({
+          limit: SlackClient.PAGE_SIZE,
+          cursor: results.response_metadata.next_cursor
+        }, pageLoaded)
+      else
+        # pagination complete, run callback with results
+        callback(null, combinedResults)
+    @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
 
 
 module.exports = SlackClient

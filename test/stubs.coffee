@@ -116,16 +116,10 @@ beforeEach ->
         id: 'D5432'
       ]
   @stubs.rtm =
-    login: =>
-      @stubs._connected = true
     start: =>
       @stubs._connected = true
-    on: (name, callback) =>
-      console.log("#####")
-      console.log(name)
-      console.log(callback)
-      callback(name)
-    removeListener: (name) =>
+    disconnect: =>
+      @stubs._connected = false
     sendMessage: (msg, room) =>
       @stubs.send room, msg
     dataStore:
@@ -150,12 +144,31 @@ beforeEach ->
   @stubs.channelsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
+  @stubs.usersMock =
+    list: (opts, cb) =>
+      @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
+      return cb(new Error('mock error')) if @stubs?._listError
+      if opts?.cursor == 'mock_cursor'
+        cb(null, @stubs.userListPageLast)
+      else
+        cb(null, @stubs.userListPageWithNextCursor)
+  @stubs.userListPageWithNextCursor = {
+    members: [{ id: 1 }, { id: 2 }]
+    response_metadata: {
+      next_cursor: 'mock_cursor'
+    }
+  }
+  @stubs.userListPageLast = {
+    members: [{ id: 3 }]
+    response_metadata: {
+      next_cursor: ''
+    }
+  }
 
   @stubs.responseUsersList =
-    ok: true
     members: [@stubs.user, @stubs.userperiod]
   @stubs.wrongResponseUsersList =
-    ok: false
+    members: []
   # Hubot.Robot instance
   @stubs.robot = do ->
     robot = new EventEmitter
@@ -171,6 +184,8 @@ beforeEach ->
         @log('debug', message)
       error: (message) ->
         @log('error', message)
+      warning: (message) ->
+        @log('warning', message)
     # record all received messages
     robot.received = []
     robot.receive = (msg) ->
@@ -181,6 +196,7 @@ beforeEach ->
     robot.listeners = []
     robot.listen = Robot.prototype.listen.bind(robot)
     robot.react = Robot.prototype.react.bind(robot)
+    robot.presenceChange = Robot.prototype.presenceChange.bind(robot)
     robot
   @stubs.callback = do ->
     return "done"
@@ -204,3 +220,4 @@ beforeEach ->
   _.merge @client.rtm, @stubs.rtm
   _.merge @client.web.chat, @stubs.chatMock
   _.merge @client.web.channels, @stubs.channelsMock
+  _.merge @client.web.users, @stubs.usersMock
