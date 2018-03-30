@@ -161,21 +161,16 @@ class SlackBot extends Adapter
     # NOTE: coupled to getting `rtm.start` data
     return if (user && (user.id is @self.id || user.id is @self.bot_id)) || (bot && (bot.id is @self.bot_id))
 
-    
 
     # Send to Hubot based on message type
     if event.type is 'message'
       
-      # Hubot expects this format for TextMessage Listener
       # NOTE: use robot.brain.userForId(id, options) to initialize the user object
       # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
-      bot.room = channel.id if bot
-      user.room = channel.id if user
-
       # Hubot expects this format for TextMessage Listener
-      user = bot if !user
-      user = {} if !user
-      user.room = channel.id
+
+      user = user || bot || {}
+      user.room = channel?.id
 
       switch event.subtype
         when 'bot_message'
