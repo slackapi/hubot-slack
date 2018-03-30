@@ -136,8 +136,12 @@ describe 'Handling incoming messages', ->
     @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.channel}
     @stubs._received.text.should.equal 'foo'
 
-  it 'Should prepend our name to a message addressed to us in a DM', ->
+  it 'Should prepend our name to a name-lacking message addressed to us in a DM', ->
     @slackbot.message {text: 'foo', user: @stubs.user, channel: @stubs.DM}
+    @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
+
+  it 'Should NOT prepend our name to a name-containing message addressed to us in a DM', ->
+    @slackbot.message {text: "#{@slackbot.robot.name} foo", user: @stubs.user, channel: @stubs.DM}
     @stubs._received.text.should.equal "#{@slackbot.robot.name} foo"
 
   it 'Should return a message object with raw text and message', ->
