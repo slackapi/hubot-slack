@@ -253,7 +253,6 @@ class SlackBot extends Adapter
   # @private
   ###
   updateUserInBrain: (event_or_user) =>
-    console.log(event_or_user)
     return unless event_or_user
     # when invoked as an event handler, this method takes an event.
     # but when invoked from usersLoaded, this method takes a user.
