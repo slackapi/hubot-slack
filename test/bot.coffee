@@ -149,15 +149,23 @@ describe 'Handling incoming messages', ->
       done()
     @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
     return
-
-  it 'Should prepend our name to a message addressed to us in a DM', (done) ->
+  
+  it 'Should prepend our name to a name-lacking message addressed to us in a DM', ->
     bot_name = @slackbot.robot.name
     @stubs.receiveMock.onReceived = (msg) ->
       msg.text.should.equal "#{bot_name} foo"
       done()
-    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.DM}
+    @slackbot.eventHandler {type: 'message', text: "foo", user: @stubs.user, channel: @stubs.DM}
     return
 
+  it 'Should NOT prepend our name to a name-containing message addressed to us in a DM', ->
+    bot_name = @slackbot.robot.name
+    @stubs.receiveMock.onReceived = (msg) ->
+      msg.text.should.equal "#{bot_name} foo"
+      done()
+    @slackbot.eventHandler {type: 'message', text: "#{bot_name} foo", user: @stubs.user, channel: @stubs.DM}
+    return
+    
   it 'Should return a message object with raw text and message', (done) ->
     #the shape of this data is an RTM message event passed through SlackClient#messageWrapper
     #see: https://api.slack.com/events/message

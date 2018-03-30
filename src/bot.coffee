@@ -177,7 +177,6 @@ class SlackBot extends Adapter
     # NOTE: coupled to getting `rtm.start` data
     return if (user && (user.id is @self.id || user.id is @self.bot_id)) || (bot && (bot.id is @self.bot_id))
 
-
     # Send to Hubot based on message type
     if event.type is 'message'
       
