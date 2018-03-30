@@ -78,8 +78,12 @@ class SlackTextMessage extends TextMessage
       text = text.replace /&amp;/g, '&'
 
       if @_channel?.is_im
-        text = "#{@_robot_name} #{text}"     # If this is a DM, pretend it was addressed to us
-      
+        startOfText = if text.indexOf('@') == 0 then 1 else 0
+        robotIsNamed = text.indexOf(@robot.name) == startOfText || text.indexOf(@robot.alias) == startOfText
+        # Assume it was addressed to us even if it wasn't
+        if not robotIsNamed
+          text = "#{@_robot_name} #{text}"     # If this is a DM, pretend it was addressed to us
+        
       @text = text
 
       cb()
