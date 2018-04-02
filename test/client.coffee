@@ -12,7 +12,7 @@ describe 'Init', ->
     (@client.web instanceof WebClient).should.equal true
     @client.web._token.should.equal 'xoxb-faketoken'
 
-  it 'Should initialize with a SlackFormatter', ->
+  it 'Should initialize with a SlackFormatter - DEPRECATED', ->
     (@client.format instanceof SlackFormatter).should.equal true
 
 describe 'connect()', ->
@@ -20,15 +20,44 @@ describe 'connect()', ->
     @client.connect();
     @stubs._connected.should.be.true
 
-describe 'onMessage()', ->
+describe 'onEvent()', ->
   it 'should not need to be set', ->
     @client.rtm.emit('message', { fake: 'message' })
     (true).should.be.ok
-  it 'should emit pre-processed messages to the callback', ->
-    @client.onMessage (message) ->
-      # TODO: we can assert a lot more about the structure of the message
+  it 'should emit pre-processed messages to the callback', (done) ->
+    @client.onEvent (message) =>
       message.should.be.ok
-    @client.rtm.emit('message', { type: 'message', user: 'U123' , channel: 'C456' , text: 'blah', ts: '1355517523.000005' })
+      message.user.real_name.should.equal @stubs.user.real_name
+      message.channel.name.should.equal @stubs.channel.name
+      done()
+    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+    @client.rtm.emit('message', {
+      type: 'message',
+      user: @stubs.user.id,
+      channel: @stubs.channel.id,
+      text: 'blah',
+      ts: '1355517523.000005'
+    })
+    # NOTE: the following check does not appear to work as expected
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+  it 'should log an error when expanded info cannot be fetched using the Web API', (done) ->
+    # NOTE: to be certain nothing goes wrong in the rejection handling, the "unhandledRejection" / "rejectionHandled"
+    # global events need to be instrumented
+    @client.onEvent (message) ->
+      done(new Error('A message was emitted'))
+    @client.rtm.emit('message', {
+      type: 'message',
+      user: 'NOT A USER',
+      channel:  @stubs.channel.id,
+      text: 'blah',
+      ts: '1355517523.000005'
+    })
+    setTimeout(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
 
 describe 'on() - DEPRECATED', ->
   it 'Should register events on the RTM stream', ->
@@ -47,9 +76,34 @@ describe 'disconnect()', ->
     @client.rtm.listeners('some_event', true).should.not.be.ok
 
 describe 'setTopic()', ->
-  it "Should set the topic in a channel", ->
-    @client.setTopic 'C123', 'iAmTopic'
-    @stubs._topic.should.equal 'iAmTopic'
+
+  it "Should set the topic in a channel", (done) ->
+    @client.setTopic @stubs.channel.id, 'iAmTopic'
+    setTimeout(() =>
+      @stubs._topic.should.equal 'iAmTopic'
+      done()
+    , 0)
+  it "should not set the topic in a DM", (done) ->
+    @client.setTopic @stubs.DM.id, 'iAmTopic'
+    setTimeout(() =>
+      @stubs.should.not.have.property('_topic')
+      # NOTE: no good way to assert that debug log was output
+      done()
+    , 0)
+  it "should not set the topic in a MPIM", (done) ->
+    @client.setTopic @stubs.group.id, 'iAmTopic'
+    setTimeout(() =>
+      @stubs.should.not.have.property('_topic')
+      # NOTE: no good way to assert that debug log was output
+      done()
+    , 0)
+  it "should log an error if the setTopic web API method fails", (done) ->
+    @client.setTopic 'NOT A CONVERSATION', 'iAmTopic'
+    setTimeout(() =>
+      @stubs.should.not.have.property('_topic')
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    , 0)
 
 describe 'send()', ->
   it 'Should send a plain string message to room', ->
@@ -61,32 +115,6 @@ describe 'send()', ->
     @client.send {room: 'room2'}, {text: 'textMessage'}
     @stubs._msg.should.equal 'textMessage'
     @stubs._room.should.equal 'room2'
-
-  it 'Should send an object message to room', ->
-    @client.send {room: 'room3'}, '<test|test>'
-    @stubs._msg.should.equal '<test|test>'
-    @stubs._room.should.equal 'room3'
-
-  # This case and the following are cool. You can post a message to a channel as a name
-  it 'Should not translate known room names to a channel id', ->
-    @client.send {room: 'known_room'}, 'Message'
-    @stubs._msg.should.equal 'Message'
-    @stubs._room.should.equal 'known_room'
-
-  it 'Should not translate an unknown room', ->
-    @client.send {room: 'unknown_room'}, 'Message'
-    @stubs._msg.should.equal 'Message'
-    @stubs._room.should.equal 'unknown_room'
-
-  it 'Should be able to send a DM to a user by id', ->
-    @client.send {room: @stubs.user.id}, 'DM Message'
-    @stubs._dmmsg.should.equal 'DM Message'
-    @stubs._room.should.equal @stubs.user.id
-
-  it 'Should be able to send a DM to a user by username', ->
-    @client.send {room: "@"+@stubs.user.name}, 'DM Message'
-    @stubs._dmmsg.should.equal 'DM Message'
-    @stubs._room.should.equal "@"+@stubs.user.name
 
   it 'Should be able to send a DM to a user object', ->
     @client.send @stubs.user, 'DM Message'

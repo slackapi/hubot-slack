@@ -1,78 +1,30 @@
-{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, Message, CatchAllMessage, Robot} = require.main.require 'hubot'
-
+{ Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage } = require.main.require 'hubot'
+{ SlackTextMessage, ReactionMessage, PresenceMessage } = require './message'
 SlackClient = require './client'
-ReactionMessage = require './reaction-message'
-PresenceMessage = require './presence-message'
-SlackTextMessage = require './slack-message'
-
-# Public: Adds a Listener for ReactionMessages with the provided matcher,
-# options, and callback
-#
-# matcher  - A Function that determines whether to call the callback.
-#            Expected to return a truthy value if the callback should be
-#            executed (optional).
-# options  - An Object of additional parameters keyed on extension name
-#            (optional).
-# callback - A Function that is called with a Response object if the
-#            matcher function returns true.
-#
-# Returns nothing.
-Robot::react = (matcher, options, callback) ->
-  matchReaction = (msg) -> msg instanceof ReactionMessage
-
-  if arguments.length == 1
-    return @listen matchReaction, matcher
-
-  else if matcher instanceof Function
-    matchReaction = (msg) -> msg instanceof ReactionMessage && matcher(msg)
-
-  else
-    callback = options
-    options = matcher
-
-  @listen matchReaction, options, callback
-
-# Public: Adds a Listener for PresenceMessages with the provided matcher,
-# options, and callback
-#
-# matcher  - A Function that determines whether to call the callback.
-#            Expected to return a truthy value if the callback should be
-#            executed (optional).
-# options  - An Object of additional parameters keyed on extension name
-#            (optional).
-# callback - A Function that is called with a Response object if the
-#            matcher function returns true.
-#
-# Returns nothing.
-Robot::presenceChange = (matcher, options, callback) ->
-  matchPresence = (msg) -> msg instanceof PresenceMessage
-
-  if arguments.length == 1
-    return @listen matchPresence, matcher
-
-  else if matcher instanceof Function
-    matchPresence = (msg) -> msg instanceof PresenceMessage && matcher(msg)
-
-  else
-    callback = options
-    options = matcher
-
-  @listen matchPresence, options, callback
 
 class SlackBot extends Adapter
 
+  ###*
+  # Slackbot is an adapter for connecting Hubot to Slack
+  # @constructor
+  # @param {Robot} robot - the Hubot robot
+  # @param {Object} options - configuration options for the adapter
+  # @param {string} options.token - authentication token for Slack APIs
+  # @param {Object} options.rtm - RTM configuration options for SlackClient
+  # @param {Object} options.rtmStart - options for `rtm.start` Web API method
+  ###
   constructor: (@robot, @options) ->
+    super
     @client = new SlackClient(@options, @robot)
 
-  ###
-  Slackbot loads full user list on the first brain load
-  QUESTION: why do brain adapters trigger a brain 'loaded' event each time a key
-  is set?
-  ###
-  setIsLoaded: (@isLoaded) ->
 
   ###
-  Slackbot initialization
+  # Hubot Adapter methods
+  ###
+
+  ###*
+  # Slackbot initialization
+  # @public
   ###
   run: ->
     return @robot.logger.error "No service token provided to Hubot" unless @options.token
@@ -82,27 +34,72 @@ class SlackBot extends Adapter
     @client.rtm.on 'open', @open
     @client.rtm.on 'close', @close
     @client.rtm.on 'error', @error
-    @client.rtm.on 'reaction_added', @reaction
-    @client.rtm.on 'reaction_removed', @reaction
     @client.rtm.on 'authenticated', @authenticated
-    @client.rtm.on 'user_change', @userChange
-    @client.rtm.on 'presence_change', @presenceChange
+    @client.rtm.on 'user_change', @updateUserInBrain
 
-    @client.loadUsers @loadUsers
-    @client.onMessage @message
 
+    @client.onEvent @eventHandler
+
+    # TODO: set this to false as soon as RTM connection closes (even if reconnect will happen later)
+    # TODO: check this value when connection finishes (even if its a reconnection)
+    # TODO: build a map of enterprise users and local users
+    @needsUserListSync = true
+    @client.loadUsers @usersLoaded
     @robot.brain.on 'loaded', () =>
+      # Hubot Brain emits 'loaded' event each time a key is set, but we only want to synchonize the users list on
+      # the first load after a connection completes
       if not @isLoaded
-        @client.loadUsers @loadUsers
-        @setIsLoaded(true)
-        @presence_sub()
+        @client.loadUsers @usersLoaded
+        @isLoaded = true
+        @presenceSub()
+        
 
     # Start logging in
     @client.connect()
 
+  ###*
+  # Hubot is sending a message to Slack
+  # @public
+  ###
+  send: (envelope, messages...) ->
+    for message in messages
+      # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
+      @client.send(envelope, message) unless message is ''
+
+  ###*
+  # Hubot is replying to a Slack message
+  # @public
+  ###
+  reply: (envelope, messages...) ->
+    for message in messages
+      if message isnt ''
+        # TODO: channel prefix matching should be removed
+        message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
+        @client.send(envelope, message)
+
+  ###*
+  # Hubot is setting the Slack channel topic
+  # @public
+  ###
+  setTopic: (envelope, strings...) ->
+    @client.setTopic envelope.room, strings.join "\n"
+
+  ###*
+  # Hubot is sending a reaction
+  # NOTE: the super class implementation is just an alias for send, but potentially, we can detect
+  # if the envelope has a specific message and send a reactji. the fallback would be to just send the
+  # emoji as a message in the channel
+  ###
+  # emote: (envelope, strings...) ->
+
 
   ###
-  Slack client has opened the connection
+  # SlackClient event handlers
+  ###
+
+  ###*
+  # Slack client has opened the connection
+  # @private
   ###
   open: =>
     @robot.logger.info 'Slack client now connected'
@@ -110,9 +107,9 @@ class SlackBot extends Adapter
     # Tell Hubot we're connected so it can load scripts
     @emit "connected"
 
-
-  ###
-  Slack client has authenticated
+  ###*
+  # Slack client has authenticated
+  # @private
   ###
   authenticated: (identity) =>
     {@self, team} = identity
@@ -125,16 +122,21 @@ class SlackBot extends Adapter
           break
 
     # Provide our name to Hubot
+    # NOTE: this value is used to match incoming TextMessages that are directed to the robot. investigate
+    # if this is effective with mentions formatted as "<@U12345|name>", "<@U12345>", "<@W12345|name>", "<@W12345>".
+    # the matching criteria:
+    #   1. prepend any special characters (from "-[]{}()*+?.,\^$|# ") in name and alias with a "\"
+    #   2. optionally start with "@", followed by alias or name, optionally followed by any from ":,", optionally followed by whitespace
     @robot.name = @self.name
 
     @robot.logger.info "Logged in as #{@robot.name} of #{team.name}"
 
-    
+ 
+  ###*
+  # Subscribes for presence change updates for all active non bot users
+  # This is necessary since January 2018 see https://api.slack.com/changelog/2018-01-presence-present-and-future
   ###
-  Subscribes for presence change updates for all active non bot users
-  This is necessary since January 2018 see https://api.slack.com/changelog/2018-01-presence-present-and-future
-  ###
-  presence_sub: () =>
+  presenceSub: =>
     usersArray = Object.values @robot.brain.data.users
     # Only status changes from active users are relevant
     members = usersArray.filter (user) => not user.is_bot and not user.deleted
@@ -142,8 +144,9 @@ class SlackBot extends Adapter
 
     @client.rtm.subscribePresence ids
 
-  ###
-  Slack client has closed the connection
+  ###*
+  # Slack client has closed the connection
+  # @private
   ###
   close: =>
     # NOTE: not confident that @options.autoReconnect has intended effect as currently implemented
@@ -154,148 +157,105 @@ class SlackBot extends Adapter
       @client.disconnect()
       process.exit 1
 
-
-  ###
-  Slack client received an error
+  ###*
+  # Slack client received an error
+  # @private
   ###
   error: (error) =>
     if error.code is -1
       return @robot.logger.warning "Received rate limiting error #{JSON.stringify error}"
-
     @robot.emit 'error', error
 
-
+  ###*
+  # Event received from Slack
+  # @private
   ###
-  Hubot is sending a message to Slack
-  ###
-  send: (envelope, messages...) ->
-    sent_messages = []
-    for message in messages
-      if message isnt ''
-        sent_messages.push @client.send(envelope, message)
-    return sent_messages
+  eventHandler: (event) =>
+    {user, channel, bot} = event
 
-
-  ###
-  Hubot is replying to a Slack message
-  ###
-  reply: (envelope, messages...) ->
-    sent_messages = []
-    for message in messages
-      if message isnt ''
-        message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is 'D'
-        @robot.logger.debug "Sending to #{envelope.room}: #{message}"
-        sent_messages.push @client.send(envelope, message)
-    return sent_messages
-
-
-  ###
-  Hubot is setting the Slack channel topic
-  ###
-  setTopic: (envelope, strings...) ->
-    return if envelope.room[0] is 'D' # ignore DMs
-
-    @client.setTopic envelope.room, strings.join "\n"
-
-
-  ###
-  Message received from Slack
-  ###
-  message: (message) =>
-    {text, rawText, returnRawText, user, channel, subtype, topic, bot} = message
-
-    return if user && (user.id == @self.id) # Ignore anything we sent, or anything from an unknown user
-    return if bot && (bot.id == @self.bot_id) # Ignore anything we sent, or anything from an unknown bot
-
-    subtype = subtype || 'message'
-
-    # Hubot expects this format for TextMessage Listener
-    user = bot if !user
-    user = {} if !user
-    user.room = channel.id
-
-
-    # Direct messages
-    isDM = channel.id[0] is 'D'
-    if isDM
-      startOfText = if text.indexOf('@') == 0 then 1 else 0
-      robotIsNamed = text.indexOf(@robot.name) == startOfText || text.indexOf(@robot.alias) == startOfText
-      # Assume it was addressed to us even if it wasn't
-      if not robotIsNamed
-        text = "#{@robot.name} #{text}"
-      channel.name ?= channel._modelName  # give the channel a name
-
+    # Ignore anything we sent
+    # NOTE: coupled to getting `rtm.start` data
+    return if (user && (user.id is @self.id || user.id is @self.bot_id)) || (bot && (bot.id is @self.bot_id))
 
     # Send to Hubot based on message type
-    switch subtype
+    if event.type is 'message'
+      
+      # NOTE: use robot.brain.userForId(id, options) to initialize the user object
+      # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
+      # Hubot expects this format for TextMessage Listener
 
-      when 'message', 'bot_message'
-        @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, from: #{user.name}"
-        if returnRawText
-          textMessage = new SlackTextMessage(user, text, rawText, message)
-        else
-          textMessage = new TextMessage(user, text, message.ts)
-        textMessage.thread_ts = message.thread_ts
-        @receive textMessage
+      user = user || bot || {}
+      user.room = channel?.id
 
-      when 'channel_join', 'group_join'
-        @robot.logger.debug "#{user.name} has joined #{channel.name}"
-        @receive new EnterMessage user
+      switch event.subtype
+        when 'bot_message'
+          @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
 
-      when 'channel_leave', 'group_leave'
-        @robot.logger.debug "#{user.name} has left #{channel.name}"
-        @receive new LeaveMessage user
+          # prefer user over bot.
+          # if both are set in the slack event, it represents an app or integration sending a message on behalf of a
+          # user, so the user is the more appropriate value.
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+            @receive message
+          )
+        # NOTE: channel_join should be replaced with a member_joined_channel event
+        when 'channel_join', 'group_join'
+          @robot.logger.debug "#{user.name} has joined #{channel.name || channel.id}"
+          @receive new EnterMessage user
+        # NOTE: channel_leave should be replaced with a member_left_channel event
+        when 'channel_leave', 'group_leave'
+          @robot.logger.debug "#{user.name} has left #{channel.name || channel.id}"
+          @receive new LeaveMessage user
+        when 'channel_topic', 'group_topic'
+          @robot.logger.debug "#{user.name} set the topic in #{channel.name || channel.id} to #{event.topic}"
+          @receive new TopicMessage user, event.topic, event.ts
+        when undefined
+          @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
+          
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+            @receive message
+          )
+        # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
+        # else
 
-      when 'channel_topic', 'group_topic'
-        @robot.logger.debug "#{user.name} set the topic in #{channel.name} to #{topic}"
-        @receive new TopicMessage user, message.topic, message.ts
+    else if event.type is 'reaction_added' or event.type is 'reaction_removed'      
+      # If the reaction is to a message, then the item.channel property will contain a conversation ID
+      # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
+      user.room = event.item?.channel # when the item is not a message this will be undefined
 
-      else
-        @robot.logger.debug "Received message: '#{text}' in channel: #{channel.name}, subtype: #{subtype}"
-        message.user = user
-        @receive new CatchAllMessage(message)
 
+      # prefer user over bot.
+      # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
+      # user is the more appropriate value.
+      @receive new ReactionMessage(event.type, user, event.reaction, event.item_user, event.item, event.event_ts)
+
+    else if event.type is 'presence_change'
+      # Prepare for the removal of the deprecated single presence change updates
+      user_ids = if event.user then [event.user] else event.users
+
+      users = []
+      for id in user_ids
+        user = @robot.brain.data.users[id]
+        if user then users.push user
+
+      @receive new PresenceMessage(users, event.presence)
+    
+  ###*
+  # @private
   ###
-  Reaction added/removed event received from Slack
-  ###
-  reaction: (message) =>
-    {type, user, reaction, item_user, item, event_ts} = message
-    return if (user == @self.id) || (user == @self.bot_id) #Ignore anything we sent
-
-    user = @client.rtm.dataStore.getUserById(user)
-    item_user = @client.rtm.dataStore.getUserById(item_user)
-    return unless user && item_user
-
-    user.room = item.channel
-    @receive new ReactionMessage(type, user, reaction, item_user, item, event_ts)
-
-  ###
-  presence changed event received from Slack
-  ###
-  presenceChange: (message) =>
-    # prepare for the removal of the deprecated single presence change updates
-    userIds = if message.user then [message.user] else message.users
-
-    users = []
-    for id in userIds
-      user = @client.rtm.dataStore.getUserById(id)
-      if user then users.push user
-
-    return unless users
-    @receive new PresenceMessage(users, message.presence)
-
-  # Callback for SlackClient.loadUsers()
-  loadUsers: (err, res) =>
-    if err || !res.members.length
+  usersLoaded: (err, res) =>
+    if err || !res.ok
       @robot.logger.error "Can't fetch users"
       return
+    @updateUserInBrain member for member in res.members
 
-    @userChange member for member in res.members
-
-  # when invoked as an event handler, this method takes an event. but when invoked from loadUsers,
-  # this method takes a user
-  userChange: (event_or_user) =>
+  ###*
+  # Update user record in the Hubot Brain
+  # @private
+  ###
+  updateUserInBrain: (event_or_user) =>
     return unless event_or_user
+    # when invoked as an event handler, this method takes an event.
+    # but when invoked from usersLoaded, this method takes a user.
     user = if event_or_user.type == 'user_change' then event_or_user.user else event_or_user
     newUser =
       id: user.id
@@ -316,4 +276,16 @@ class SlackBot extends Adapter
     delete @robot.brain.data.users[user.id]
     @robot.brain.userForId user.id, newUser
 
+
 module.exports = SlackBot
+
+# Open question:
+# What is a `room` for this adapter? There needs to be a contract about what is and is not a valid `room`?
+# The most basic contract would be a room is a string that is a Slack conversationId.
+# There's also precidence (from documentation) that the value in `user.name` should be used as a room. If we could
+# detect a `user.name`, then maybe its possible to find the user ID and then open a DM to retreive a conversationId. We
+# should only do this if its supported already, because Slack's latest guidance is to not use display names for any
+# programmatic purpose.
+
+# NOTE: should 'room' describe a thread_ts too for messages that are a part of a thread, so that a response.send()
+# (or other variant) can continue interacting in the thread? is there a way to respond to the "parent" room?
