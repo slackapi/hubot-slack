@@ -62,6 +62,7 @@ class SlackBot extends Adapter
   # @public
   ###
   send: (envelope, messages...) ->
+    console.log("ENVELOPE #{JSON.stringify(envelope)}")
     for message in messages
       # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
       @client.send(envelope, message) unless message is ''
@@ -180,12 +181,21 @@ class SlackBot extends Adapter
     # Send to Hubot based on message type
     if event.type is 'message'
       
-      # NOTE: use robot.brain.userForId(id, options) to initialize the user object
-      # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
       # Hubot expects this format for TextMessage Listener
-
+      # Flag added to user object
+      is_bot = !user? && bot?
       user = user || bot || {}
-      user.room = channel?.id
+      user.is_bot = if user.is_bot then user.is_bot else is_bot
+
+      ###*
+      # Hubot user object in Brain. User object returned guaranteed to contain:
+      # id {String}:        Slack user ID
+      # is_bot {Boolean}:   Flag indicating whether user is a bot
+      # name {String}:      Slack username
+      # real_name {String}: First and Last name of Slack user
+      ###
+      user = @updateUserInBrain(user)
+      #user.room = channel?.id
 
       switch event.subtype
         when 'bot_message'
