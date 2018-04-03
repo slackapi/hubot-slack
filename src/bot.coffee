@@ -62,7 +62,6 @@ class SlackBot extends Adapter
   # @public
   ###
   send: (envelope, messages...) ->
-    console.log("ENVELOPE #{JSON.stringify(envelope)}")
     for message in messages
       # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
       @client.send(envelope, message) unless message is ''

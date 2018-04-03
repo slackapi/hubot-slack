@@ -46,33 +46,33 @@ describe 'Logger', ->
 describe 'Send Messages', ->
 
   it 'Should send a message', ->
-    sentMessages = @slackbot.send {room: 'general'}, 'message'
+    sentMessages = @slackbot.send {room: @stubs.channel.id}, 'message'
     sentMessages.length.should.equal 1
     sentMessages[0].should.equal 'message'
 
   it 'Should send multiple messages', ->
-    sentMessages = @slackbot.send {room: 'general'}, 'one', 'two', 'three'
+    sentMessages = @slackbot.send {room: @stubs.channel.id}, 'one', 'two', 'three'
     sentMessages.length.should.equal 3
 
   it 'Should not send empty messages', ->
-    sentMessages = @slackbot.send {room: 'general'}, 'Hello', '', '', 'world!'
+    sentMessages = @slackbot.send {room: @stubs.channel.id}, 'Hello', '', '', 'world!'
     # Removes undefined (or unsent) messages from sentMessages
     _.remove(sentMessages, _.isUndefined)
     sentMessages.length.should.equal 2
 
   it 'Should not fail for inexistant user', ->
-    chai.expect(() => @slackbot.send {room: 'inexistant'}, 'Hello').to.not.throw()
+    chai.expect(() => @slackbot.send {room: 'U987'}, 'Hello').to.not.throw()
 
   it 'Should open a DM channel if needed', ->
     msg = 'Test'
-    @slackbot.send {room: 'name'}, msg
-    @stubs._msg.should.eql msg
+    @slackbot.send {room: @stubs.user.id}, msg
+    @stubs._dmmsg.should.eql msg
 
   it 'Should use an existing DM channel if possible', ->
     msg = 'Test'
-    @slackbot.send {room: '@user2'}, msg
+    @slackbot.send {room: @stubs.user.id}, msg
     @stubs._dmmsg.should.eql msg
-    @stubs._room.should.eql '@user2'
+    @stubs._room.should.eql @stubs.user.id
 
   it 'Should send a message to a user', ->
     @slackbot.send @stubs.user, 'message'
@@ -82,11 +82,11 @@ describe 'Send Messages', ->
 
 describe 'Client sending message', ->
   it 'Should append as_user = true', ->
-    @client.send {room: 'name'}, {text: 'foo', user: @stubs.user, channel: @stubs.channel}
+    @client.send {room: @stubs.user.id}, {text: 'foo', user: @stubs.user, channel: @stubs.channel}
     @stubs._opts.as_user.should.eql true
 
   it 'Should append as_user = true only as a default', ->
-    @client.send {room: 'name'}, {text: 'foo', user: @stubs.user, channel: @stubs.channel, as_user: false}
+    @client.send {room: @stubs.user.id}, {text: 'foo', user: @stubs.user, channel: @stubs.channel, as_user: false}
     @stubs._opts.as_user.should.eql false
 
 describe 'Reply to Messages', ->
