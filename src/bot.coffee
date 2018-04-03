@@ -204,7 +204,7 @@ class SlackBot extends Adapter
           # prefer user over bot.
           # if both are set in the slack event, it represents an app or integration sending a message on behalf of a
           # user, so the user is the more appropriate value.
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
             @receive message
           )
         # NOTE: channel_join should be replaced with a member_joined_channel event
@@ -221,7 +221,7 @@ class SlackBot extends Adapter
         when undefined
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
           
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
             @receive message
           )
         # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
