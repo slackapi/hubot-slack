@@ -131,16 +131,21 @@ class SlackClient
 
   ###*
   # Fetch users from Slack API (using pagination) and invoke callback
+  # @param {String} bot_id - (optional) if exists, find user info with bot id
   # @public
   ###
-  loadUsers: (callback) ->
+  loadUsers: (bot_id, callback) ->
     # paginated call to users.list
     # some properties of the real results are left out because they are not used
     combinedResults = { members: [] }
     pageLoaded = (error, results) =>
       return callback(error) if error
       # merge results into combined results
-      combinedResults.members.push(member) for member in results.members
+      for member in results.members
+        ## TODO: Do you need to check to make sure member.id != bot_id?
+        if (bot_id && member.profile?.bot_id == bot_id)
+          return callback(null, member)
+        combinedResults.members.push(member)
       if results?.response_metadata?.next_cursor
         # fetch next page
         @web.users.list({
@@ -169,28 +174,31 @@ class SlackClient
       fetches = {};
       fetches.user = @web.users.info(event.user) if event.user
       fetches.channel = @web.conversations.info(event.channel) if event.channel
-      fetches.bot = @web.bots.info(event.bot_id) if event.bot_id
       fetches.item_user = @web.users.info(event.item_user) if event.item_user
 
       Promise.props(fetches).then((fetched) =>
 
         event.channel = fetched.channel if fetched.channel
 
-        # messages sent from human users, apps with a bot user and using the xoxb token, and
-        # slackbot have the user property
-        event.user = fetched.user if fetched.user
-
-        # bot_id exists on all messages with subtype bot_message
-        # these messages only have a user property if sent from a bot user (xoxb token). therefore
-        # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-        event.bot = fetched.bot if fetched.bot
-
         # this property is for reaction_added and reaction_removed events
         # previous behavior was to ignore this event entirely if the user and item_user were not in the local workspace
         event.item_user = fetched.item_user if fetched.item_user
 
-        try @eventHandler(event)
-        catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
+        # messages sent from human users, apps with a bot user and using the xoxb token, and
+        # slackbot have the user property
+        if fetched.user
+          event.user = fetched.user
+          try @eventHandler(event)
+          catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
+        else if event.bot_id
+          # bot_id exists on all messages with subtype bot_message
+          # these messages only have a user property if sent from a bot user (xoxb token). therefore
+          # the above assignment will not happen for all messages from custom integrations or apps without a bot user
+          loadUsers(event.bot_id, (err, res) =>
+            event.user = res
+            try @eventHandler(event)
+            catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
+          )        
       )
       .catch((error) =>
         @robot.logger.error "Incoming RTM message dropped due to error fetching info for a property: #{error.message}."

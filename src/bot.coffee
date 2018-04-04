@@ -44,12 +44,12 @@ class SlackBot extends Adapter
     # TODO: check this value when connection finishes (even if its a reconnection)
     # TODO: build a map of enterprise users and local users
     @needsUserListSync = true
-    @client.loadUsers @usersLoaded
+    @client.loadUsers null, @usersLoaded
     @robot.brain.on 'loaded', () =>
       # Hubot Brain emits 'loaded' event each time a key is set, but we only want to synchonize the users list on
       # the first load after a connection completes
       if not @isLoaded
-        @client.loadUsers @usersLoaded
+        @client.loadUsers null, @usersLoaded
         @isLoaded = true
         @presenceSub()
         
@@ -171,30 +171,24 @@ class SlackBot extends Adapter
   # @private
   ###
   eventHandler: (event) =>
-    {user, channel, bot} = event
+    {user, channel} = event
 
     # Ignore anything we sent
     # NOTE: coupled to getting `rtm.start` data
-    return if (user && (user.id is @self.id || user.id is @self.bot_id)) || (bot && (bot.id is @self.bot_id))
+    return if user && (user.id is @self.id)
 
     # Send to Hubot based on message type
     if event.type is 'message'
       
-      # Hubot expects this format for TextMessage Listener
-      # Flag added to user object
-      is_bot = !user? && bot?
-      user = user || bot || {}
-      user.is_bot = if user.is_bot then user.is_bot else is_bot
-
       ###*
       # Hubot user object in Brain. User object returned guaranteed to contain:
-      # id {String}:        Slack user ID
-      # is_bot {Boolean}:   Flag indicating whether user is a bot
-      # name {String}:      Slack username
-      # real_name {String}: First and Last name of Slack user
+      # id {String}:              Slack user ID
+      # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
+      # name {String}:            Slack username
+      # real_name {String}:       Name of Slack user or bot
       ###
-      user = @updateUserInBrain(user)
-      #user.room = channel?.id
+      user = @robot.brain.userForId user.id, user
+      user.room = channel?.id
 
       switch event.subtype
         when 'bot_message'

@@ -248,7 +248,7 @@ describe 'Handling incoming messages', ->
     @stubs.receiveMock.onReceived = (msg) ->
       should.equal (msg instanceof SlackTextMessage), true
       done()
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.bot, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.user, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
     return
   
   it 'Should handle presence_change events as envisioned', ->
@@ -261,12 +261,13 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.users[0].id, @stubs.user.id
     @stubs._received.users.length.should.equal 1
 
+  #TODO: review these tests to add testing for more complex functionality
   it 'Should ignore messages it sent itself', ->
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
     should.equal @stubs._received, undefined
 
   it 'Should ignore messages it sent itself, if sent as a botuser', ->
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', bot: @stubs.self_bot, channel: @stubs.channel, text: 'Ignore me' }
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
     should.equal @stubs._received, undefined
 
   it 'Should ignore reaction events that it generated itself', ->
@@ -275,7 +276,7 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received, undefined
 
   it 'Should ignore reaction events that it generated itself as a botuser', ->
-    reactionMessage = { type: 'reaction_added', user: @stubs.self_bot, reaction: 'thumbsup', event_ts: '1360782804.083113' }
+    reactionMessage = { type: 'reaction_added', user: @stubs.self, reaction: 'thumbsup', event_ts: '1360782804.083113' }
     @slackbot.eventHandler reactionMessage
     should.equal @stubs._received, undefined
 

@@ -123,10 +123,13 @@ describe 'send()', ->
 
 describe 'loadUsers()', ->
   it 'should make successive calls to users.list', ->
-    @client.loadUsers (err, result) =>
+    @client.loadUsers null, (err, result) =>
       @stubs?._listCount.should.equal 2
-      result.members.length.should.equal 3
+      result.members.length.should.equal 4
   it 'should handle errors', ->
     @stubs._listError = true
-    @client.loadUsers (err, result) =>
+    @client.loadUsers null, (err, result) =>
       err.should.be.an.Error
+  it 'should retrieve bot user', ->
+    @client.loadUsers 'B1', (err, result) =>
+      result.id.should.equal 4
