@@ -246,6 +246,9 @@ class SlackBot extends Adapter
     if err || !res.ok
       @robot.logger.error "Can't fetch users"
       return
+    if process.env.NO_LOAD_ALL_USERS?
+      @robot.logger.debug "Auto-loading ALL users disabled, skipping"
+      return
     @updateUserInBrain member for member in res.members
 
   ###*
