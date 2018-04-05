@@ -280,9 +280,12 @@ describe 'Handling incoming messages', ->
     @slackbot.eventHandler reactionMessage
     should.equal @stubs._received, undefined
 
-  it 'Should handle undefined users as envisioned', ->
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: undefined, channel: @stubs.channel}
-    should.equal @stubs._received, undefined
+  it 'Should handle undefined users as envisioned', (done)->
+    @stubs.receiveMock.onReceived = (msg) ->
+      should.equal (msg instanceof SlackTextMessage), true
+      done()
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: undefined, channel: @stubs.channel, text: 'Foo'}
+    return
 
   it 'Should handle reaction events from users who are in different workspace in shared channel', ->
     reactionMessage = {
