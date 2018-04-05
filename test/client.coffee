@@ -42,6 +42,23 @@ describe 'onEvent()', ->
     setTimeout(( =>
       @stubs.robot.logger.logs.should.not.have.property('error')
     ), 0);
+  it 'should successfully convert bot users', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      message.user.id.should.equal 4
+      message.channel.name.should.equal @stubs.channel.name
+      done()
+    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+    @client.rtm.emit('message', {
+      type: 'message',
+      bot_id: 'B1'
+      channel: @stubs.channel.id,
+      text: 'blah'    
+    })
+    # NOTE: the following check does not appear to work as expected
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
   it 'should log an error when expanded info cannot be fetched using the Web API', (done) ->
     # NOTE: to be certain nothing goes wrong in the rejection handling, the "unhandledRejection" / "rejectionHandled"
     # global events need to be instrumented

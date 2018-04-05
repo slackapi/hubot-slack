@@ -195,7 +195,7 @@ class SlackClient
           # bot_id exists on all messages with subtype bot_message
           # these messages only have a user property if sent from a bot user (xoxb token). therefore
           # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-          loadUsers(event.bot_id, (err, res) =>
+          @loadUsers(event.bot_id, (err, res) =>
             event.user = res
             try @eventHandler(event)
             catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
