@@ -2,7 +2,9 @@ SlackBot = require './src/bot'
 require './src/extensions'
 
 exports.use = (robot) ->
-  options = token: process.env.HUBOT_SLACK_TOKEN
+  options =
+    token:        process.env.HUBOT_SLACK_TOKEN
+    loadAllUsers: not process.env.NO_LOAD_ALL_USERS?
   try
     options.rtm = JSON.parse(process.env.HUBOT_SLACK_RTM_CLIENT_OPTS)
   catch
