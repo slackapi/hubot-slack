@@ -6,7 +6,7 @@ class SlackBot extends Adapter
 
   ###*
   # Slackbot is an adapter for connecting Hubot to Slack
-  # @ tructor
+  # @constructor
   # @param {Robot} robot - the Hubot robot
   # @param {Object} options - configuration options for the adapter
   # @param {string} options.token - authentication token for Slack APIs
@@ -194,7 +194,7 @@ class SlackBot extends Adapter
     # Send to Hubot based on message type
     if event.type is 'message'
       # If bot user not found in users.info from client
-      return if !user?
+      user = if user? then user else {}
 
       user.room = channel?.id
 
