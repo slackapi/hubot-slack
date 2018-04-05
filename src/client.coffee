@@ -131,7 +131,7 @@ class SlackClient
 
   ###*
   # Fetch users from Slack API (using pagination) and invoke callback
-  # @param {String} bot_id - (optional) if exists, find user info with bot id
+  # @param {String} bot_id - (optional) if exists, find user object with corresponding bot id
   # @public
   ###
   loadUsers: (bot_id, callback) ->
@@ -142,7 +142,6 @@ class SlackClient
       return callback(error) if error
       # merge results into combined results
       for member in results.members
-        ## TODO: Do you need to check to make sure member.id != bot_id?
         if (bot_id && member.profile?.bot_id == bot_id)
           return callback(null, member)
         combinedResults.members.push(member)
@@ -154,7 +153,8 @@ class SlackClient
         }, pageLoaded)
       else
         # pagination complete, run callback with results
-        callback(null, combinedResults)
+        if !bot_id then callback(null, combinedResults)
+        else callback(null, undefined)
     @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
 
   ###*
@@ -190,6 +190,7 @@ class SlackClient
           event.user = fetched.user
           try @eventHandler(event)
           catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
+        # User always preferred over bot
         else if event.bot_id
           # bot_id exists on all messages with subtype bot_message
           # these messages only have a user property if sent from a bot user (xoxb token). therefore

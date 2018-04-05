@@ -251,6 +251,16 @@ describe 'Handling incoming messages', ->
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.user, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
     return
   
+  it 'Should handle single user presence_change events as envisioned', ->
+    @slackbot.robot.brain.userForId(@stubs.user.id, @stubs.user)
+    presenceMessage = {
+      type: 'presence_change', user: @stubs.user.id, presence: 'away'
+    }
+    @slackbot.eventHandler presenceMessage
+    should.equal (@stubs._received instanceof PresenceMessage), true
+    should.equal @stubs._received.users[0].id, @stubs.user.id
+    @stubs._received.users.length.should.equal 1
+
   it 'Should handle presence_change events as envisioned', ->
     @slackbot.robot.brain.userForId(@stubs.user.id, @stubs.user)
     presenceMessage = {
@@ -261,12 +271,7 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.users[0].id, @stubs.user.id
     @stubs._received.users.length.should.equal 1
 
-  #TODO: review these tests to add testing for more complex functionality
   it 'Should ignore messages it sent itself', ->
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
-    should.equal @stubs._received, undefined
-
-  it 'Should ignore messages it sent itself, if sent as a botuser', ->
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.self, channel: @stubs.channel, text: 'Ignore me' }
     should.equal @stubs._received, undefined
 
@@ -275,9 +280,8 @@ describe 'Handling incoming messages', ->
     @slackbot.eventHandler reactionMessage
     should.equal @stubs._received, undefined
 
-  it 'Should ignore reaction events that it generated itself as a botuser', ->
-    reactionMessage = { type: 'reaction_added', user: @stubs.self, reaction: 'thumbsup', event_ts: '1360782804.083113' }
-    @slackbot.eventHandler reactionMessage
+  it 'Should handle undefined users as envisioned', ->
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: undefined, channel: @stubs.channel}
     should.equal @stubs._received, undefined
 
   it 'Should handle reaction events from users who are in different workspace in shared channel', ->

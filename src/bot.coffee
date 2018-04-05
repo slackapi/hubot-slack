@@ -175,19 +175,23 @@ class SlackBot extends Adapter
 
     # Ignore anything we sent
     # NOTE: coupled to getting `rtm.start` data
-    return if user && (user.id is @self.id)
+    return if user && (user?.id is @self.id)
+
+    ###*
+    # Hubot user object in Brain. User object returned guaranteed to contain:
+    # id {String}:              Slack user ID
+    # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
+    # name {String}:            Slack username
+    # real_name {String}:       Name of Slack user or bot
+    ###
+    # Check if user is just id for presence_change event
+    user = if user?.id? then @robot.brain.userForId user.id, user else user
 
     # Send to Hubot based on message type
     if event.type is 'message'
-      
-      ###*
-      # Hubot user object in Brain. User object returned guaranteed to contain:
-      # id {String}:              Slack user ID
-      # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
-      # name {String}:            Slack username
-      # real_name {String}:       Name of Slack user or bot
-      ###
-      user = @robot.brain.userForId user.id, user
+      # If bot user not found in users.info from client
+      return if !user
+
       user.room = channel?.id
 
       switch event.subtype
@@ -224,16 +228,14 @@ class SlackBot extends Adapter
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
       user.room = event.item?.channel # when the item is not a message this will be undefined
+      # Convert item user into a Hubot user
+      item_user = @robot.brain.userForId event.item_user.id, event.item_user
 
-
-      # prefer user over bot.
-      # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
-      # user is the more appropriate value.
-      @receive new ReactionMessage(event.type, user, event.reaction, event.item_user, event.item, event.event_ts)
+      @receive new ReactionMessage(event.type, user, event.reaction, item_user, event.item, event.event_ts)
 
     else if event.type is 'presence_change'
       # Prepare for the removal of the deprecated single presence change updates
-      user_ids = if event.user then [event.user] else event.users
+      user_ids = if user? then [user] else event.users
 
       users = []
       for id in user_ids

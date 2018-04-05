@@ -133,3 +133,6 @@ describe 'loadUsers()', ->
   it 'should retrieve bot user', ->
     @client.loadUsers 'B1', (err, result) =>
       result.id.should.equal 4
+  it 'should handle users when retrieving bot user', ->
+    @client.loadUsers 'NOBOT', (err, result) =>
+      should.equal result, undefined
