@@ -6,7 +6,7 @@ class SlackBot extends Adapter
 
   ###*
   # Slackbot is an adapter for connecting Hubot to Slack
-  # @constructor
+  # @ tructor
   # @param {Robot} robot - the Hubot robot
   # @param {Object} options - configuration options for the adapter
   # @param {string} options.token - authentication token for Slack APIs
@@ -177,20 +177,24 @@ class SlackBot extends Adapter
     # NOTE: coupled to getting `rtm.start` data
     return if user && (user?.id is @self.id)
 
+    
     ###*
-    # Hubot user object in Brain. User object returned guaranteed to contain:
+    # Hubot user object in Brain.
+    # User can represent a Slack user OR bot
+    # 
+    # The returned user from a message or reaction event is guaranteed to contain:
+    # 
     # id {String}:              Slack user ID
     # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
     # name {String}:            Slack username
     # real_name {String}:       Name of Slack user or bot
     ###
-    # Check if user is just id for presence_change event
-    user = if user?.id? then @robot.brain.userForId user.id, user else user
+    user = if user?.id? then @robot.brain.userForId user.id, user else user # Checks if user is just id for presence_change
 
     # Send to Hubot based on message type
     if event.type is 'message'
       # If bot user not found in users.info from client
-      return if !user
+      return if !user?
 
       user.room = channel?.id
 
@@ -198,9 +202,6 @@ class SlackBot extends Adapter
         when 'bot_message'
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
 
-          # prefer user over bot.
-          # if both are set in the slack event, it represents an app or integration sending a message on behalf of a
-          # user, so the user is the more appropriate value.
           SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
             @receive message
           )
