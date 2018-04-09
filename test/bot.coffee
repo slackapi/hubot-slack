@@ -68,12 +68,6 @@ describe 'Send Messages', ->
     @slackbot.send {room: @stubs.user.id}, msg
     @stubs._dmmsg.should.eql msg
 
-  it 'Should use an existing DM channel if possible', ->
-    msg = 'Test'
-    @slackbot.send {room: @stubs.user.id}, msg
-    @stubs._dmmsg.should.eql msg
-    @stubs._room.should.eql @stubs.user.id
-
   it 'Should send a message to a user', ->
     @slackbot.send @stubs.user, 'message'
     @stubs._dmmsg.should.eql 'message'
@@ -82,11 +76,11 @@ describe 'Send Messages', ->
 
 describe 'Client sending message', ->
   it 'Should append as_user = true', ->
-    @client.send {room: @stubs.user.id}, {text: 'foo', user: @stubs.user, channel: @stubs.channel}
+    @client.send {room: @stubs.channel.id}, {text: 'foo', user: @stubs.user, channel: @stubs.channel}
     @stubs._opts.as_user.should.eql true
 
   it 'Should append as_user = true only as a default', ->
-    @client.send {room: @stubs.user.id}, {text: 'foo', user: @stubs.user, channel: @stubs.channel, as_user: false}
+    @client.send {room: @stubs.channel.id}, {text: 'foo', user: @stubs.user, channel: @stubs.channel, as_user: false}
     @stubs._opts.as_user.should.eql false
 
 describe 'Reply to Messages', ->
@@ -254,7 +248,7 @@ describe 'Handling incoming messages', ->
   it 'Should handle single user presence_change events as envisioned', ->
     @slackbot.robot.brain.userForId(@stubs.user.id, @stubs.user)
     presenceMessage = {
-      type: 'presence_change', user: @stubs.user.id, presence: 'away'
+      type: 'presence_change', user: @stubs.user, presence: 'away'
     }
     @slackbot.eventHandler presenceMessage
     should.equal (@stubs._received instanceof PresenceMessage), true

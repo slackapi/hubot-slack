@@ -131,21 +131,20 @@ class SlackClient
 
   ###*
   # Fetch users from Slack API (using pagination) and invoke callback
-  # @param {String} bot_id - (optional) if exists, find user object with corresponding bot id
   # @public
   ###
-  loadUsers: (bot_id, callback) ->
+  loadUsers: (callback, continueFn = @defaultContinueFn) ->
     # paginated call to users.list
     # some properties of the real results are left out because they are not used
     combinedResults = { members: [] }
     pageLoaded = (error, results) =>
       return callback(error) if error
       # merge results into combined results
-      for member in results.members
-        if (bot_id && member.profile?.bot_id == bot_id)
-          return callback(null, member)
-        combinedResults.members.push(member)
-      if results?.response_metadata?.next_cursor
+      combinedResults.members.push(member) for member in results.members
+      # checks if result found in results
+      shouldContinue = continueFn(results.members)
+
+      if shouldContinue && results?.response_metadata?.next_cursor
         # fetch next page
         @web.users.list({
           limit: SlackClient.PAGE_SIZE,
@@ -153,9 +152,28 @@ class SlackClient
         }, pageLoaded)
       else
         # pagination complete, run callback with results
-        if !bot_id then callback(null, combinedResults)
-        else callback(null, undefined)
+        callback(null, combinedResults)
     @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
+
+  ###*
+  # Default function for continueFn for loadUsers()
+  ###
+  defaultContinueFn: (combinedResults) ->
+    return true
+
+  ###*
+  # Invokes callback with Slack user object for a given botId 
+  ###
+  findBotUser: (botId, callback) ->
+    @loadUsers((err, res) => 
+      if err then return callback(err)
+      for member in res.members
+        if member.profile?.bot_id == botId then return callback(null, member)
+    , (partialResult) =>
+        for member in partialResult
+          if member.profile?.bot_id == botId then return false
+        return true
+    )
 
   ###*
   # Event handler for Slack RTM events
@@ -184,22 +202,25 @@ class SlackClient
         # previous behavior was to ignore this event entirely if the user and item_user were not in the local workspace
         event.item_user = fetched.item_user if fetched.item_user
 
+        # User always preferred over bot
         # messages sent from human users, apps with a bot user and using the xoxb token, and
         # slackbot have the user property
         if fetched.user
           event.user = fetched.user
-          try @eventHandler(event)
-          catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
-        # User always preferred over bot
+          return event
+
         else if event.bot_id
           # bot_id exists on all messages with subtype bot_message
           # these messages only have a user property if sent from a bot user (xoxb token). therefore
           # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-          @loadUsers(event.bot_id, (err, res) =>
+          Promise.promisify(@findBotUser, { context: @ })(event.bot_id).then((res) =>
             event.user = res
-            try @eventHandler(event)
-            catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
-          )        
+            return event
+          )
+      )
+      .then((fetchedEvent) =>
+        try @eventHandler(fetchedEvent)
+        catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
       )
       .catch((error) =>
         @robot.logger.error "Incoming RTM message dropped due to error fetching info for a property: #{error.message}."
