@@ -162,6 +162,14 @@ class SlackClient
     return true
 
   ###*
+  # Function to determine if given botId in partialResult
+  ###
+  botContinueFn: (botId, partialResult) ->
+    for member in partialResult
+      if member.profile?.bot_id == botId then return false
+    return true
+
+  ###*
   # Invokes callback with Slack user object for a given botId 
   ###
   findBotUser: (botId, callback) ->
@@ -169,11 +177,7 @@ class SlackClient
       if err then return callback(err)
       for member in res.members
         if member.profile?.bot_id == botId then return callback(null, member)
-    , (partialResult) =>
-        for member in partialResult
-          if member.profile?.bot_id == botId then return false
-        return true
-    )
+    , (partialResult) => return @botContinueFn(botId, partialResult))
 
   ###*
   # Event handler for Slack RTM events
