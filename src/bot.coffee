@@ -171,30 +171,37 @@ class SlackBot extends Adapter
   # @private
   ###
   eventHandler: (event) =>
-    {user, channel, bot} = event
+    {user, channel} = event
 
     # Ignore anything we sent
     # NOTE: coupled to getting `rtm.start` data
-    return if (user && (user.id is @self.id || user.id is @self.bot_id)) || (bot && (bot.id is @self.bot_id))
+    return if user && (user?.id is @self.id)
+
+    
+    ###*
+    # Hubot user object in Brain.
+    # User can represent a Slack human user or bot user
+    # 
+    # The returned user from a message or reaction event is guaranteed to contain:
+    # 
+    # id {String}:              Slack user ID
+    # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
+    # name {String}:            Slack username
+    # real_name {String}:       Name of Slack user or bot
+    # room {String}:            Slack channel ID for event (will be empty string if no channel in event)
+    ###
+    user = if user? then @robot.brain.userForId user.id, user else {}
 
     # Send to Hubot based on message type
     if event.type is 'message'
-      
-      # NOTE: use robot.brain.userForId(id, options) to initialize the user object
-      # think about whether this is true for bots and if we want to be storing bots in the same brain namespace as users
-      # Hubot expects this format for TextMessage Listener
 
-      user = user || bot || {}
-      user.room = channel?.id
+      user.room = if channel? then channel.id else ''
 
       switch event.subtype
         when 'bot_message'
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
 
-          # prefer user over bot.
-          # if both are set in the slack event, it represents an app or integration sending a message on behalf of a
-          # user, so the user is the more appropriate value.
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
             @receive message
           )
         # NOTE: channel_join should be replaced with a member_joined_channel event
@@ -211,7 +218,7 @@ class SlackBot extends Adapter
         when undefined
           @robot.logger.debug "Received message in channel: #{channel.name || channel.id}, from: #{user.name}"
           
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @client, (message) =>
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
             @receive message
           )
         # NOTE: if we want to expose all remaining subtypes not covered above as a generic message implement an else
@@ -220,17 +227,15 @@ class SlackBot extends Adapter
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'      
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
-      user.room = event.item?.channel # when the item is not a message this will be undefined
+      user.room = if event.item? then event.item.channel else '' # when the item is not a message this will be undefined
+      # Convert item user into a Hubot user
+      item_user = if event.item_user? then @robot.brain.userForId event.item_user.id, event.item_user else {}
 
-
-      # prefer user over bot.
-      # if both are set in the slack event, it represents an app or integration reacting on behalf of a user, so the
-      # user is the more appropriate value.
-      @receive new ReactionMessage(event.type, user, event.reaction, event.item_user, event.item, event.event_ts)
+      @receive new ReactionMessage(event.type, user, event.reaction, item_user, event.item, event.event_ts)
 
     else if event.type is 'presence_change'
       # Prepare for the removal of the deprecated single presence change updates
-      user_ids = if event.user then [event.user] else event.users
+      user_ids = if user?.id? then [user.id] else event.users
 
       users = []
       for id in user_ids

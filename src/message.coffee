@@ -44,10 +44,11 @@ class SlackTextMessage extends TextMessage
   # text       - The parsed message text
   # rawText    - The unparsed message text
   # rawMessage - The Slack Message object
-  constructor: (@user, text, rawText, @rawMessage, channel, robot_name) ->
+  constructor: (@user, text, rawText, @rawMessage, channel, robot_name, robot_alias) ->
     # private instance properties (not trying to expand API contract)
     @_channel = channel
     @_robot_name = robot_name
+    @_robot_alias = robot_alias
 
     # public instance property initialization
     @rawText = if rawText? then rawText else @rawMessage.text
@@ -79,7 +80,7 @@ class SlackTextMessage extends TextMessage
 
       if @_channel?.is_im
         startOfText = if text.indexOf('@') == 0 then 1 else 0
-        robotIsNamed = text.indexOf(@_robot_name) == startOfText || text.indexOf(client.robot.alias) == startOfText
+        robotIsNamed = text.indexOf(@_robot_name) == startOfText || text.indexOf(@_robot_alias) == startOfText
         # Assume it was addressed to us even if it wasn't
         if not robotIsNamed
           text = "#{@_robot_name} #{text}"     # If this is a DM, pretend it was addressed to us
@@ -179,8 +180,8 @@ class SlackTextMessage extends TextMessage
   ###*
   # Factory method to construct SlackTextMessage
   ###
-  @makeSlackTextMessage: (@user, text, rawText, @rawMessage, channel, robot_name, client, cb) ->
-    message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, client)
+  @makeSlackTextMessage: (@user, text, rawText, @rawMessage, channel, robot_name, robot_alias, client, cb) ->
+    message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, robot_alias, client)
 
     if not message.text? then message.buildText(client, () ->
       setImmediate(() -> cb(message))

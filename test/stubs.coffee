@@ -178,7 +178,7 @@ beforeEach ->
       else
         return Promise.reject(new Error('usersMock could not match user ID'))
   @stubs.userListPageWithNextCursor = {
-    members: [{ id: 1 }, { id: 2 }]
+    members: [{ id: 1 }, { id: 2 }, { id: 4, profile: { bot_id: 'B1' } }]
     response_metadata: {
       next_cursor: 'mock_cursor'
     }
