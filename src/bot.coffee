@@ -188,13 +188,14 @@ class SlackBot extends Adapter
     # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
     # name {String}:            Slack username
     # real_name {String}:       Name of Slack user or bot
+    # room {String}:            Channel id of event (will be empty string if no channel)
     ###
     user = if user? then @robot.brain.userForId user.id, user else {}
 
     # Send to Hubot based on message type
     if event.type is 'message'
 
-      user.room = channel?.id
+      user.room = if channel? then channel.id else ''
 
       switch event.subtype
         when 'bot_message'
@@ -226,7 +227,7 @@ class SlackBot extends Adapter
     else if event.type is 'reaction_added' or event.type is 'reaction_removed'      
       # If the reaction is to a message, then the item.channel property will contain a conversation ID
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a conversation
-      user.room = event.item?.channel # when the item is not a message this will be undefined
+      user.room = if event.item? then event.item.channel else '' # when the item is not a message this will be undefined
       # Convert item user into a Hubot user
       item_user = if event.item_user? then @robot.brain.userForId event.item_user.id, event.item_user else {}
 

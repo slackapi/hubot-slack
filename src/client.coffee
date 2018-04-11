@@ -217,7 +217,7 @@ class SlackClient
           # bot_id exists on all messages with subtype bot_message
           # these messages only have a user property if sent from a bot user (xoxb token). therefore
           # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-          Promise.promisify(@findBotUser, { context: @ })(event.bot_id).then((res) =>
+          return Promise.promisify(@findBotUser, { context: @ })(event.bot_id).then((res) =>
             event.user = res
             return event
           )
