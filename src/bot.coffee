@@ -188,7 +188,7 @@ class SlackBot extends Adapter
     # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
     # name {String}:            Slack username
     # real_name {String}:       Name of Slack user or bot
-    # room {String}:            Channel id of event (will be empty string if no channel)
+    # room {String}:            Slack channel ID for event (will be empty string if no channel in event)
     ###
     user = if user? then @robot.brain.userForId user.id, user else {}
 
