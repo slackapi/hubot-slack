@@ -60,7 +60,7 @@ describe 'onEvent()', ->
       @stubs.robot.logger.logs.should.not.have.property('error')
     ), 0);
 
-  it.only 'should handle undefined bot users', (done) ->
+  it 'should handle undefined bot users', (done) ->
     @client.onEvent (message) =>
       message.should.be.ok
       message.channel.name.should.equal @stubs.channel.name
