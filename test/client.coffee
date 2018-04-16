@@ -60,20 +60,20 @@ describe 'onEvent()', ->
       @stubs.robot.logger.logs.should.not.have.property('error')
     ), 0);
 
-  it 'should handle undefined bot users', (done) ->
+  it.only 'should handle undefined bot users', (done) ->
     @client.onEvent (message) =>
       message.should.be.ok
-    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+      message.channel.name.should.equal @stubs.channel.name
+      done()
     @client.rtm.emit('message', {
       type: 'message',
       bot_id: 'B789'
       channel: @stubs.channel.id,
       text: 'blah'    
     })
-    # NOTE: the following check does not appear to work as expected
+
     setTimeout(( =>
-      @stubs.robot.logger.logs?.error.length.should.equal 1
-      done()
+      @stubs.robot.logger.logs.should.not.have.property('error')
     ), 0);
   it 'should log an error when expanded info cannot be fetched using the Web API', (done) ->
     # NOTE: to be certain nothing goes wrong in the rejection handling, the "unhandledRejection" / "rejectionHandled"

@@ -183,6 +183,8 @@ class SlackTextMessage extends TextMessage
   @makeSlackTextMessage: (@user, text, rawText, @rawMessage, channel, robot_name, robot_alias, client, cb) ->
     message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, robot_alias, client)
 
+    console.log(@rawMessage)
+
     if not message.text? then message.buildText(client, () ->
       setImmediate(() -> cb(message))
     ) else 

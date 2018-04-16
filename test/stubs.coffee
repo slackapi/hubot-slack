@@ -168,7 +168,7 @@ beforeEach ->
     info: (botId) =>
       if botId == @stubs.bot.id
         return Promise.resolve(@stubs.bot)
-      if botId == @stubs.undefined_user_bot
+      if botId == @stubs.undefined_user_bot.id
         return Promise.resolve(@stubs.undefined_user_bot)
   @stubs.usersMock =
     list: (opts, cb) =>
