@@ -44,7 +44,10 @@ class SlackBot extends Adapter
     # TODO: check this value when connection finishes (even if its a reconnection)
     # TODO: build a map of enterprise users and local users
     @needsUserListSync = true
-    @client.loadUsers @usersLoaded
+    unless @client.disableUserSync
+      @client.loadUsers @usersLoaded
+    else
+      @isLoaded = true
     @robot.brain.on 'loaded', () =>
       # Hubot Brain emits 'loaded' event each time a key is set, but we only want to synchonize the users list on
       # the first load after a connection completes
@@ -52,7 +55,7 @@ class SlackBot extends Adapter
         @client.loadUsers @usersLoaded
         @isLoaded = true
         @presenceSub()
-        
+
 
     # Start logging in
     @client.connect()
@@ -250,9 +253,6 @@ class SlackBot extends Adapter
   usersLoaded: (err, res) =>
     if err || !res.ok
       @robot.logger.error "Can't fetch users"
-      return
-    unless @options.loadAllUsers
-      @robot.logger.debug "Auto-loading ALL users disabled, skipping"
       return
     @updateUserInBrain member for member in res.members
 
