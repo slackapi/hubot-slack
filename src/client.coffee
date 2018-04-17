@@ -133,7 +133,7 @@ class SlackClient
   # Fetch users from Slack API (using pagination) and invoke callback
   # @public
   ###
-  loadUsers: (callback) ->
+  loadUsers: (callback, continueFn = @defaultContinueFn) ->
     # paginated call to users.list
     # some properties of the real results are left out because they are not used
     combinedResults = { members: [] }
@@ -141,7 +141,10 @@ class SlackClient
       return callback(error) if error
       # merge results into combined results
       combinedResults.members.push(member) for member in results.members
-      if results?.response_metadata?.next_cursor
+      # checks if result found in results
+      shouldContinue = continueFn(results.members)
+
+      if shouldContinue && results?.response_metadata?.next_cursor
         # fetch next page
         @web.users.list({
           limit: SlackClient.PAGE_SIZE,
@@ -151,6 +154,30 @@ class SlackClient
         # pagination complete, run callback with results
         callback(null, combinedResults)
     @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
+
+  ###*
+  # Default function for continueFn for loadUsers()
+  ###
+  defaultContinueFn: (combinedResults) ->
+    return true
+
+  ###*
+  # Function to determine if given botId in partialResult
+  ###
+  botContinueFn: (botId, partialResult) ->
+    for member in partialResult
+      if member.profile?.bot_id == botId then return false
+    return true
+
+  ###*
+  # Invokes callback with Slack user object for a given botId 
+  ###
+  findBotUser: (botId, callback) ->
+    @loadUsers((err, res) => 
+      if err then return callback(err)
+      for member in res.members
+        if member.profile?.bot_id == botId then return callback(null, member)
+    , (partialResult) => return @botContinueFn(botId, partialResult))
 
   ###*
   # Event handler for Slack RTM events
@@ -169,27 +196,34 @@ class SlackClient
       fetches = {};
       fetches.user = @web.users.info(event.user) if event.user
       fetches.channel = @web.conversations.info(event.channel) if event.channel
-      fetches.bot = @web.bots.info(event.bot_id) if event.bot_id
       fetches.item_user = @web.users.info(event.item_user) if event.item_user
 
       Promise.props(fetches).then((fetched) =>
 
         event.channel = fetched.channel if fetched.channel
 
-        # messages sent from human users, apps with a bot user and using the xoxb token, and
-        # slackbot have the user property
-        event.user = fetched.user if fetched.user
-
-        # bot_id exists on all messages with subtype bot_message
-        # these messages only have a user property if sent from a bot user (xoxb token). therefore
-        # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-        event.bot = fetched.bot if fetched.bot
-
         # this property is for reaction_added and reaction_removed events
         # previous behavior was to ignore this event entirely if the user and item_user were not in the local workspace
         event.item_user = fetched.item_user if fetched.item_user
 
-        try @eventHandler(event)
+        # User always preferred over bot
+        # messages sent from human users, apps with a bot user and using the xoxb token, and
+        # slackbot have the user property
+        if fetched.user
+          event.user = fetched.user
+          return event
+
+        else if event.bot_id
+          # bot_id exists on all messages with subtype bot_message
+          # these messages only have a user property if sent from a bot user (xoxb token). therefore
+          # the above assignment will not happen for all messages from custom integrations or apps without a bot user
+          return Promise.promisify(@findBotUser, { context: @ })(event.bot_id).then((res) =>
+            event.user = res
+            return event
+          )
+      )
+      .then((fetchedEvent) =>
+        try @eventHandler(fetchedEvent)
         catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
       )
       .catch((error) =>
