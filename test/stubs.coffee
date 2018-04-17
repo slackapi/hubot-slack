@@ -157,19 +157,22 @@ beforeEach ->
       if @stubs.receiveMock.onTopic? then @stubs.receiveMock.onTopic @stubs._topic
     info: (conversationId) =>
       if conversationId == @stubs.channel.id
-        return Promise.resolve(@stubs.channel)
+        return Promise.resolve({ok: true, channel: @stubs.channel})
       else if conversationId == @stubs.DM.id
-        return Promise.resolve(@stubs.DM)
+        return Promise.resolve({ok: true, channel: @stubs.DM})
       else if conversationId == 'C789'
         return Promise.resolve()
       else
         return Promise.reject(new Error('conversationsMock could not match conversation ID'))
   @stubs.botsMock =
-    info: (botId) =>
+    info: (event) =>
+      botId = event.bot
       if botId == @stubs.bot.id
-        return Promise.resolve(@stubs.bot)
-      if botId == @stubs.undefined_user_bot.id
-        return Promise.resolve(@stubs.undefined_user_bot)
+        return Promise.resolve({ok: true, bot: @stubs.bot})
+      else if botId == @stubs.undefined_user_bot.id
+        return Promise.resolve({ok: true, bot: @stubs.undefined_user_bot})
+      else
+        return Promise.reject(new Error('botsMock could not match bot ID'))
   @stubs.usersMock =
     list: (opts, cb) =>
       @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
@@ -180,9 +183,9 @@ beforeEach ->
         cb(null, @stubs.userListPageWithNextCursor)
     info: (userId) =>
       if userId == @stubs.user.id
-        return Promise.resolve(@stubs.user)
+        return Promise.resolve({ok: true, user: @stubs.user})
       else if userId == @stubs.org_user_not_in_workspace.id
-        return Promise.resolve(@stubs.org_user_not_in_workspace)
+        return Promise.resolve({ok: true, user: @stubs.org_user_not_in_workspace})
       else if userId == 'U789'
         return Promise.resolve()
       else

@@ -87,7 +87,8 @@ class SlackClient
   setTopic: (conversationId, topic) ->
     # NOTE: if channel cache is implemented, then this query should hit the cache
     @robot.logger.debug topic
-    @web.conversations.info(conversationId).then((conversation) =>
+    @web.conversations.info(conversationId).then((res) =>
+      conversation = res.channel
       if !conversation.is_im && !conversation.is_mpim
         return @web.conversations.setTopic(conversationId, topic)
       else
@@ -167,12 +168,11 @@ class SlackClient
       # NOTE: all we ever use from channel is the id and iff its a TextMessage the is_im property
       # NOTE: can we update the user entry in the brain?
       # NOTE: fetches will likely need to take place later after formatting if any user or channel mentions are found
-      fetches = {};
-      fetches.user = @web.users.info(event.user) if event.user
-      fetches.bot = @web.bots.info(event.bot_id) if event.bot_id
-      fetches.channel = @web.conversations.info(event.channel) if event.channel
-      fetches.item_user = @web.users.info(event.item_user) if event.item_user
-
+      fetches = {}
+      fetches.user = @web.users.info(event.user).then((r) => r.user) if event.user
+      fetches.bot = @web.bots.info(bot: event.bot_id).then((r) => r.bot) if event.bot_id
+      fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
+      fetches.item_user = @web.users.info(event.item_user).then((r) => r.user) if event.item_user
       Promise.props(fetches).then((fetched) =>
 
         event.channel = fetched.channel if fetched.channel
@@ -194,10 +194,11 @@ class SlackClient
           # the above assignment will not happen for all messages from custom integrations or apps without a bot user
           if fetched.bot.user_id?
             return @web.users.info(fetched.bot.user_id).then((res) =>
-              event.user = res
+              event.user = res.user
               return event
             )
           else return event
+
       )
       .then((fetchedEvent) =>
         try @eventHandler(fetchedEvent)
