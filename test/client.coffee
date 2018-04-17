@@ -27,8 +27,8 @@ describe 'onEvent()', ->
   it 'should emit pre-processed messages to the callback', (done) ->
     @client.onEvent (message) =>
       message.should.be.ok
-      #message.user.real_name.should.equal @stubs.user.real_name
-      #message.channel.name.should.equal @stubs.channel.name
+      message.user.real_name.should.equal @stubs.user.real_name
+      message.channel.name.should.equal @stubs.channel.name
       done()
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
