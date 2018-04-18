@@ -75,6 +75,10 @@ beforeEach ->
   @stubs.bot =
     name: 'testbot'
     id: 'B123'
+    user_id: 'U123'
+  @stubs.undefined_user_bot =
+    name: 'testbot'
+    id: 'B789'
   @stubs.self =
     name: 'self'
     id: 'U456'
@@ -160,6 +164,12 @@ beforeEach ->
         return Promise.resolve()
       else
         return Promise.reject(new Error('conversationsMock could not match conversation ID'))
+  @stubs.botsMock =
+    info: (botId) =>
+      if botId == @stubs.bot.id
+        return Promise.resolve(@stubs.bot)
+      if botId == @stubs.undefined_user_bot.id
+        return Promise.resolve(@stubs.undefined_user_bot)
   @stubs.usersMock =
     list: (opts, cb) =>
       @stubs._listCount = if @stubs?._listCount then @stubs._listCount + 1 else 1
@@ -236,7 +246,6 @@ beforeEach ->
   _.merge @slackbot.client.web.chat, @stubs.chatMock
   _.merge @slackbot.client.web.conversations, @stubs.conversationsMock
   _.merge @slackbot, @stubs.receiveMock
-  _.merge @slackbot.client.web.users, @stubs.userdsMock
   @slackbot.self = @stubs.self
 
   @formatter = new SlackFormatter @stubs.client.dataStore, @stubs.robot
@@ -248,3 +257,4 @@ beforeEach ->
   _.merge @client.web.chat, @stubs.chatMock
   _.merge @client.web.conversations, @stubs.conversationsMock
   _.merge @client.web.users, @stubs.usersMock
+  _.merge @client.web.bots, @stubs.botsMock

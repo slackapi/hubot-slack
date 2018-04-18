@@ -45,17 +45,33 @@ describe 'onEvent()', ->
   it 'should successfully convert bot users', (done) ->
     @client.onEvent (message) =>
       message.should.be.ok
-      message.user.id.should.equal 4
+      message.user.id.should.equal @stubs.user.id
       message.channel.name.should.equal @stubs.channel.name
       done()
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
       type: 'message',
-      bot_id: 'B1'
+      bot_id: 'B123'
       channel: @stubs.channel.id,
       text: 'blah'    
     })
     # NOTE: the following check does not appear to work as expected
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+
+  it 'should handle undefined bot users', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      message.channel.name.should.equal @stubs.channel.name
+      done()
+    @client.rtm.emit('message', {
+      type: 'message',
+      bot_id: 'B789'
+      channel: @stubs.channel.id,
+      text: 'blah'    
+    })
+
     setTimeout(( =>
       @stubs.robot.logger.logs.should.not.have.property('error')
     ), 0);
@@ -146,12 +162,4 @@ describe 'loadUsers()', ->
   it 'should handle errors', ->
     @stubs._listError = true
     @client.loadUsers (err, result) =>
-      err.should.be.an.Error
-
-describe 'findBotUser()', ->  
-  it 'should retrieve bot user', ->
-    @client.findBotUser 'B1', (err, result) =>
-      result.id.should.equal 4
-  it 'should handle unfound bot user', ->
-    @client.findBotUser 'oops', (err, result) =>
       err.should.be.an.Error
