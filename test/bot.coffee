@@ -43,6 +43,19 @@ describe 'Logger', ->
     logger.logs["error"].length.should.be.above(0)
     logger.logs["error"][logger.logs["error"].length-1].should.equal 'Invalid service token provided, please follow the upgrade instructions'
 
+describe 'Disable Sync', ->
+  it 'Should sync users by default', ->
+    @slackbot.run()
+    @stubs.client.dataStore.users.length.should.equal 4
+    # XXX: OK that this is 4, but it's also 4 when you don't run run()!
+    @slackbot.client.web.users.list().then (data) ->
+      data.length.should.equal 4
+      # XXX: Error: invalid_auth
+    # @slackbot.robot.brain.data.users.should.equal 4
+    # XXX: expected {} to equal 4
+  it 'Should not sync users when disabled'
+  it 'Should still sync interacting users when disabled'
+
 describe 'Send Messages', ->
 
   it 'Should send a message', ->
