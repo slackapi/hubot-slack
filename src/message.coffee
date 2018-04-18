@@ -148,8 +148,9 @@ class SlackTextMessage extends TextMessage
   # Returns name of user with id
   ###
   replaceUser: (client, id, mentions) ->
-    client.web.users.info(id).then((user) ->
-      if user
+    client.web.users.info(id).then((res) =>
+      if res?.user?
+        user = res.user
         mention = new SlackMention(user.id, 'user', user)
         mentions.push(mention)
         return "@#{user.name}"
@@ -164,8 +165,9 @@ class SlackTextMessage extends TextMessage
   # Returns name of channel with id
   ###
   replaceConversation: (client, id, mentions) ->
-    client.web.conversations.info(id).then((conversation) ->
-      if conversation
+    client.web.conversations.info(id).then((res) =>
+      if res?.channel?
+        conversation = res.channel
         mention = new SlackMention(conversation.id, 'conversation', conversation)
         mentions.push(mention)
         return "\##{conversation.name}"

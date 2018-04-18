@@ -177,7 +177,6 @@ class SlackBot extends Adapter
     # NOTE: coupled to getting `rtm.start` data
     return if user && (user?.id is @self.id)
 
-    
     ###*
     # Hubot user object in Brain.
     # User can represent a Slack human user or bot user
@@ -248,7 +247,7 @@ class SlackBot extends Adapter
   # @private
   ###
   usersLoaded: (err, res) =>
-    if err || !res.ok
+    if err || !res.members.length
       @robot.logger.error "Can't fetch users"
       return
     @updateUserInBrain member for member in res.members
