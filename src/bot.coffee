@@ -44,7 +44,7 @@ class SlackBot extends Adapter
     # TODO: check this value when connection finishes (even if its a reconnection)
     # TODO: build a map of enterprise users and local users
     @needsUserListSync = true
-    unless @client.disableUserSync
+    unless @options.disableUserSync
       @client.loadUsers @usersLoaded
     else
       @isLoaded = true
