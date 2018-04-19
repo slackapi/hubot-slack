@@ -10,6 +10,7 @@ class SlackBot extends Adapter
   # @param {Robot} robot - the Hubot robot
   # @param {Object} options - configuration options for the adapter
   # @param {string} options.token - authentication token for Slack APIs
+  # @param {Boolean} options.disableUserSync - disables syncing all user data on start
   # @param {Object} options.rtm - RTM configuration options for SlackClient
   # @param {Object} options.rtmStart - options for `rtm.start` Web API method
   ###
