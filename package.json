@@ -39,8 +39,8 @@
     "should": "~2.0.2"
   },
   "engines": {
-    "node": ">= 0.10.x",
-    "npm": ">= 1.4.0"
+    "node": ">= 0.12.x",
+    "npm": ">= 2.0.0"
   },
   "contributors": [
     {
