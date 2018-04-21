@@ -2,6 +2,7 @@
 layout: page
 title: Frequently Asked Questions
 permalink: /faq
+hidden: true
 order: 6
 headings:
     - title: What even is this?
@@ -38,7 +39,7 @@ help and we don't bite. Much.
 ## I'd like to contribute...but how?
 
 What an excellent question. First of all, please have a look at our general
-[contributing guidelines](https://github.com/{{ site.github_username }}/{{ site.repo_name }}/blob/master/CONTRIBUTING.md).
+[contributing guidelines](https://github.com/{{ site.github_username }}/{{ site.repo_name }}/blob/master/.github/contributing.md).
 We'll wait for you here.
 
 All done? Great! While we're super excited to incorporate your new feature into {{ site.product_name }}, there are a

@@ -22,5 +22,5 @@ include: ['_pages']
 
 # Build settings
 markdown: kramdown
-gems:
+plugins:
   - jemoji
