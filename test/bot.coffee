@@ -133,7 +133,7 @@ describe 'Receiving an error event', ->
   it 'Should handle rate limit errors', ->
     {logger} = @slackbot.robot
     @slackbot.error {msg: 'ratelimit', code: -1}
-    logger.logs["warning"].length.should.be.above(0)
+    logger.logs["error"].length.should.be.above(0)
 
 describe 'Handling incoming messages', ->
 
@@ -143,7 +143,7 @@ describe 'Handling incoming messages', ->
       done()
     @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
     return
-  
+
   it 'Should prepend our name to a name-lacking message addressed to us in a DM', ->
     bot_name = @slackbot.robot.name
     @stubs.receiveMock.onReceived = (msg) ->
@@ -159,7 +159,7 @@ describe 'Handling incoming messages', ->
       done()
     @slackbot.eventHandler {type: 'message', text: "#{bot_name} foo", user: @stubs.user, channel: @stubs.DM}
     return
-    
+
   it 'Should return a message object with raw text and message', (done) ->
     #the shape of this data is an RTM message event passed through SlackClient#messageWrapper
     #see: https://api.slack.com/events/message
@@ -244,7 +244,7 @@ describe 'Handling incoming messages', ->
       done()
     @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.user, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
     return
-  
+
   it 'Should handle single user presence_change events as envisioned', ->
     @slackbot.robot.brain.userForId(@stubs.user.id, @stubs.user)
     presenceMessage = {
@@ -289,7 +289,7 @@ describe 'Handling incoming messages', ->
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     }
 
-    @slackbot.eventHandler reactionMessage 
+    @slackbot.eventHandler reactionMessage
     should.equal (@stubs._received instanceof ReactionMessage), true
     should.equal @stubs._received.user.id, @stubs.org_user_not_in_workspace_in_channel.id
     should.equal @stubs._received.user.room, @stubs.channel.id
@@ -395,8 +395,6 @@ describe 'Users data', ->
         real_name: @stubs.user.real_name
         profile:
           email: @stubs.user.profile.email
-        client:
-          client
 
     @slackbot.updateUserInBrain(user_change_event)
 
