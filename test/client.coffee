@@ -53,7 +53,7 @@ describe 'onEvent()', ->
       type: 'message',
       bot_id: 'B123'
       channel: @stubs.channel.id,
-      text: 'blah'    
+      text: 'blah'
     })
     # NOTE: the following check does not appear to work as expected
     setTimeout(( =>
@@ -69,7 +69,7 @@ describe 'onEvent()', ->
       type: 'message',
       bot_id: 'B789'
       channel: @stubs.channel.id,
-      text: 'blah'    
+      text: 'blah'
     })
 
     setTimeout(( =>
@@ -87,7 +87,7 @@ describe 'onEvent()', ->
       text: 'blah',
       ts: '1355517523.000005'
     })
-    setTimeout(( =>
+    setImmediate(( =>
       @stubs.robot.logger.logs?.error.length.should.equal 1
       done()
     ), 0);
