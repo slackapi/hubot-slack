@@ -92,16 +92,16 @@ module.exports = (robot) ->
 
   robot.hear /thanks/i, (res) ->
     # filter mentions to just user mentions
-    user_mentions = mention for mention in res.message.mentions when mention.type is "user"
+    user_mentions = (mention for mention in res.message.mentions when mention.type is "user")
 
     # when there are user mentions...
     if user_mentions.length > 0
       response_text = ""
 
       # process each mention
-      for id of user_mentions
+      for { id } in user_mentions
         # increment the thank score
-        thank_scores[id] = thank_scores[id] + 1 if thank_scores[id]? else 1
+        thank_scores[id] = if thank_scores[id]? then (thank_scores[id] + 1) else 1
         # show the total score in the message with a properly formatted mention (uses display name)
         response_text += "<@#{id}> has been thanked #{thank_scores[id]} times!\n"
 
@@ -201,7 +201,8 @@ module.exports = (robot) ->
     if res.message.type == "added" and res.message.item.type == "message"
 
       # res.messsage.reaction is the emoji alias for the reaction Hubot just heard
-      web.reactions.add res.message.reaction,
+      web.reactions.add
+        name: res.message.reaction,
         channel: res.message.item.channel,
         timestamp: res.message.item.ts
 ```
@@ -218,10 +219,9 @@ module.exports = (robot) ->
   robot.presenceChange (res) ->
 
     # res.message is a PresenceMessssage instance that represents the presence change Hubot just heard
-    # NOTE: don't use the name property if you'd like to mention the user in a response, format the mention with the ID!
-    name = res.message.user.name
+    names = (user.name for user in res.message.users).join ", "
 
-    message = if res.message.user.presence is 'away' then "Bye bye #{name}" else "Glad you are back #{name}"
+    message = if res.message.presence is "away" then "Bye bye #{names}" else "Glad you are back #{names}"
     robot.logger.debug message
 ```
 
@@ -259,7 +259,7 @@ module.exports = (robot) ->
 
   # Any message that says "send updates here" will change the notification room
   robot.hear /send updates here/i, (res) ->
-    notification_room = res.message.rawMessage.channel
+    notification_room = res.message.rawMessage.channel.id
 
   # Any message that says "my update" will cause Hubot to echo that message to the notification room
   robot.hear /my update/i, (res) ->
