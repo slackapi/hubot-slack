@@ -157,6 +157,7 @@ beforeEach ->
     setTopic: (id, topic) =>
       @stubs._topic = topic
       if @stubs.receiveMock.onTopic? then @stubs.receiveMock.onTopic @stubs._topic
+      Promise.resolve()
     info: (conversationId) =>
       if conversationId == @stubs.channel.id
         return Promise.resolve({ok: true, channel: @stubs.channel})
