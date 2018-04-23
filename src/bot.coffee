@@ -30,8 +30,8 @@ class SlackBot extends Adapter
   ###
   run: ->
     # Token validation
-    return @robot.logger.error "No service token provided to Hubot" unless @options.token
-    return @robot.logger.error "Invalid service token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ["xoxb-", "xoxp-"])
+    return @robot.logger.error "No token provided to Hubot" unless @options.token
+    return @robot.logger.error "Invalid token provided, please follow the upgrade instructions" unless (@options.token.substring(0, 5) in ["xoxb-", "xoxp-"])
 
     # SlackClient event handlers
     @client.rtm.on "open", @open
