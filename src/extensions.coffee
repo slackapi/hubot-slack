@@ -1,5 +1,5 @@
 {Robot}           = require.main.require "hubot"
-{ReactionMessage} = require "./message"
+{ReactionMessage, PresenceMessage} = require "./message"
 
 ###*
 # Adds a Listener for ReactionMessages with the provided matcher, options, and callback
