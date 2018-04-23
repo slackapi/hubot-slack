@@ -1,5 +1,5 @@
-{ Robot } = require.main.require 'hubot'
-{ ReactionMessage } = require './message';
+{Robot}           = require.main.require "hubot"
+{ReactionMessage, PresenceMessage} = require "./message"
 
 ###*
 # Adds a Listener for ReactionMessages with the provided matcher, options, and callback
@@ -30,7 +30,7 @@ Robot::react = (matcher, options, callback) ->
 # @param {Function} [matcher] - A Function that determines whether to call the callback.
 # Expected to return a truthy value if the callback should be executed (optional).
 # @param {Object} [options]  - An Object of additional parameters keyed on extension name (optional).
-# @param {Function} callback - A Function that is called with a Response object if the matcher 
+# @param {Function} callback - A Function that is called with a Response object if the matcher
 # function returns true.
 ###
 Robot::presenceChange = (matcher, options, callback) ->
