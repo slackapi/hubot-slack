@@ -17,14 +17,15 @@ require '../src/extensions'
 beforeEach ->
   @stubs = {}
 
+  @stubs._sendCount = 0
   @stubs.send = (room, msg, opts) =>
     @stubs._room = room
     @stubs._opts = opts
-    if /^[UD@][\d\w]+/.test(room)
+    if (/^[UD@][\d\w]+/.test(room)) or (room is @stubs.DM.id)
       @stubs._dmmsg = msg
     else
       @stubs._msg = msg
-    msg
+    @stubs._sendCount = @stubs._sendCount + 1
 
   # These objects are of conversation shape: https://api.slack.com/types/conversation
   @stubs.channel =
@@ -151,6 +152,7 @@ beforeEach ->
   @stubs.chatMock =
     postMessage: (msg, room, opts) =>
       @stubs.send(msg, room, opts)
+      Promise.resolve()
   @stubs.conversationsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic

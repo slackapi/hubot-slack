@@ -46,19 +46,17 @@ describe 'Logger', ->
 describe 'Send Messages', ->
 
   it 'Should send a message', ->
-    sentMessages = @slackbot.send {room: @stubs.channel.id}, 'message'
-    sentMessages.length.should.equal 1
-    sentMessages[0].should.equal 'message'
+    @slackbot.send {room: @stubs.channel.id}, 'message'
+    @stubs._sendCount.should.equal 1
+    @stubs._msg.should.equal 'message'
 
   it 'Should send multiple messages', ->
-    sentMessages = @slackbot.send {room: @stubs.channel.id}, 'one', 'two', 'three'
-    sentMessages.length.should.equal 3
+    @slackbot.send {room: @stubs.channel.id}, 'one', 'two', 'three'
+    @stubs._sendCount.should.equal 3
 
   it 'Should not send empty messages', ->
-    sentMessages = @slackbot.send {room: @stubs.channel.id}, 'Hello', '', '', 'world!'
-    # Removes undefined (or unsent) messages from sentMessages
-    _.remove(sentMessages, _.isUndefined)
-    sentMessages.length.should.equal 2
+    @slackbot.send {room: @stubs.channel.id}, 'Hello', '', '', 'world!'
+    @stubs._sendCount.should.equal 2
 
   it 'Should not fail for inexistant user', ->
     chai.expect(() => @slackbot.send {room: 'U987'}, 'Hello').to.not.throw()
@@ -85,27 +83,23 @@ describe 'Client sending message', ->
 
 describe 'Reply to Messages', ->
   it 'Should mention the user in a reply sent in a channel', ->
-    sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'message'
-    sentMessages.length.should.equal 1
-    sentMessages[0].should.equal "<@#{@stubs.user.id}>: message"
+    @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'message'
+    @stubs._sendCount.should.equal 1
+    @stubs._msg.should.equal "<@#{@stubs.user.id}>: message"
 
   it 'Should mention the user in multiple replies sent in a channel', ->
-    sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'one', 'two', 'three'
-    sentMessages.length.should.equal 3
-    sentMessages[0].should.equal "<@#{@stubs.user.id}>: one"
-    sentMessages[1].should.equal "<@#{@stubs.user.id}>: two"
-    sentMessages[2].should.equal "<@#{@stubs.user.id}>: three"
+    @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'one', 'two', 'three'
+    @stubs._sendCount.should.equal 3
+    @stubs._msg.should.equal "<@#{@stubs.user.id}>: three"
 
   it 'Should send nothing if messages are empty', ->
-    sentMessages = @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, ''
-    # Removes undefined (or unsent) messages from sentMessages
-    _.remove(sentMessages, _.isUndefined)
-    sentMessages.length.should.equal 0
+    @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, ''
+    @stubs._sendCount.should.equal 0
 
   it 'Should NOT mention the user in a reply sent in a DM', ->
-    sentMessages = @slackbot.reply {user: @stubs.user, room: 'D123'}, 'message'
-    sentMessages.length.should.equal 1
-    sentMessages[0].should.equal "message"
+    @slackbot.reply {user: @stubs.user, room: @stubs.DM.id }, 'message'
+    @stubs._sendCount.should.equal 1
+    @stubs._dmmsg.should.equal "message"
 
 describe 'Setting the channel topic', ->
 
