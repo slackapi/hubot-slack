@@ -183,8 +183,7 @@ class SlackTextMessage extends TextMessage
       .then (res) =>
         if res?.user?
           user = res.user
-          mention = new SlackMention(user.id, "user", user)
-          mentions.push(mention)
+          mentions.push(new SlackMention(user.id, "user", user))
           return "@#{user.name}"
         else return "<@#{id}>"
       .catch (error) =>
@@ -205,8 +204,7 @@ class SlackTextMessage extends TextMessage
       .then (res) =>
         if res?.channel?
           conversation = res.channel
-          mention = new SlackMention(conversation.id, 'conversation', conversation)
-          mentions.push(mention)
+          mentions.push(new SlackMention(conversation.id, 'conversation', conversation))
           return "\##{conversation.name}"
         else return "<\##{id}>"
       .catch (error) =>
