@@ -79,8 +79,8 @@ module.exports = (robot) ->
 When your Hubot hears a message, it might contain mentions of other users, channels, or groups. The `text` property is
 pretty and human-readable. But this isn't great for scripting because
 [usernames are deprecated](https://api.slack.com/changelog/2017-09-the-one-about-usernames), and display names and
-conversation names can change. What you really want is an ID; its stable to store and gives your Hubot an any easy way
-to write mentions that have the user's preferred display name.
+conversation names can change. What you really want is an ID; it's stable to store and gives your Hubot an easy way to
+write mentions that have the user's preferred display name.
 
 Each incoming message has a `mentions` array that contains the ID and any other information known about the user or
 conversation that was mentioned.

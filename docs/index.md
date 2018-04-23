@@ -96,3 +96,5 @@ If you get stuck, we're here to help. The following are the best ways to get ass
 
   * [Bot Developer Hangout](https://community.botkit.ai) is a Slack community for developers building all types of bots.
     You can find the maintainers and users of this package in **#slack-api.**
+
+  * Email us in Slack developer support: [developers@slack.com](mailto://developers@slack.com)
