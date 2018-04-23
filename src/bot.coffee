@@ -142,8 +142,8 @@ class SlackBot extends Adapter
     if identity.users
       for user in identity.users
         if user.id == @self.id
+          @robot.logger.debug "SlackBot#authenticated() Found self in RTM start data"
           @self.bot_id = user.profile.bot_id
-          @self.display_name = user.profile.display_name
           break
 
     # Provide name to Hubot so it can be used for matching in `robot.respond()`. This must be a username, despite the
@@ -151,7 +151,7 @@ class SlackBot extends Adapter
     # Hubot will be comparing to the message text.
     @robot.name = @self.name
 
-    @robot.logger.info "Logged in as @#{@self.display_name} in workspace #{team.name}"
+    @robot.logger.info "Logged in as @#{@robot.name} in workspace #{team.name}"
 
 
   ###*
@@ -162,6 +162,7 @@ class SlackBot extends Adapter
     # Only subscribe to status changes from human users that are not deleted
     ids = for own id, user of @robot.brain.data.users when (not user.is_bot and not user.deleted)
       id
+    @robot.logger.debug "SlackBot#presenceSub() Subscribing to presence for #{ids.length} users"
     @client.rtm.subscribePresence ids
 
   ###*
