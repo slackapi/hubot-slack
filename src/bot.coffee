@@ -229,8 +229,7 @@ class SlackBot extends Adapter
     # real_name {String}:       Name of Slack user or bot
     # room {String}:            Slack channel ID for event (will be empty string if no channel in event)
     ###
-    # NOTE: should this be using `updateUserInBrain()`?
-    user = if user? then @robot.brain.userForId user.id, user else {}
+    user = if user? then @updateUserInBrain user else {}
 
     # Send to Hubot based on message type
     if event.type is "message"

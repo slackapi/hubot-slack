@@ -18,13 +18,13 @@ beforeEach ->
   @stubs = {}
 
   @stubs._sendCount = 0
-  @stubs.send = (room, msg, opts) =>
-    @stubs._room = room
+  @stubs.send = (conversationId, text, opts) =>
+    @stubs._room = conversationId
     @stubs._opts = opts
-    if (/^[UD@][\d\w]+/.test(room)) or (room is @stubs.DM.id)
-      @stubs._dmmsg = msg
+    if (/^[UD@][\d\w]+/.test(conversationId)) or (conversationId is @stubs.DM.id)
+      @stubs._dmmsg = text
     else
-      @stubs._msg = msg
+      @stubs._msg = text
     @stubs._sendCount = @stubs._sendCount + 1
 
   # These objects are of conversation shape: https://api.slack.com/types/conversation
@@ -37,6 +37,9 @@ beforeEach ->
   @stubs.group =
     id: 'G12324',
     is_mpim: true
+
+  # These objects are conversation IDs used to siwtch behavior of another stub
+  @stubs.channelWillFailChatPost = "BAD_CHANNEL"
 
   # These objects are of user shape: https://api.slack.com/types/user
   @stubs.user =
@@ -150,8 +153,9 @@ beforeEach ->
           when @stubs.channel.id then @stubs.channel
           when @stubs.DM.id then @stubs.DM
   @stubs.chatMock =
-    postMessage: (msg, room, opts) =>
-      @stubs.send(msg, room, opts)
+    postMessage: (conversationId, text, opts) =>
+      return Promise.reject(new Error("stub error")) if conversationId is @stubs.channelWillFailChatPost
+      @stubs.send(conversationId, text, opts)
       Promise.resolve()
   @stubs.conversationsMock =
     setTopic: (id, topic) =>
@@ -221,6 +225,7 @@ beforeEach ->
       log: (type, message) ->
         @logs[type] ?= []
         @logs[type].push(message)
+        # console.log "#{type} #{message}"
       info: (message) ->
         @log('info', message)
       debug: (message) ->
