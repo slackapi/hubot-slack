@@ -3,6 +3,7 @@
 
 ###*
 # Adds a Listener for ReactionMessages with the provided matcher, options, and callback
+#
 # @public
 # @param {Function} [matcher] - a function to determine if the listener should run. must return something
 # truthy if it should and that value with be available on `response.match`.
@@ -26,6 +27,7 @@ Robot::react = (matcher, options, callback) ->
 
 ###*
 # Adds a Listener for PresenceMessages with the provided matcher, options, and callback
+#
 # @public
 # @param {Function} [matcher] - A Function that determines whether to call the callback.
 # Expected to return a truthy value if the callback should be executed (optional).
