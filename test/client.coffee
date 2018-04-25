@@ -112,7 +112,7 @@ describe 'setTopic()', ->
 
   it "Should set the topic in a channel", (done) ->
     @client.setTopic @stubs.channel.id, 'iAmTopic'
-    setTimeout(() =>
+    setImmediate(() =>
       @stubs._topic.should.equal 'iAmTopic'
       done()
     , 0)
@@ -160,6 +160,7 @@ describe 'send()', ->
 
   it 'should log an error when chat.postMessage fails (plain string)', ->
     @client.send { room: @stubs.channelWillFailChatPost }, "Message"
+    @stubs._sendCount.should.equal 0
     setImmediate(( =>
       @stubs.robot.logger.logs?.error.length.should.equal 1
       done()
@@ -167,6 +168,7 @@ describe 'send()', ->
 
   it 'should log an error when chat.postMessage fails (object)', ->
     @client.send { room: @stubs.channelWillFailChatPost }, { text: "textMessage" }
+    @stubs._sendCount.should.equal 0
     setImmediate(( =>
       @stubs.robot.logger.logs?.error.length.should.equal 1
       done()
