@@ -38,6 +38,9 @@ beforeEach ->
     id: 'G12324',
     is_mpim: true
 
+  # These objects are conversation IDs used to siwtch behavior of another stub
+  @stubs.channelWillFailChatPost = "BAD_CHANNEL"
+
   # These objects are of user shape: https://api.slack.com/types/user
   @stubs.user =
     id: 'U123'
@@ -152,6 +155,7 @@ beforeEach ->
   @stubs.chatMock =
     postMessage: (msg, room, opts) =>
       @stubs.send(msg, room, opts)
+      Promise.reject() if room is @stubs.channelWillFailChatPost
       Promise.resolve()
   @stubs.conversationsMock =
     setTopic: (id, topic) =>

@@ -154,6 +154,24 @@ describe 'send()', ->
     @stubs._dmmsg.should.equal 'DM Message'
     @stubs._room.should.equal @stubs.user.id
 
+  it 'should not send a message to a user without an ID', ->
+    @client.send { name: "my_crufty_username" }, "don't program with usernames"
+    @stubs._sendCount.should.equal 0
+
+  it 'should log an error when chat.postMessage fails (plain string)', ->
+    @client.send { room: @stubs.channelWillFailChatPost }, "Message"
+    setImmediate(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
+
+  it 'should log an error when chat.postMessage fails (object)', ->
+    @client.send { room: @stubs.channelWillFailChatPost }, { text: "textMessage" }
+    setImmediate(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
+
 describe 'loadUsers()', ->
   it 'should make successive calls to users.list', ->
     @client.loadUsers (err, result) =>
