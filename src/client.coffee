@@ -3,6 +3,8 @@ Promise                = require "bluebird"
 {RtmClient, WebClient} = require "@slack/client"
 SlackFormatter         = require "./formatter"
 
+# TODO: make this client brain-aware
+
 class SlackClient
   ###*
   # Number used for limit when making paginated requests to Slack Web API list methods
@@ -206,22 +208,16 @@ class SlackClient
   ###
   eventWrapper: (event) ->
     if @eventHandler
-      # fetch full representations of the user, bot, channel, and potentially the item_user.
+      # fetch full representations of the user, bot, and potentially the item_user.
       fetches = {}
       fetches.user = @web.users.info(event.user).then((r) => r.user) if event.user
       fetches.bot = @web.bots.info(bot: event.bot_id).then((r) => r.bot) if event.bot_id
       fetches.item_user = @web.users.info(event.item_user).then((r) => r.user) if event.item_user
 
-      # NOTE: there's a performance cost to making this request which may be avoided since the only properties used are
-      # id and is_im. the former is already available, while the latter can be retreived on-demand inside the
-      # SlackTextMessage#buildText() method
-      fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
-
       # after fetches complete...
       Promise.props(fetches)
         .then (fetched) =>
           # start augmenting the event with the fetched data
-          event.channel = fetched.channel if fetched.channel
           event.item_user = fetched.item_user if fetched.item_user
 
           # assigning `event.user` properly depends on how the message was sent
@@ -254,7 +250,7 @@ class SlackClient
 # @callback SlackClient~eventHandler
 # @param {Object} event
 # @param {SlackUserInfo} event.user
-# @param {SlackConversationInfo} event.channel
+# @param {string} event.channel
 ###
 
 ###*
