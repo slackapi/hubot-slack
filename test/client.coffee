@@ -1,16 +1,15 @@
-{RtmClient, WebClient, MemoryDataStore} = require '@slack/client'
+{RTMClient, WebClient, MemoryDataStore} = require '@slack/client'
 SlackFormatter = require '../src/formatter'
 should = require 'should'
 _ = require 'lodash'
 
 describe 'Init', ->
   it 'Should initialize with an RTM client', ->
-    (@client.rtm instanceof RtmClient).should.equal true
-    @client.rtm._token.should.equal 'xoxb-faketoken'
+    (@client.rtm instanceof RTMClient).should.equal true
 
   it 'Should initialize with a Web client', ->
     (@client.web instanceof WebClient).should.equal true
-    @client.web._token.should.equal 'xoxb-faketoken'
+    @client.web.token.should.equal 'xoxb-faketoken'
 
   it 'Should initialize with a SlackFormatter - DEPRECATED', ->
     (@client.format instanceof SlackFormatter).should.equal true
@@ -106,7 +105,8 @@ describe 'disconnect()', ->
   it 'should remove all RTM listeners - LEGACY', ->
     @client.on 'some_event', _.noop
     @client.disconnect()
-    @client.rtm.listeners('some_event', true).should.not.be.ok
+    debugger
+    @client.rtm.listeners('some_event', true).should.be.empty
 
 describe 'setTopic()', ->
 

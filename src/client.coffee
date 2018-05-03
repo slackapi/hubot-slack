@@ -1,6 +1,6 @@
 _                      = require "lodash"
 Promise                = require "bluebird"
-{RtmClient, WebClient} = require "@slack/client"
+{RTMClient, WebClient} = require "@slack/client"
 SlackFormatter         = require "./formatter"
 
 class SlackClient
@@ -14,8 +14,8 @@ class SlackClient
   # @constructor
   # @param {Object} options - Configuration options for this SlackClient instance
   # @param {string} options.token - Slack API token for authentication
-  # @param {Object} [options.rtm={}] - Configuration options for owned RtmClient instance
-  # @param {Object} [options.rtmStart={}] - Configuration options for RtmClient#start() method
+  # @param {Object} [options.rtm={}] - Configuration options for owned RTMClient instance
+  # @param {Object} [options.rtmStart={}] - Configuration options for RTMClient#start() method
   # @param {boolean} [options.noRawText=false] - Deprecated: All SlackTextMessages (subtype of TextMessage) will contain
   # both the formatted text property and the rawText property
   # @param {Robot} robot - Hubot robot instance
@@ -26,10 +26,10 @@ class SlackClient
     # NOTE: the recommended initialization options are `{ dataStore: false, useRtmConnect: true }`. However the
     # @rtm.dataStore property is publically accessible, so the recommended settings cannot be used without breaking
     # this object's API. The property is no longer used internally.
-    @rtm = new RtmClient options.token, options.rtm
+    @rtm = new RTMClient options.token, options.rtm
     @web = new WebClient options.token
 
-    @robot.logger.debug "RtmClient initialized with options: #{JSON.stringify(options.rtm)}"
+    @robot.logger.debug "RTMClient initialized with options: #{JSON.stringify(options.rtm)}"
     @rtmStartOpts = options.rtmStart || {}
 
     # Message formatter
@@ -51,7 +51,7 @@ class SlackClient
   # @public
   ###
   connect: ->
-    @robot.logger.debug "RtmClient#start() with options: #{JSON.stringify(@rtmStartOpts)}"
+    @robot.logger.debug "RTMClient#start() with options: #{JSON.stringify(@rtmStartOpts)}"
     @rtm.start(@rtmStartOpts)
 
   ###*
