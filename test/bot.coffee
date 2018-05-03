@@ -291,7 +291,7 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.type, 'added'
     should.equal @stubs._received.reaction, 'thumbsup'
 
-describe 'Robot.react', ->
+describe 'Robot.react DEPRECATED', ->
   before ->
     user = { id: @stubs.user.id, room: @stubs.channel.id }
     item = {
@@ -335,6 +335,53 @@ describe 'Robot.react', ->
   it 'Should register a Listener that does not match the ReactionMessage', ->
     matcher = (msg) -> msg.type == 'removed'
     @slackbot.robot.react matcher, @handleReaction
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@reactionMessage).should.be.false
+
+describe 'Robot.hearReaction', ->
+  before ->
+    user = { id: @stubs.user.id, room: @stubs.channel.id }
+    item = {
+      type: 'message', channel: @stubs.channel.id, ts: '1360782804.083113'
+    }
+    @reactionMessage = new ReactionMessage(
+      'reaction_added', user, 'thumbsup', item, '1360782804.083113'
+    )
+    @handleReaction = (msg) -> "#{msg.reaction} handled"
+
+  it 'Should register a Listener with callback only', ->
+    @slackbot.robot.hearReaction @handleReaction
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@reactionMessage).should.be.true
+    listener.options.should.eql({id: null})
+    listener.callback(@reactionMessage).should.eql('thumbsup handled')
+
+  it 'Should register a Listener with opts and callback', ->
+    @slackbot.robot.hearReaction {id: 'foobar'}, @handleReaction
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@reactionMessage).should.be.true
+    listener.options.should.eql({id: 'foobar'})
+    listener.callback(@reactionMessage).should.eql('thumbsup handled')
+
+  it 'Should register a Listener with matcher and callback', ->
+    matcher = (msg) -> msg.type == 'added'
+    @slackbot.robot.hearReaction matcher, @handleReaction
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@reactionMessage).should.be.true
+    listener.options.should.eql({id: null})
+    listener.callback(@reactionMessage).should.eql('thumbsup handled')
+
+  it 'Should register a Listener with matcher, opts, and callback', ->
+    matcher = (msg) -> msg.type == 'removed' || msg.reaction == 'thumbsup'
+    @slackbot.robot.hearReaction matcher, {id: 'foobar'}, @handleReaction
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@reactionMessage).should.be.true
+    listener.options.should.eql({id: 'foobar'})
+    listener.callback(@reactionMessage).should.eql('thumbsup handled')
+
+  it 'Should register a Listener that does not match the ReactionMessage', ->
+    matcher = (msg) -> msg.type == 'removed'
+    @slackbot.robot.hearReaction matcher, @handleReaction
     listener = @slackbot.robot.listeners.shift()
     listener.matcher(@reactionMessage).should.be.false
 

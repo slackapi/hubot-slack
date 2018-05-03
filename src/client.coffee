@@ -64,7 +64,7 @@ class SlackClient
     @eventHandler = callback if @eventHandler != callback
 
   ###*
-  # Attach event handlers to the RTM stream
+  # DEPRECATED Attach event handlers to the RTM stream
   # @public
   # @deprecated This method is being removed without a replacement in the next major version.
   ###
