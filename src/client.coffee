@@ -17,7 +17,6 @@ class SlackClient
   # @param {Robot} robot - Hubot robot instance
   ###
   constructor: (options, robot) ->
-
     @robot = robot
 
     # RTM is the default communication client
@@ -34,6 +33,10 @@ class SlackClient
     # Message formatter
     # Leaving the @format property here for backwards compatibility, but it is no longer used internally.
     @format = new SlackFormatter(@rtm.dataStore, @robot)
+
+    # Map to convert bot user IDs (BXXXXXXXX) to user IDs (UXXXXXXXX/WXXXXXXXX) for events from custom 
+    # integrations and apps without a bot user
+    @botUserIdMap = {}
 
     # Event handler
     # NOTE: add channel join and leave events
@@ -170,9 +173,12 @@ class SlackClient
       # NOTE: fetches will likely need to take place later after formatting if any user or channel mentions are found
       fetches = {}
       fetches.user = @web.users.info(event.user).then((r) => r.user) if event.user
-      fetches.bot = @web.bots.info(bot: event.bot_id).then((r) => r.bot) if event.bot_id
       fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
       fetches.item_user = @web.users.info(event.item_user).then((r) => r.user) if event.item_user
+      if event.bot_id
+        # bots.info should only be called when mapping doesn't already exist in @botUserIdMap
+        fetches.bot = if !@botUserIdMap[event.bot_id]? then @web.bots.info(bot: event.bot_id).then((r) => r.bot) else @botUserIdMap[event.bot_id]
+      
       Promise.props(fetches).then((fetched) =>
 
         event.channel = fetched.channel if fetched.channel
@@ -188,6 +194,7 @@ class SlackClient
           event.user = fetched.user
           return event
 
+        # fetched.bot will be false if bot_id in @botUserIdMap but is from custom integration or app without bot user
         else if fetched.bot
           # bot_id exists on all messages with subtype bot_message
           # these messages only have a user property if sent from a bot user (xoxb token). therefore
@@ -195,13 +202,15 @@ class SlackClient
           if fetched.bot.user_id?
             return @web.users.info(fetched.bot.user_id).then((res) =>
               event.user = res.user
+              @botUserIdMap[event.bot_id] = res.user
               return event
             )
-          else return event
-
+          else 
+            @botUserIdMap[event.bot_id] = false
+            return event
       )
       .then((fetchedEvent) =>
-        try @eventHandler(fetchedEvent)
+        try @eventHandler(fetchedEvent) if fetchedEvent?
         catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
       )
       .catch((error) =>
