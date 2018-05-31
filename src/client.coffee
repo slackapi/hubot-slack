@@ -158,6 +158,28 @@ class SlackClient
     @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
 
   ###*
+  # Fetch user info from the brain. If not available, call users.info
+  # @public
+  ###
+  fetchUser: (user) ->
+    # User exists in the brain - retrieve this representation
+    return @robot.brain.data.users[user] if @robot.brain.data.users[user]?
+    
+    # User is not in brain - call users.info
+    # The user will be added to the brain in EventHandler
+    @web.users.info(user).then((r) => r.user)
+
+  ###*
+  # Fetch bot user info from the bot -> user map
+  # @public
+  ###
+  fetchBotUser: (bot) ->
+    return @botUserIdMap[bot] if @botUserIdMap[bot]?
+
+    # Bot user is not in mapping - call bots.info
+    @web.bots.info(bot: bot).then((r) => r.bot)
+    
+  ###*
   # Event handler for Slack RTM events
   # @private
   # @param {Object} event - A Slack event. See <https://api.slack.com/events>
@@ -172,12 +194,10 @@ class SlackClient
       # NOTE: can we update the user entry in the brain?
       # NOTE: fetches will likely need to take place later after formatting if any user or channel mentions are found
       fetches = {}
-      fetches.user = @web.users.info(event.user).then((r) => r.user) if event.user
+      fetches.user = @fetchUser(event.user) if event.user
+      fetches.bot = @fetchBotUser(event.bot_id) if event.bot_id
       fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
       fetches.item_user = @web.users.info(event.item_user).then((r) => r.user) if event.item_user
-      if event.bot_id
-        # bots.info should only be called when mapping doesn't already exist in @botUserIdMap
-        fetches.bot = if !@botUserIdMap[event.bot_id]? then @web.bots.info(bot: event.bot_id).then((r) => r.bot) else @botUserIdMap[event.bot_id]
       
       Promise.props(fetches).then((fetched) =>
 
@@ -194,18 +214,24 @@ class SlackClient
           event.user = fetched.user
           return event
 
-        # fetched.bot will be false if bot_id in @botUserIdMap but is from custom integration or app without bot user
+        # fetched.bot will exist and be false if bot_id in @botUserIdMap 
+        # but is from custom integration or app without bot user
         else if fetched.bot
+          # fetched.bot is user representation of bot since it exists in botToUserMap
+          if @botUserIdMap[event.bot_id]
+            event.user = fetched.bot
+            return event
           # bot_id exists on all messages with subtype bot_message
           # these messages only have a user property if sent from a bot user (xoxb token). therefore
           # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-          if fetched.bot.user_id?
+          else if fetched.bot.user_id?
             return @web.users.info(fetched.bot.user_id).then((res) =>
               event.user = res.user
               @botUserIdMap[event.bot_id] = res.user
               return event
             )
-          else 
+          else
+            # bot doesn't have an associated user id
             @botUserIdMap[event.bot_id] = false
             return event
       )
