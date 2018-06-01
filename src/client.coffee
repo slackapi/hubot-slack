@@ -194,8 +194,8 @@ class SlackClient
       # NOTE: can we update the user entry in the brain?
       # NOTE: fetches will likely need to take place later after formatting if any user or channel mentions are found
       fetches = {}
-      fetches.user = @fetchUser(event.user) if event.user
-      fetches.bot = @fetchBotUser(event.bot_id) if event.bot_id
+      fetches.user = @fetchUser event.user if event.user
+      fetches.bot = @fetchBotUser event.bot_id if event.bot_id
       fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
       fetches.item_user = @web.users.info(event.item_user).then((r) => r.user) if event.item_user
       
@@ -236,7 +236,7 @@ class SlackClient
             return event
       )
       .then((fetchedEvent) =>
-        try @eventHandler(fetchedEvent) if fetchedEvent?
+        try @eventHandler(fetchedEvent)
         catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
       )
       .catch((error) =>
