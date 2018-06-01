@@ -161,23 +161,23 @@ class SlackClient
   # Fetch user info from the brain. If not available, call users.info
   # @public
   ###
-  fetchUser: (user) ->
+  fetchUser: (userId) ->
     # User exists in the brain - retrieve this representation
-    return @robot.brain.data.users[user] if @robot.brain.data.users[user]?
+    return @robot.brain.data.users[userId] if @robot.brain.data.users[userId]?
     
     # User is not in brain - call users.info
     # The user will be added to the brain in EventHandler
-    @web.users.info(user).then((r) => r.user)
+    @web.users.info(userId).then((r) => r.user)
 
   ###*
   # Fetch bot user info from the bot -> user map
   # @public
   ###
-  fetchBotUser: (bot) ->
-    return @botUserIdMap[bot] if @botUserIdMap[bot]?
+  fetchBotUser: (botId) ->
+    return @botUserIdMap[botId] if @botUserIdMap[botId]?
 
     # Bot user is not in mapping - call bots.info
-    @web.bots.info(bot: bot).then((r) => r.bot)
+    @web.bots.info(bot: botId).then((r) => r.bot)
     
   ###*
   # Event handler for Slack RTM events
