@@ -1,9 +1,13 @@
-{RtmClient, WebClient} = require '@slack/client'
-SlackFormatter = require './formatter'
-_ = require 'lodash'
-Promise = require 'bluebird'
+_                      = require "lodash"
+Promise                = require "bluebird"
+{RtmClient, WebClient} = require "@slack/client"
+SlackFormatter         = require "./formatter"
 
 class SlackClient
+  ###*
+  # Number used for limit when making paginated requests to Slack Web API list methods
+  # @private
+  ###
   @PAGE_SIZE = 100
 
   ###*
@@ -16,53 +20,55 @@ class SlackClient
   # both the formatted text property and the rawText property
   # @param {Robot} robot - Hubot robot instance
   ###
-  constructor: (options, robot) ->
-    @robot = robot
+  constructor: (options, @robot) ->
 
-    # RTM is the default communication client
-    @robot.logger.debug "slack rtm client options: #{JSON.stringify(options.rtm)}"
-    # NOTE: the recommended initialization options include { dataStore: false, useRtmConnect: true }
-    # but because this library exposes the @rtm.dataStore property, we cannot use those settings without breaking
-    # the API for users.
+    # Client initialization
+    # NOTE: the recommended initialization options are `{ dataStore: false, useRtmConnect: true }`. However the
+    # @rtm.dataStore property is publically accessible, so the recommended settings cannot be used without breaking
+    # this object's API. The property is no longer used internally.
     @rtm = new RtmClient options.token, options.rtm
-    @rtmStartOpts = options.rtmStart || {}
-
-    # Web is the fallback for complex messages
     @web = new WebClient options.token
 
+    @robot.logger.debug "RtmClient initialized with options: #{JSON.stringify(options.rtm)}"
+    @rtmStartOpts = options.rtmStart || {}
+
     # Message formatter
-    # Leaving the @format property here for backwards compatibility, but it is no longer used internally.
+    # NOTE: the SlackFormatter class is deprecated. However the @format property is publicly accessible, so it cannot
+    # be removed without breaking this object's API. The property is no longer used internally.
     @format = new SlackFormatter(@rtm.dataStore, @robot)
 
     # Map to convert bot user IDs (BXXXXXXXX) to user IDs (UXXXXXXXX/WXXXXXXXX) for events from custom 
     # integrations and apps without a bot user
     @botUserIdMap = {}
 
-    # Event handler
+    # Event handling
     # NOTE: add channel join and leave events
-    @rtm.on 'message', @eventWrapper, this
-    @rtm.on 'reaction_added', @eventWrapper, this
-    @rtm.on 'reaction_removed', @eventWrapper, this
-    @rtm.on 'presence_change', @eventWrapper, this
+    @rtm.on "message", @eventWrapper, this
+    @rtm.on "reaction_added", @eventWrapper, this
+    @rtm.on "reaction_removed", @eventWrapper, this
+    @rtm.on "presence_change", @eventWrapper, this
     @eventHandler = undefined
 
   ###*
   # Open connection to the Slack RTM API
+  #
   # @public
   ###
   connect: ->
-    @robot.logger.debug "slack rtm start with options: #{JSON.stringify(@rtmStartOpts)}"
+    @robot.logger.debug "RtmClient#start() with options: #{JSON.stringify(@rtmStartOpts)}"
     @rtm.start(@rtmStartOpts)
 
   ###*
   # Set event handler
+  #
   # @public
+  # @param {SlackClient~eventHandler} callback
   ###
   onEvent: (callback) ->
     @eventHandler = callback if @eventHandler != callback
 
   ###*
-  # Attach event handlers to the RTM stream
+  # DEPRECATED Attach event handlers to the RTM stream
   # @public
   # @deprecated This method is being removed without a replacement in the next major version.
   ###
@@ -76,6 +82,7 @@ class SlackClient
 
   ###*
   # Disconnect from the Slack RTM API
+  #
   # @public
   ###
   disconnect: ->
@@ -85,60 +92,98 @@ class SlackClient
 
   ###*
   # Set a channel's topic
+  #
   # @public
+  # @param {string} conversationId - Slack conversation ID
+  # @param {string} topic - new topic
   ###
   setTopic: (conversationId, topic) ->
-    # NOTE: if channel cache is implemented, then this query should hit the cache
-    @robot.logger.debug topic
-    @web.conversations.info(conversationId).then((res) =>
-      conversation = res.channel
-      if !conversation.is_im && !conversation.is_mpim
-        return @web.conversations.setTopic(conversationId, topic)
-      else
-        @robot.logger.debug "Cannot set topic in DM or MPIM"
-    )
-    .catch((error) =>
-      @robot.logger.error "Error setting topic in conversation #{conversationId}: #{error.message}"
-    )
+    @robot.logger.debug "SlackClient#setTopic() with topic #{topic}"
+
+    # The `conversations.info` method is used to find out if this conversation can have a topic set
+    # NOTE: There's a performance cost to making this request, which can be avoided if instead the attempt to set the
+    # topic is made regardless of the conversation type. If the conversation type is not compatible, the call would
+    # fail, which is exactly the outcome in this implementation.
+    @web.conversations.info(conversationId)
+      .then (res) =>
+        conversation = res.channel
+        if !conversation.is_im && !conversation.is_mpim
+          return @web.conversations.setTopic(conversationId, topic)
+        else
+          @robot.logger.debug "Conversation #{conversationId} is a DM or MPDM. " +
+                              "These conversation types do not have topics."
+      .catch (error) =>
+        @robot.logger.error "Error setting topic in conversation #{conversationId}: #{error.message}"
 
   ###*
-  # Send a message to Slack using the Web API
+  # Send a message to Slack using the Web API.
+  #
+  # This method is usually called when a Hubot script is sending a message in response to an incoming message. The
+  # response object has a `send()` method, which triggers execution of all response middleware, and ultimately calls
+  # `send()` on the Adapter. SlackBot, the adapter in this case, delegates that call to this method; once for every item
+  # (since its method signature is variadic). The `envelope` is created by the Hubot Response object.
+  #
+  # This method can also be called when a script directly calls `robot.send()` or `robot.adapter.send()`. That bypasses
+  # the execution of the response middleware and directly calls into SlackBot#send(). In this case, the `envelope`
+  # parameter is up to the script.
+  #
+  # The `envelope.room` property is intended to be a conversation ID. Even when that is not the case, this method will
+  # makes a reasonable attempt at sending the message. If the property is set to a public or private channel name, it
+  # will still work. When there's no `room` in the envelope, this method will fallback to the `id` property. That
+  # affordance allows scripts to use Hubot User objects, Slack users (as obtained from the response to `users.info`),
+  # and Slack conversations (as obtained from the response to `conversations.info`) as possible envelopes. In the first
+  # two cases, envelope.id` will contain a user ID (`Uxxx` or `Wxxx`). Since Hubot runs using a bot token (`xoxb`),
+  # passing a user ID as the `channel` argument to `chat.postMessage` (with `as_user=true`) results in a DM from the bot
+  # user (if `as_user=false` it would instead result in a DM from slackbot). Leaving `as_user=true` has no effect when
+  # the `channel` argument is a conversation ID.
+  #
+  # NOTE: This method no longer accepts `envelope.room` set to a user name. Using it in this manner will result in a
+  # `channel_not_found` error.
+  #
   # @public
+  # @param {Object} envelope - a Hubot Response envelope
+  # @param {Message} [envelope.message] - the Hubot Message that was received and generated the Response which is now
+  # being used to send an outgoing message
+  # @param {User} [envelope.user] - the Hubot User object representing the user who sent `envelope.message`
+  # @param {string} [envelope.room] - a Slack conversation ID for where `envelope.message` was received, usually an
+  # alias of `envelope.user.room`
+  # @param {string} [envelope.id] - a Slack conversation ID similar to `envelope.room`
+  # @param {string|Object} message - the outgoing message to be sent, can be a simple string or a key/value object of
+  # optional arguments for the Slack Web API method `chat.postMessage`.
   ###
   send: (envelope, message) ->
-    # NOTE: potentially lost functionality:
-    # channel = @client.getChannelGroupOrDMByName envelope.room
-    # channel = @client.getChannelGroupOrDMByID(envelope.room) unless channel
-    #
-    # if not channel and @client.getUserByName(envelope.room)
-    #   user_id = @client.getUserByName(envelope.room).id
-    #   @client.openDM user_id, =>
-    #     this.send envelope, messages...
-    #   return
-    if envelope.room
-      room = envelope.room
-    else if envelope.id # Maybe we were sent a user object or channel object. Use the id, in that case.
-      room = envelope.id
+    room = envelope.room || envelope.id
+    if not room?
+      @robot.logger.error "Cannot send message without a valid room. Envelopes should contain a room property set to " +
+                          "a Slack conversation ID."
+      return
 
-    @robot.logger.debug "Sending to #{room}: #{message}"
+    @robot.logger.debug "SlackClient#send() room: #{room}, message: #{message}"
 
-    # NOTE: when posting to a DM, setting the `as_user` option to true will post as the _authenticated user_, and false
-    # will post _as the bot_. its not clear what that means when using a bot token (xoxb), since its not supposed to
-    # have an authenticated user like user tokens (xoxp).
-    # NOTE: should the thread_ts option be directly on the envelop instead of inside envelop.message?
-    options = { as_user: true, link_names: 1, thread_ts: envelope.message?.thread_ts }
+    options =
+      as_user: true,
+      link_names: 1,
+      # when the incoming message was inside a thread, send responses as replies to the thread
+      # NOTE: consider building a new (backwards-compatible) format for room which includes the thread_ts.
+      # e.g. "#{conversationId} #{thread_ts}" - this would allow a portable way to say the message is in a thread
+      thread_ts: envelope.message?.thread_ts
 
-    if typeof message isnt 'string'
+    if typeof message isnt "string"
       @web.chat.postMessage(room, message.text, _.defaults(message, options))
+        .catch (error) =>
+          @robot.logger.error "SlackClient#send() error: #{error.message}"
     else
       @web.chat.postMessage(room, message, options)
+        .catch (error) =>
+          @robot.logger.error "SlackClient#send() error: #{error.message}"
 
   ###*
-  # Fetch users from Slack API (using pagination) and invoke callback
+  # Fetch users from Slack API using pagination
+  #
   # @public
+  # @param {SlackClient~usersCallback} callback
   ###
   loadUsers: (callback) ->
-    # paginated call to users.list
     # some properties of the real results are left out because they are not used
     combinedResults = { members: [] }
     pageLoaded = (error, results) =>
@@ -180,68 +225,84 @@ class SlackClient
     @web.bots.info(bot: botId).then((r) => r.bot)
     
   ###*
-  # Event handler for Slack RTM events
+  # Processes events to fetch additional data or rearrange the shape of an event before handing off to the eventHandler
+  #
   # @private
-  # @param {Object} event - A Slack event. See <https://api.slack.com/events>
+  # @param {SlackRtmEvent} event - One of any of the events listed in <https://api.slack.com/events> with RTM enabled.
   ###
   eventWrapper: (event) ->
     if @eventHandler
-      # fetch full representations of the user, bot, and channel
-      # TODO: implement caching store for this data
-      # NOTE: can we delay these fetches until they are actually necessary? for some types of messages, they
-      # will never be needed
-      # NOTE: all we ever use from channel is the id and iff its a TextMessage the is_im property
-      # NOTE: can we update the user entry in the brain?
-      # NOTE: fetches will likely need to take place later after formatting if any user or channel mentions are found
+      # fetch full representations of the user, bot, channel, and potentially the item_user.
       fetches = {}
       fetches.user = @fetchUser event.user if event.user
       fetches.bot = @fetchBotUser event.bot_id if event.bot_id
       fetches.item_user = @fetchUser event.item_user if event.item_user
-      fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
       
-      Promise.props(fetches).then((fetched) =>
+      # NOTE: there's a performance cost to making this request which may be avoided since the only properties used are
+      # id and is_im. the former is already available, while the latter can be retreived on-demand inside the
+      # SlackTextMessage#buildText() method
+      fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
 
-        event.channel = fetched.channel if fetched.channel
+      # after fetches complete...
+      Promise.props(fetches)
+        .then (fetched) =>
+          # start augmenting the event with the fetched data
+          event.channel = fetched.channel if fetched.channel
+          event.item_user = fetched.item_user if fetched.item_user
 
-        # this property is for reaction_added and reaction_removed events
-        # previous behavior was to ignore this event entirely if the user and item_user were not in the local workspace
-        event.item_user = fetched.item_user if fetched.item_user
-
-        # User always preferred over bot
-        # messages sent from human users, apps with a bot user and using the xoxb token, and
-        # slackbot have the user property
-        if fetched.user
-          event.user = fetched.user
-          return event
-
-        # fetched.bot will exist and be false if bot_id in @botUserIdMap 
-        # but is from custom integration or app without bot user
-        else if fetched.bot
-          # fetched.bot is user representation of bot since it exists in botToUserMap
-          if @botUserIdMap[event.bot_id]
-            event.user = fetched.bot
-            return event
-          # bot_id exists on all messages with subtype bot_message
-          # these messages only have a user property if sent from a bot user (xoxb token). therefore
-          # the above assignment will not happen for all messages from custom integrations or apps without a bot user
-          else if fetched.bot.user_id?
-            return @web.users.info(fetched.bot.user_id).then((res) =>
-              event.user = res.user
-              @botUserIdMap[event.bot_id] = res.user
+          # assigning `event.user` properly depends on how the message was sent
+          if fetched.user
+            # messages sent from human users, apps with a bot user and using the bot token, and slackbot have the user
+            # property: this is preferred if its available
+            event.user = fetched.user
+          
+          # fetched.bot will exist and be false if bot_id in @botUserIdMap 
+          # but is from custom integration or app without bot user
+          else if fetched.bot
+            # fetched.bot is user representation of bot since it exists in botToUserMap
+            if @botUserIdMap[event.bot_id]
+              event.user = fetched.bot
               return event
-            )
-          else
-            # bot doesn't have an associated user id
-            @botUserIdMap[event.bot_id] = false
-            return event
-      )
-      .then((fetchedEvent) =>
-        try @eventHandler(fetchedEvent)
-        catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
-      )
-      .catch((error) =>
-        @robot.logger.error "Incoming RTM message dropped due to error fetching info for a property: #{error.message}."
-      )
+            # bot_id exists on all messages with subtype bot_message
+            # these messages only have a user property if sent from a bot user (xoxb token). therefore
+            # the above assignment will not happen for all messages from custom integrations or apps without a bot user
+            else if fetched.bot.user_id?
+              return @web.users.info(fetched.bot.user_id).then((res) =>
+                event.user = res.user
+                @botUserIdMap[event.bot_id] = res.user
+                return event
+              )
+            else
+              # bot doesn't have an associated user id
+              @botUserIdMap[event.bot_id] = false
+              return event
+     
+        # once the event is fully populated...
+        .then (fetchedEvent) =>
+          # hand the event off to the eventHandler
+          try @eventHandler(fetchedEvent)
+          catch error then @robot.logger.error "An error occurred while processing an RTM event: #{error.message}."
 
+        # handle fetch errors
+        .catch (error) =>
+          @robot.logger.error "Incoming RTM message dropped due to error fetching info for a property: #{error.message}."
+
+###*
+# A handler for all incoming Slack events that are meaningful for the Adapter
+#
+# @callback SlackClient~eventHandler
+# @param {Object} event
+# @param {SlackUserInfo} event.user
+# @param {SlackConversationInfo} event.channel
+###
+
+###*
+# Callback that recieves a list of users
+#
+# @callback SlackClient~usersCallback
+# @param {Error|null} error - an error if one occurred
+# @param {Object} results
+# @param {Array<SlackUserInfo>} results.members
+###
 
 module.exports = SlackClient

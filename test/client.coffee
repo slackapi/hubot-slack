@@ -53,7 +53,7 @@ describe 'onEvent()', ->
       type: 'message',
       bot_id: 'B123'
       channel: @stubs.channel.id,
-      text: 'blah'    
+      text: 'blah'
     })
     # NOTE: the following check does not appear to work as expected
     setTimeout(( =>
@@ -69,7 +69,7 @@ describe 'onEvent()', ->
       type: 'message',
       bot_id: 'B789'
       channel: @stubs.channel.id,
-      text: 'blah'    
+      text: 'blah'
     })
 
     setTimeout(( =>
@@ -87,7 +87,7 @@ describe 'onEvent()', ->
       text: 'blah',
       ts: '1355517523.000005'
     })
-    setTimeout(( =>
+    setImmediate(( =>
       @stubs.robot.logger.logs?.error.length.should.equal 1
       done()
     ), 0);
@@ -112,7 +112,7 @@ describe 'setTopic()', ->
 
   it "Should set the topic in a channel", (done) ->
     @client.setTopic @stubs.channel.id, 'iAmTopic'
-    setTimeout(() =>
+    setImmediate(() =>
       @stubs._topic.should.equal 'iAmTopic'
       done()
     , 0)
@@ -153,6 +153,26 @@ describe 'send()', ->
     @client.send @stubs.user, 'DM Message'
     @stubs._dmmsg.should.equal 'DM Message'
     @stubs._room.should.equal @stubs.user.id
+
+  it 'should not send a message to a user without an ID', ->
+    @client.send { name: "my_crufty_username" }, "don't program with usernames"
+    @stubs._sendCount.should.equal 0
+
+  it 'should log an error when chat.postMessage fails (plain string)', ->
+    @client.send { room: @stubs.channelWillFailChatPost }, "Message"
+    @stubs._sendCount.should.equal 0
+    setImmediate(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
+
+  it 'should log an error when chat.postMessage fails (object)', ->
+    @client.send { room: @stubs.channelWillFailChatPost }, { text: "textMessage" }
+    @stubs._sendCount.should.equal 0
+    setImmediate(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
 
 describe 'loadUsers()', ->
   it 'should make successive calls to users.list', ->
