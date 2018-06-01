@@ -196,8 +196,8 @@ class SlackClient
       fetches = {}
       fetches.user = @fetchUser event.user if event.user
       fetches.bot = @fetchBotUser event.bot_id if event.bot_id
+      fetches.item_user = @fetchUser event.item_user if event.item_user
       fetches.channel = @web.conversations.info(event.channel).then((r) => r.channel) if event.channel
-      fetches.item_user = @web.users.info(event.item_user).then((r) => r.user) if event.item_user
       
       Promise.props(fetches).then((fetched) =>
 
