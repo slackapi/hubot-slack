@@ -75,6 +75,41 @@ describe 'onEvent()', ->
     setTimeout(( =>
       @stubs.robot.logger.logs.should.not.have.property('error')
     ), 0);
+  it 'should update bot id to user representation map', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      @client.botUserIdMap[@stubs.bot.id].id.should.equal @stubs.user.id
+      done()
+    
+    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+    @client.rtm.emit('message', {
+      type: 'message',
+      bot_id: @stubs.bot.id,
+      channel: @stubs.channel.id,
+      text: 'blah'
+    })
+
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+  it 'should use user representation for bot id in map', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      message.user.id.should.equal @stubs.user.id
+      done()
+    
+    @client.botUserIdMap[@stubs.bot.id] = @stubs.user
+    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+    @client.rtm.emit('message', {
+      type: 'message',
+      bot_id: @stubs.bot.id,
+      channel: @stubs.channel.id,
+      text: 'blah'
+    })
+
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
   it 'should log an error when expanded info cannot be fetched using the Web API', (done) ->
     # NOTE: to be certain nothing goes wrong in the rejection handling, the "unhandledRejection" / "rejectionHandled"
     # global events need to be instrumented
@@ -91,7 +126,7 @@ describe 'onEvent()', ->
       @stubs.robot.logger.logs?.error.length.should.equal 1
       done()
     ), 0);
-
+  
 describe 'on() - DEPRECATED', ->
   it 'Should register events on the RTM stream', ->
     event = undefined
@@ -183,3 +218,23 @@ describe 'loadUsers()', ->
     @stubs._listError = true
     @client.loadUsers (err, result) =>
       err.should.be.an.Error
+
+describe 'fetchBotUser()', ->
+  it 'should return user representation from map', ->
+    @client.botUserIdMap[@stubs.bot.id] = @stubs.user
+    result = @client.fetchBotUser @stubs.bot.id
+    result.id.should.equal @stubs.user.id
+
+  it 'should return promise if no user representation exists in map', ->
+    result = @client.fetchBotUser @stubs.bot.id
+    result.should.be.Promise()
+
+describe 'fetchUser()', ->
+  it 'should return user representation from brain', ->
+    @slackbot.updateUserInBrain(@stubs.user)
+    user = @client.fetchUser @stubs.user.id
+    user.id.should.equal @stubs.user.id
+
+  it 'should return promise if no user exists in brain', ->
+    result = @client.fetchUser @stubs.user.id
+    result.should.be.Promise()
