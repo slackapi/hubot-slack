@@ -39,6 +39,10 @@ class SlackClient
     # be removed without breaking this object's API. The property is no longer used internally.
     @format = new SlackFormatter(@rtm.dataStore, @robot)
 
+    # Map to convert bot user IDs (BXXXXXXXX) to user IDs (UXXXXXXXX/WXXXXXXXX) for events from custom 
+    # integrations and apps without a bot user
+    @botUserIdMap = {}
+
     # Event handling
     # NOTE: add channel join and leave events
     @rtm.on "message", @eventWrapper, this
@@ -66,7 +70,7 @@ class SlackClient
     @eventHandler = callback if @eventHandler != callback
 
   ###*
-  # Attach event handlers to the RTM stream
+  # DEPRECATED Attach event handlers to the RTM stream
   # @public
   # @deprecated This method is being removed without a replacement in the next major version.
   ###
@@ -201,6 +205,28 @@ class SlackClient
     @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
 
   ###*
+  # Fetch user info from the brain. If not available, call users.info
+  # @public
+  ###
+  fetchUser: (userId) ->
+    # User exists in the brain - retrieve this representation
+    return @robot.brain.data.users[userId] if @robot.brain.data.users[userId]?
+    
+    # User is not in brain - call users.info
+    # The user will be added to the brain in EventHandler
+    @web.users.info(userId).then((r) => r.user)
+
+  ###*
+  # Fetch bot user info from the bot -> user map
+  # @public
+  ###
+  fetchBotUser: (botId) ->
+    return @botUserIdMap[botId] if @botUserIdMap[botId]?
+
+    # Bot user is not in mapping - call bots.info
+    @web.bots.info(bot: botId).then((r) => r.bot)
+
+  ###*
   # Processes events to fetch additional data or rearrange the shape of an event before handing off to the eventHandler
   #
   # @private
@@ -210,9 +236,9 @@ class SlackClient
     if @eventHandler
       # fetch full representations of the user, bot, and potentially the item_user.
       fetches = {}
-      fetches.user = @web.users.info(event.user).then((r) => r.user) if event.user
-      fetches.bot = @web.bots.info(bot: event.bot_id).then((r) => r.bot) if event.bot_id
-      fetches.item_user = @web.users.info(event.item_user).then((r) => r.user) if event.item_user
+      fetches.user = @fetchUser event.user if event.user
+      fetches.bot = @fetchBotUser event.bot_id if event.bot_id
+      fetches.item_user = @fetchUser event.item_user if event.item_user
 
       # after fetches complete...
       Promise.props(fetches)
@@ -225,13 +251,25 @@ class SlackClient
             # messages sent from human users, apps with a bot user and using the bot token, and slackbot have the user
             # property: this is preferred if its available
             event.user = fetched.user
-          else if fetched.bot?.user_id?
-            # if `event.user` isn't available and the event has a `bot_id`, then there may be a bot user associated
-            # with that `bot_id`
-            return @web.users.info(fetched.bot.user_id)
-              .then (res) =>
+          # fetched.bot will exist and be false if bot_id in @botUserIdMap 
+          # but is from custom integration or app without bot user
+          else if fetched.bot
+            # fetched.bot is user representation of bot since it exists in botToUserMap
+            if @botUserIdMap[event.bot_id]
+              event.user = fetched.bot
+
+            # bot_id exists on all messages with subtype bot_message
+            # these messages only have a user_id property if sent from a bot user (xoxb token). therefore
+            # the above assignment will not happen for all messages from custom integrations or apps without a bot user
+            else if fetched.bot.user_id?
+              return @web.users.info(fetched.bot.user_id).then((res) =>
                 event.user = res.user
+                @botUserIdMap[event.bot_id] = res.user
                 return event
+              )
+            else
+              # bot doesn't have an associated user id
+              @botUserIdMap[event.bot_id] = false
           return event
 
         # once the event is fully populated...

@@ -240,6 +240,7 @@ beforeEach ->
     robot.listeners = []
     robot.listen = Robot.prototype.listen.bind(robot)
     robot.react = Robot.prototype.react.bind(robot)
+    robot.hearReaction = Robot.prototype.hearReaction.bind(robot)
     robot.presenceChange = Robot.prototype.presenceChange.bind(robot)
     robot
   @stubs.callback = do ->
