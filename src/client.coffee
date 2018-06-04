@@ -263,7 +263,7 @@ class SlackClient
               event.user = fetched.bot
 
             # bot_id exists on all messages with subtype bot_message
-            # these messages only have a user property if sent from a bot user (xoxb token). therefore
+            # these messages only have a user_id property if sent from a bot user (xoxb token). therefore
             # the above assignment will not happen for all messages from custom integrations or apps without a bot user
             else if fetched.bot.user_id?
               return @web.users.info(fetched.bot.user_id).then((res) =>
