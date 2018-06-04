@@ -208,8 +208,7 @@ class SlackBot extends Adapter
   # @param {Object} event
   # @param {string} event.type - this specifies the event type
   # @param {SlackUserInfo} [event.user] - the description of the user creating this event as returned by `users.info`
-  # @param {SlackConversationInfo} [event.channel] - the description of the conversation where the event happened as
-  # returned by `conversations.info`
+  # @param {string} [event.channel] - the conversation ID for where this event took place
   # @param {SlackBotInfo} [event.bot] - the description of the bot creating this event as returned by `bots.info`
   ###
   eventHandler: (event) =>
@@ -237,32 +236,34 @@ class SlackBot extends Adapter
 
       # Hubot expects all user objects to have a room property that is used in the envelope for the message after it
       # is received
-      user.room = if channel? then channel.id else ""
+      user.room = if channel? then channel else ""
 
       switch event.subtype
         when "bot_message"
-          @robot.logger.debug "Received text message in channel: #{channel.id}, from: #{user.id} (bot)"
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
+          @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (bot)"
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (error, message) =>
+            return @robot.logger.error "Dropping message due to error #{error.message}" if error
             @receive message
           )
 
         # NOTE: channel_join should be replaced with a member_joined_channel event
         when "channel_join", "group_join"
-          @robot.logger.debug "Received enter message for user: #{user.id}, joining: #{channel.id}"
+          @robot.logger.debug "Received enter message for user: #{user.id}, joining: #{channel}"
           @receive new EnterMessage user
 
         # NOTE: channel_leave should be replaced with a member_left_channel event
         when "channel_leave", "group_leave"
-          @robot.logger.debug "Received leave message for user: #{user.id}, leaving: #{channel.id}"
+          @robot.logger.debug "Received leave message for user: #{user.id}, leaving: #{channel}"
           @receive new LeaveMessage user
 
         when "channel_topic", "group_topic"
-          @robot.logger.debug "Received topic change message in conversation: #{channel.id}, new topic: #{event.topic}, set by: #{user.id}"
+          @robot.logger.debug "Received topic change message in conversation: #{channel}, new topic: #{event.topic}, set by: #{user.id}"
           @receive new TopicMessage user, event.topic, event.ts
 
         when undefined
-          @robot.logger.debug "Received text message in channel: #{channel.id}, from: #{user.id} (human)"
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
+          @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (human)"
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (error, message) =>
+            return @robot.logger.error "Dropping message due to error #{error.message}" if error
             @receive message
           )
 
