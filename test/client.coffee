@@ -183,3 +183,23 @@ describe 'loadUsers()', ->
     @stubs._listError = true
     @client.loadUsers (err, result) =>
       err.should.be.an.Error
+
+describe 'fetchBotUser()', ->
+  it 'should return user representation from map', ->
+    @client.botUserIdMap[@stubs.bot.id] = @stubs.user
+    result = @client.fetchBotUser @stubs.bot.id
+    result.id.should.equal @stubs.user.id
+
+  it 'should return promise if no user representation exists in map', ->
+    result = @client.fetchBotUser @stubs.bot.id
+    result.should.be.Promise()
+
+describe 'fetchUser()', ->
+  it 'should return user representation from brain', ->
+    @slackbot.updateUserInBrain(@stubs.user)
+    user = @client.fetchUser @stubs.user.id
+    user.id.should.equal @stubs.user.id
+
+  it 'should return promise if no user exists in brain', ->
+    result = @client.fetchUser @stubs.user.id
+    result.should.be.Promise()

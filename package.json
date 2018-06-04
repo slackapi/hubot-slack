@@ -39,7 +39,7 @@
     "hubot": "^2.19.0",
     "istanbul": "^0.4.3",
     "mocha": "^3.5.3",
-    "should": "^2.0.2"
+    "should": "^8.0.0"
   },
   "engines": {
     "node": ">= 0.12",

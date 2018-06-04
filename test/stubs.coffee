@@ -174,6 +174,8 @@ beforeEach ->
   @stubs.botsMock =
     info: (event) =>
       botId = event.bot
+      console.log(botId)
+      console.log(@stubs.bot.id)
       if botId == @stubs.bot.id
         return Promise.resolve({ok: true, bot: @stubs.bot})
       else if botId == @stubs.undefined_user_bot.id
