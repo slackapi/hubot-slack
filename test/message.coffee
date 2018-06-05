@@ -91,6 +91,16 @@ describe 'buildText()', ->
       should.equal (message.mentions[1] instanceof SlackMention), true
       should.equal (message.mentions[2] instanceof SlackMention), true
 
+  it 'Should populate mentions with simple SlackMention object if user in brain', ->
+    @slackbot.updateUserInBrain(@stubs.user)
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo <@U123> bar'
+    message.buildText @client, () ->
+      message.mentions.length.should.equal 1
+      message.mentions[0].type.should.equal 'user'
+      message.mentions[0].id.should.equal 'U123'
+      should.equal (message.mentions[0] instanceof SlackMention), true
+
   it 'Should add conversation to cache', ->
     message = @slacktextmessage
     client = @client
@@ -103,14 +113,14 @@ describe 'buildText()', ->
     message = @slacktextmessage
     client = @client
     client.channelData[@stubs.channel.id] = {
-      conversation: {id: @stubs.channel.id, name: 'baz'},
+      channel: {id: @stubs.channel.id, name: 'baz'},
       updated: Date.now()
     }
     message.rawMessage.text = 'foo bar'
     message.buildText @client, () ->
       message.text.should.equal('foo bar')
       client.channelData.should.have.key('C123')
-      client.channelData['C123'].conversation.name.should.equal 'baz'
+      client.channelData['C123'].channel.name.should.equal 'baz'
 
 describe 'replaceLinks()', ->
 
@@ -176,20 +186,28 @@ describe 'replaceLinks()', ->
 
 describe 'fetchConversation()', ->
   it 'Should remove expired conversation info', ->
-    @client.channelData[@stubs.channel.id] = {
-      conversation: @stubs.channel,
+    channel = @stubs.channel
+    client = @client
+    client.channelData[channel.id] = {
+      channel: channel,
       updated: @stubs.expired_timestamp
     }
-    conversation = @slacktextmessage.fetchConversation @client, @stubs.channel.id
-    conversation.should.be.Promise()
-    @client.channelData.should.be.an.Object().and.be.empty();
-
+    conversation = @slacktextmessage.fetchConversation client, channel.id
+    .then((res) ->
+      res.channel.id.should.equal channel.id
+      res.channel.name.should.equal channel.name
+      client.channelData.should.be.an.Object().and.be.empty()
+    )
+    
   it 'Should return conversation info if not expired', ->
-    @client.channelData[@stubs.channel.id] = {
-      conversation: @stubs.channel,
+    channel = @stubs.channel
+    @client.channelData[channel.id] = {
+      channel: channel,
       updated: Date.now()
     }
-    conversation = @slacktextmessage.fetchConversation @client, @stubs.channel.id
-    conversation.id.should.equal @stubs.channel.id
-    conversation.name.should.equal @stubs.channel.name
+    conversation = @slacktextmessage.fetchConversation @client, channel.id
+    .then((conversation) ->
+      conversation.id.should.equal channel.id
+      conversation.name.should.equal channel.name
+    )
 

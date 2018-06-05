@@ -112,7 +112,7 @@ class SlackTextMessage extends TextMessage
           conversationInfo = conversationInfo.channel
           # Add channel to map
           client.channelData[@_channel_id] = {
-            conversation: conversationInfo,
+            channel: conversationInfo,
             updated: Date.now()
           }
         # special handling for message text when inside a DM conversation
@@ -194,7 +194,7 @@ class SlackTextMessage extends TextMessage
     expiration = Date.now() - (5 * 60 * 1000)
 
     # Check whether conversation is held in client's channelData map and whether information is expired
-    return client.channelData[conversationId].conversation if client.channelData[conversationId]?.conversation? and 
+    return Promise.resolve(client.channelData[conversationId].channel) if client.channelData[conversationId]?.channel? and 
       expiration < client.channelData[conversationId]?.updated
 
     # Delete data from map if it's expired
@@ -212,6 +212,10 @@ class SlackTextMessage extends TextMessage
   # @returns {Promise<string>} - a string that can be placed into the text for this mention
   ###
   replaceUser: (client, id, mentions) ->
+    if client.robot.brain.data.users[id]?.name?
+      user = client.robot.brain.data.users[id]
+      mentions.push(new SlackMention(user.id, "user", user))
+      return "@#{user.name}"
     client.web.users.info(id)
       .then (res) =>
         if res?.user?
@@ -233,7 +237,7 @@ class SlackTextMessage extends TextMessage
   # @returns {Promise<string>} - a string that can be placed into the text for this mention
   ###
   replaceConversation: (client, id, mentions) ->
-    client.web.conversations.info(id)
+    @fetchConversation(client, id)
       .then (res) =>
         if res?.channel?
           conversation = res.channel
