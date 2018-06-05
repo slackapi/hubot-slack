@@ -91,6 +91,26 @@ describe 'buildText()', ->
       should.equal (message.mentions[1] instanceof SlackMention), true
       should.equal (message.mentions[2] instanceof SlackMention), true
 
+  it 'Should add conversation to cache', ->
+    message = @slacktextmessage
+    client = @client
+    message.rawMessage.text = 'foo bar'
+    message.buildText @client, () ->
+      message.text.should.equal('foo bar')
+      client.channelData.should.have.key('C123')
+
+  it 'Should not modify conversation if it is not expired', ->
+    message = @slacktextmessage
+    client = @client
+    client.channelData[@stubs.channel.id] = {
+      conversation: {id: @stubs.channel.id, name: 'baz'},
+      updated: Date.now()
+    }
+    message.rawMessage.text = 'foo bar'
+    message.buildText @client, () ->
+      message.text.should.equal('foo bar')
+      client.channelData.should.have.key('C123')
+      client.channelData['C123'].conversation.name.should.equal 'baz'
 
 describe 'replaceLinks()', ->
 
@@ -153,3 +173,23 @@ describe 'replaceLinks()', ->
   it 'Should leave <!foobar> links as-is when no label is provided', ->
     @slacktextmessage.replaceLinks @client, 'foo <!foobar> bar'
     .then((text) -> text.should.equal 'foo <!foobar> bar')
+
+describe 'fetchConversation()', ->
+  it 'Should remove expired conversation info', ->
+    @client.channelData[@stubs.channel.id] = {
+      conversation: @stubs.channel,
+      updated: @stubs.expired_timestamp
+    }
+    conversation = @slacktextmessage.fetchConversation @client, @stubs.channel.id
+    conversation.should.be.Promise()
+    @client.channelData.should.be.an.Object().and.be.empty();
+
+  it 'Should return conversation info if not expired', ->
+    @client.channelData[@stubs.channel.id] = {
+      conversation: @stubs.channel,
+      updated: Date.now()
+    }
+    conversation = @slacktextmessage.fetchConversation @client, @stubs.channel.id
+    conversation.id.should.equal @stubs.channel.id
+    conversation.name.should.equal @stubs.channel.name
+

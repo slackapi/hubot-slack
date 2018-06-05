@@ -108,13 +108,15 @@ class SlackTextMessage extends TextMessage
 
         # Add conversation info to conversation map
         if not client.channelData[@_channel_id]? and conversationInfo.channel?
+          # Use only the channel object
+          conversationInfo = conversationInfo.channel
+          # Add channel to map
           client.channelData[@_channel_id] = {
-            conversation: conversationInfo.channel,
+            conversation: conversationInfo,
             updated: Date.now()
           }
-
         # special handling for message text when inside a DM conversation
-        if conversationInfo.channel.is_im
+        if conversationInfo.is_im
           startOfText = if text.indexOf("@") == 0 then 1 else 0
           robotIsNamed = text.indexOf(@_robot_name) == startOfText || text.indexOf(@_robot_alias) == startOfText
           # Assume it was addressed to us even if it wasn't
@@ -189,10 +191,11 @@ class SlackTextMessage extends TextMessage
   ###
   fetchConversation: (client, conversationId) ->
     # Current date minus 5 minutes (time of expiration for conversation info)
-    expiration = Date.now() - (60000*5)
+    expiration = Date.now() - (5 * 60 * 1000)
 
     # Check whether conversation is held in client's channelData map and whether information is expired
-    return client.channelData[conversationId].conversation if client.channelData[conversationId]?.conversation? and expiration < client.channelData[conversationId]?.updated
+    return client.channelData[conversationId].conversation if client.channelData[conversationId]?.conversation? and 
+      expiration < client.channelData[conversationId]?.updated
 
     # Delete data from map if it's expired
     delete client.channelData[conversationId] if client.channelData[conversationId]?

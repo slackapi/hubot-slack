@@ -106,6 +106,7 @@ beforeEach ->
       email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
+  @stubs.expired_timestamp = 1528238205453
 
   # Slack client
   @stubs.client =
@@ -262,7 +263,7 @@ beforeEach ->
 
   @formatter = new SlackFormatter @stubs.client.dataStore, @stubs.robot
 
-  @slacktextmessage = new SlackTextMessage @stubs.self, undefined, undefined, {text: undefined}, 'C123', undefined, @slackbot.client
+  @slacktextmessage = new SlackTextMessage @stubs.self, undefined, undefined, {text: undefined}, @stubs.channel.id, undefined, @slackbot.client
 
   @client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
   _.merge @client.rtm, @stubs.rtm
