@@ -122,6 +122,14 @@ describe 'buildText()', ->
       client.channelData.should.have.key('C123')
       client.channelData['C123'].channel.name.should.equal 'baz'
 
+  it 'Should handle conversation errors', ->
+    message = @slacktextmessage_invalid_conversation
+    client = @client
+    message.rawMessage.text = 'foo bar'
+    message.buildText @client, () ->
+      client.robot.logger.logs?.error.length.should.equal 1
+
+
 describe 'replaceLinks()', ->
 
   it 'Should change <@U123> links to @name', ->
@@ -210,4 +218,3 @@ describe 'fetchConversation()', ->
       conversation.id.should.equal channel.id
       conversation.name.should.equal channel.name
     )
-
