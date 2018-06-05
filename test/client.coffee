@@ -28,7 +28,7 @@ describe 'onEvent()', ->
     @client.onEvent (message) =>
       message.should.be.ok
       message.user.real_name.should.equal @stubs.user.real_name
-      message.channel.name.should.equal @stubs.channel.name
+      message.channel.should.equal @stubs.channel.id
       done()
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
@@ -46,7 +46,7 @@ describe 'onEvent()', ->
     @client.onEvent (message) =>
       message.should.be.ok
       message.user.id.should.equal @stubs.user.id
-      message.channel.name.should.equal @stubs.channel.name
+      message.channel.should.equal @stubs.channel.id
       done()
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
@@ -63,7 +63,7 @@ describe 'onEvent()', ->
   it 'should handle undefined bot users', (done) ->
     @client.onEvent (message) =>
       message.should.be.ok
-      message.channel.name.should.equal @stubs.channel.name
+      message.channel.should.equal @stubs.channel.id
       done()
     @client.rtm.emit('message', {
       type: 'message',

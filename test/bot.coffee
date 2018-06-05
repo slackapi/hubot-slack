@@ -135,7 +135,7 @@ describe 'Handling incoming messages', ->
     @stubs.receiveMock.onReceived = (msg) ->
       msg.text.should.equal 'foo'
       done()
-    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel }
+    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel.id }
     return
 
   it 'Should prepend our name to a name-lacking message addressed to us in a DM', ->
@@ -143,7 +143,7 @@ describe 'Handling incoming messages', ->
     @stubs.receiveMock.onReceived = (msg) ->
       msg.text.should.equal "#{bot_name} foo"
       done()
-    @slackbot.eventHandler {type: 'message', text: "foo", user: @stubs.user, channel: @stubs.DM}
+    @slackbot.eventHandler {type: 'message', text: "foo", user: @stubs.user, channel: @stubs.DM.id}
     return
 
   it 'Should NOT prepend our name to a name-containing message addressed to us in a DM', ->
@@ -151,7 +151,7 @@ describe 'Handling incoming messages', ->
     @stubs.receiveMock.onReceived = (msg) ->
       msg.text.should.equal "#{bot_name} foo"
       done()
-    @slackbot.eventHandler {type: 'message', text: "#{bot_name} foo", user: @stubs.user, channel: @stubs.DM}
+    @slackbot.eventHandler {type: 'message', text: "#{bot_name} foo", user: @stubs.user, channel: @stubs.DM.id}
     return
 
   it 'Should return a message object with raw text and message', (done) ->
@@ -160,7 +160,7 @@ describe 'Handling incoming messages', ->
     messageData = {
       type: 'message'
       user: @stubs.user,
-      channel: @stubs.channel,
+      channel: @stubs.channel.id,
       text: 'foo <http://www.example.com> bar',
     }
     @stubs.receiveMock.onReceived = (msg) ->
@@ -236,7 +236,7 @@ describe 'Handling incoming messages', ->
     @stubs.receiveMock.onReceived = (msg) ->
       should.equal (msg instanceof SlackTextMessage), true
       done()
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.user, channel: @stubs.channel, text: 'Pushing is the answer', returnRawText: true }
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: @stubs.user, channel: @stubs.channel.id, text: 'Pushing is the answer', returnRawText: true }
     return
 
   it 'Should handle single user presence_change events as envisioned', ->
@@ -272,7 +272,7 @@ describe 'Handling incoming messages', ->
     @stubs.receiveMock.onReceived = (msg) ->
       should.equal (msg instanceof SlackTextMessage), true
       done()
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: undefined, channel: @stubs.channel, text: 'Foo'}
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: undefined, channel: @stubs.channel.id, text: 'Foo'}
     return
 
   it 'Should handle reaction events from users who are in different workspace in shared channel', ->

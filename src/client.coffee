@@ -3,8 +3,6 @@ Promise                = require "bluebird"
 {RtmClient, WebClient} = require "@slack/client"
 SlackFormatter         = require "./formatter"
 
-# TODO: make this client brain-aware
-
 class SlackClient
   ###*
   # Number used for limit when making paginated requests to Slack Web API list methods
@@ -39,9 +37,12 @@ class SlackClient
     # be removed without breaking this object's API. The property is no longer used internally.
     @format = new SlackFormatter(@rtm.dataStore, @robot)
 
-    # Map to convert bot user IDs (BXXXXXXXX) to user IDs (UXXXXXXXX/WXXXXXXXX) for events from custom 
+    # Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom 
     # integrations and apps without a bot user
     @botUserIdMap = {}
+
+    # Map to convert conversation IDs to conversation representations
+    @channelData = {}
 
     # Event handling
     # NOTE: add channel join and leave events

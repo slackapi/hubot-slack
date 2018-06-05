@@ -96,8 +96,8 @@ class SlackTextMessage extends TextMessage
 
     # Replace links in text async to fetch user and channel info (if present)
     mentionFormatting = @replaceLinks(client, text)
-    # TODO: make this go through a conversations cache
-    fetchingConversationInfo = client.web.conversations.info(@_channel_id)
+    # Fetch conversation info
+    fetchingConversationInfo = @fetchConversation(client, @_channel_id)
     Promise.all([mentionFormatting, fetchingConversationInfo])
       .then (results) =>
         [ replacedText, conversationInfo ] = results
@@ -105,6 +105,13 @@ class SlackTextMessage extends TextMessage
         text = text.replace /&lt;/g, "<"
         text = text.replace /&gt;/g, ">"
         text = text.replace /&amp;/g, "&"
+
+        # Add conversation info to conversation map
+        if not client.channelData[@_channel_id]? and conversationInfo.channel?
+          client.channelData[@_channel_id] = {
+            conversation: conversationInfo.channel,
+            updated: Date.now()
+          }
 
         # special handling for message text when inside a DM conversation
         if conversationInfo.channel.is_im
@@ -175,6 +182,22 @@ class SlackTextMessage extends TextMessage
     return Promise.all(parts)
       .then (substrings) ->
         return substrings.join("")
+
+  ###*
+  # Fetch conversation information from conversation map
+  # @private
+  ###
+  fetchConversation: (client, conversationId) ->
+    # Current date minus 5 minutes (time of expiration for conversation info)
+    expiration = Date.now() - (60000*5)
+
+    # Check whether conversation is held in client's channelData map and whether information is expired
+    return client.channelData[conversationId].conversation if client.channelData[conversationId]?.conversation? and expiration < client.channelData[conversationId]?.updated
+
+    # Delete data from map if it's expired
+    delete client.channelData[conversationId] if client.channelData[conversationId]?
+    # Return conversations.info promise
+    client.web.conversations.info(conversationId)
 
   ###*
   # Creates a mention from a user ID
