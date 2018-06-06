@@ -50,6 +50,7 @@ class SlackClient
     @rtm.on "reaction_added", @eventWrapper, this
     @rtm.on "reaction_removed", @eventWrapper, this
     @rtm.on "presence_change", @eventWrapper, this
+    @rtm.on "user_change", @updateUserInBrain
     @eventHandler = undefined
 
   ###*
@@ -211,21 +212,84 @@ class SlackClient
   ###
   fetchUser: (userId) ->
     # User exists in the brain - retrieve this representation
-    return @robot.brain.data.users[userId] if @robot.brain.data.users[userId]?
+    return Promise.resolve(@robot.brain.data.users[userId]) if @robot.brain.data.users[userId]?
     
     # User is not in brain - call users.info
     # The user will be added to the brain in EventHandler
-    @web.users.info(userId).then((r) => r.user)
+    @web.users.info(userId).then((r) => @updateUserInBrain(r.user))
 
   ###*
   # Fetch bot user info from the bot -> user map
   # @public
   ###
   fetchBotUser: (botId) ->
-    return @botUserIdMap[botId] if @botUserIdMap[botId]?
+    return Promise.resolve(@botUserIdMap[botId]) if @botUserIdMap[botId]?
 
     # Bot user is not in mapping - call bots.info
     @web.bots.info(bot: botId).then((r) => r.bot)
+
+  ###*
+  # Fetch conversation info from conversation map. If not available, call conversations.info
+  # @public
+  ###
+  fetchConversation: (conversationId) ->
+    # Current date minus 5 minutes (time of expiration for conversation info)
+    expiration = Date.now() - (5 * 60 * 1000)
+
+    # Check whether conversation is held in client's channelData map and whether information is expired
+    return Promise.resolve(@channelData[conversationId].channel) if @channelData[conversationId]?.channel? and 
+      expiration < @channelData[conversationId]?.updated
+
+    # Delete data from map if it's expired
+    delete @channelData[conversationId] if @channelData[conversationId]?
+
+    # Return conversations.info promise
+    @web.conversations.info(conversationId).then((r) => 
+      if r.channel?
+        @channelData[conversationId] = {
+          channel: r.channel,
+          updated: Date.now()
+        }
+      r.channel
+    )
+
+  ###*
+  # Update user record in the Hubot Brain. This may be called as a handler for `user_change` events or to update a
+  # a single user with its latest SlackUserInfo object.
+  #
+  # @private
+  # @param {SlackUserInfo|SlackUserChangeEvent} event_or_user - an object containing information about a Slack user
+  # that should be updated in the brain
+  ###
+  updateUserInBrain: (event_or_user) ->
+    # if this method was invoked as a `user_change` event handler, unwrap the user from the event
+    user = if event_or_user.type == 'user_change' then event_or_user.user else event_or_user
+
+    # create a full representation of the user in the shape we persist for Hubot brain based on the parameter
+    # all top-level properties of the user are meant to be shared across adapters
+    newUser =
+      id: user.id
+      name: user.name
+      real_name: user.real_name
+      slack: {}
+    # don't create keys for properties that have no value, because the empty value will become authoritative
+    newUser.email_address = user.profile.email if user.profile?.email?
+    # all "non-standard" keys of a user are namespaced inside the slack property, so they don't interfere with other
+    # adapters (in case this hubot switched between adapters)
+    for key, value of user
+      newUser.slack[key] = value
+
+    # merge any existing representation of this user already stored in the brain into the new representation
+    if user.id of @robot.brain.data.users
+      for key, value of @robot.brain.data.users[user.id]
+        # the merge strategy is to only copy over data for keys that do not exist in the new representation
+        # this means the entire `slack` property is treated as one value
+        unless key of newUser
+          newUser[key] = value
+
+    # remove the existing representation and write the new representation to the brain
+    delete @robot.brain.data.users[user.id]
+    @robot.brain.userForId user.id, newUser
 
   ###*
   # Processes events to fetch additional data or rearrange the shape of an event before handing off to the eventHandler

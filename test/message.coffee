@@ -92,7 +92,7 @@ describe 'buildText()', ->
       should.equal (message.mentions[2] instanceof SlackMention), true
 
   it 'Should populate mentions with simple SlackMention object if user in brain', ->
-    @slackbot.updateUserInBrain(@stubs.user)
+    @client.updateUserInBrain(@stubs.user)
     message = @slacktextmessage
     message.rawMessage.text = 'foo <@U123> bar'
     message.buildText @client, () ->
@@ -191,30 +191,3 @@ describe 'replaceLinks()', ->
   it 'Should leave <!foobar> links as-is when no label is provided', ->
     @slacktextmessage.replaceLinks @client, 'foo <!foobar> bar'
     .then((text) -> text.should.equal 'foo <!foobar> bar')
-
-describe 'fetchConversation()', ->
-  it 'Should remove expired conversation info', ->
-    channel = @stubs.channel
-    client = @client
-    client.channelData[channel.id] = {
-      channel: channel,
-      updated: @stubs.expired_timestamp
-    }
-    conversation = @slacktextmessage.fetchConversation client, channel.id
-    .then((res) ->
-      res.channel.id.should.equal channel.id
-      res.channel.name.should.equal channel.name
-      client.channelData.should.be.an.Object().and.be.empty()
-    )
-    
-  it 'Should return conversation info if not expired', ->
-    channel = @stubs.channel
-    @client.channelData[channel.id] = {
-      channel: channel,
-      updated: Date.now()
-    }
-    conversation = @slacktextmessage.fetchConversation @client, channel.id
-    .then((conversation) ->
-      conversation.id.should.equal channel.id
-      conversation.name.should.equal channel.name
-    )

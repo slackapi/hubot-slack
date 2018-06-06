@@ -226,7 +226,6 @@ beforeEach ->
       log: (type, message) ->
         @logs[type] ?= []
         @logs[type].push(message)
-        # console.log "#{type} #{message}"
       info: (message) ->
         @log('info', message)
       debug: (message) ->
