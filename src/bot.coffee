@@ -11,6 +11,7 @@ class SlackBot extends Adapter
   # @param {Robot} robot - the Hubot robot
   # @param {Object} options - configuration options for the adapter
   # @param {string} options.token - authentication token for Slack APIs
+  # @param {Boolean} options.disableUserSync - disables syncing all user data on start
   # @param {Object} options.rtm - RTM configuration options for SlackClient
   # @param {Object} options.rtmStart - options for `rtm.start` Web API method
   ###
@@ -40,9 +41,16 @@ class SlackBot extends Adapter
     @client.rtm.on "authenticated", @authenticated
     @client.onEvent @eventHandler
 
-    # Synchronize workspace users to brain
-    @client.loadUsers @usersLoaded
-
+    # TODO: set this to false as soon as RTM connection closes (even if reconnect will happen later)
+    # TODO: check this value when connection finishes (even if its a reconnection)
+    # TODO: build a map of enterprise users and local users
+    @needsUserListSync = true
+    unless @options.disableUserSync
+      # Synchronize workspace users to brain
+      @client.loadUsers @usersLoaded
+    else
+      @isLoaded = true
+    
     # Brain will emit 'loaded' the first time it connects to its storage and then again each time a key is set
     @robot.brain.on "loaded", () =>
       if not @brainIsLoaded
@@ -56,7 +64,7 @@ class SlackBot extends Adapter
         # connection is complete?
         # NOTE: this seems wasteful. when there is brain storage, it will end up loading all the users twice.
         @client.loadUsers @usersLoaded
-
+        @isLoaded = true
         # NOTE: will this only subscribe a partial user list because loadUsers has not yet completed? it will at least
         # subscribe to the users that were stored in the brain from the last run.
         @presenceSub()

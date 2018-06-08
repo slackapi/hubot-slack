@@ -106,6 +106,7 @@ beforeEach ->
       email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
+    id: 'T123'
   @stubs.expired_timestamp = 1528238205453
 
   # Slack client
@@ -256,6 +257,7 @@ beforeEach ->
   _.merge @slackbot.client, @stubs.client
   _.merge @slackbot.client.rtm, @stubs.rtm
   _.merge @slackbot.client.web.chat, @stubs.chatMock
+  _.merge @slackbot.client.web.users, @stubs.usersMock
   _.merge @slackbot.client.web.conversations, @stubs.conversationsMock
   _.merge @slackbot, @stubs.receiveMock
   @slackbot.self = @stubs.self

@@ -28,6 +28,28 @@ describe 'Connect', ->
     @slackbot.run()
     @stubs._connected.should.be.true
 
+describe 'Authenticate', ->
+  it 'Should authenticate successfully', ->
+    {logger} = @slackbot.robot
+    start = self: {
+      id: @stubs.self.id
+      name: @stubs.self.name
+    },
+    team: {
+      id: @stubs.team.id,
+      name: @stubs.team.name
+    },
+    users: [
+      @stubs.self,
+      @stubs.user
+    ]
+
+    @slackbot.authenticated start
+    @slackbot.self.id.should.equal @stubs.self.id
+    @slackbot.robot.name.should.equal @stubs.self.name
+    logger.logs["info"].length.should.be.above(0)
+    logger.logs["info"][logger.logs["info"].length-1].should.equal "Logged in as @#{@stubs.self.name} in workspace #{@stubs.team.name}"
+
 describe 'Logger', ->
   it 'It should log missing token error', ->
     {logger} = @slackbot.robot
@@ -43,6 +65,27 @@ describe 'Logger', ->
     logger.logs["error"].length.should.be.above(0)
     logger.logs["error"][logger.logs["error"].length-1].should.equal 'Invalid token provided, please follow the upgrade instructions'
 
+describe 'Disable Sync', ->
+  it 'Should sync users by default', ->
+    @slackbot.run()
+    @slackbot.robot.brain.data.users.should.have.keys('1','2','3','4')
+
+  it 'Should not sync users when disabled', ->
+    @slackbot.options.disableUserSync = true
+    @slackbot.run()
+    @slackbot.robot.brain.data.users.should.be.empty()
+  
+  it 'Should still sync interacting users when disabled', (done) ->
+    slackbot = @slackbot
+    @stubs.receiveMock.onReceived = (msg) ->
+      msg.text.should.equal 'foo'
+      slackbot.robot.brain.data.users.should.have.keys('U123')
+      done()
+    @slackbot.options.disableUserSync = true
+    @slackbot.run()
+    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel.id }
+    return
+    
 describe 'Send Messages', ->
 
   it 'Should send a message', ->
