@@ -28,19 +28,22 @@
     "bluebird": "^3.5.1",
     "lodash": "^3.10.1"
   },
+  "peerDependencies": {
+    "hubot": "^2.0.0"
+  },
   "devDependencies": {
     "chai": "^3.5.0",
     "coffee-coverage": "^2.0.0",
     "coffeescript": "^1.12.7",
     "codecov": "^2.3.1",
-    "hubot": "~2.19",
+    "hubot": "^2.19.0",
     "istanbul": "^0.4.3",
     "mocha": "^3.5.3",
-    "should": "~2.0.2"
+    "should": "^8.0.0"
   },
   "engines": {
-    "node": ">= 0.10.x",
-    "npm": ">= 1.4.0"
+    "node": ">= 0.12",
+    "npm": ">= 2.0.0"
   },
   "contributors": [
     {
@@ -75,6 +78,10 @@
     {
       "email": "aoberoi@gmail.com",
       "name": "Ankur Oberoi"
+    },
+    {
+      "email": "sdewael@slack-corp.com",
+      "name": "Shane DeWael"
     }
   ]
 }

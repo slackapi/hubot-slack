@@ -91,6 +91,44 @@ describe 'buildText()', ->
       should.equal (message.mentions[1] instanceof SlackMention), true
       should.equal (message.mentions[2] instanceof SlackMention), true
 
+  it 'Should populate mentions with simple SlackMention object if user in brain', ->
+    @client.updateUserInBrain(@stubs.user)
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo <@U123> bar'
+    message.buildText @client, () ->
+      message.mentions.length.should.equal 1
+      message.mentions[0].type.should.equal 'user'
+      message.mentions[0].id.should.equal 'U123'
+      should.equal (message.mentions[0] instanceof SlackMention), true
+
+  it 'Should add conversation to cache', ->
+    message = @slacktextmessage
+    client = @client
+    message.rawMessage.text = 'foo bar'
+    message.buildText @client, () ->
+      message.text.should.equal('foo bar')
+      client.channelData.should.have.key('C123')
+
+  it 'Should not modify conversation if it is not expired', ->
+    message = @slacktextmessage
+    client = @client
+    client.channelData[@stubs.channel.id] = {
+      channel: {id: @stubs.channel.id, name: 'baz'},
+      updated: Date.now()
+    }
+    message.rawMessage.text = 'foo bar'
+    message.buildText @client, () ->
+      message.text.should.equal('foo bar')
+      client.channelData.should.have.key('C123')
+      client.channelData['C123'].channel.name.should.equal 'baz'
+
+  it 'Should handle conversation errors', ->
+    message = @slacktextmessage_invalid_conversation
+    client = @client
+    message.rawMessage.text = 'foo bar'
+    message.buildText @client, () ->
+      client.robot.logger.logs?.error.length.should.equal 1
+
 
 describe 'replaceLinks()', ->
 

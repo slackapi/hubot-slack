@@ -1,5 +1,6 @@
 {RtmClient, WebClient, MemoryDataStore} = require '@slack/client'
 SlackFormatter = require '../src/formatter'
+SlackClient = require '../src/client'
 should = require 'should'
 _ = require 'lodash'
 
@@ -28,7 +29,7 @@ describe 'onEvent()', ->
     @client.onEvent (message) =>
       message.should.be.ok
       message.user.real_name.should.equal @stubs.user.real_name
-      message.channel.name.should.equal @stubs.channel.name
+      message.channel.should.equal @stubs.channel.id
       done()
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
@@ -46,14 +47,14 @@ describe 'onEvent()', ->
     @client.onEvent (message) =>
       message.should.be.ok
       message.user.id.should.equal @stubs.user.id
-      message.channel.name.should.equal @stubs.channel.name
+      message.channel.should.equal @stubs.channel.id
       done()
     # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
     @client.rtm.emit('message', {
       type: 'message',
       bot_id: 'B123'
       channel: @stubs.channel.id,
-      text: 'blah'    
+      text: 'blah'
     })
     # NOTE: the following check does not appear to work as expected
     setTimeout(( =>
@@ -63,13 +64,48 @@ describe 'onEvent()', ->
   it 'should handle undefined bot users', (done) ->
     @client.onEvent (message) =>
       message.should.be.ok
-      message.channel.name.should.equal @stubs.channel.name
+      message.channel.should.equal @stubs.channel.id
       done()
     @client.rtm.emit('message', {
       type: 'message',
       bot_id: 'B789'
       channel: @stubs.channel.id,
-      text: 'blah'    
+      text: 'blah'
+    })
+
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+  it 'should update bot id to user representation map', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      @client.botUserIdMap[@stubs.bot.id].id.should.equal @stubs.user.id
+      done()
+    
+    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+    @client.rtm.emit('message', {
+      type: 'message',
+      bot_id: @stubs.bot.id,
+      channel: @stubs.channel.id,
+      text: 'blah'
+    })
+
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+  it 'should use user representation for bot id in map', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      message.user.id.should.equal @stubs.user.id
+      done()
+    
+    @client.botUserIdMap[@stubs.bot.id] = @stubs.user
+    # the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
+    @client.rtm.emit('message', {
+      type: 'message',
+      bot_id: @stubs.bot.id,
+      channel: @stubs.channel.id,
+      text: 'blah'
     })
 
     setTimeout(( =>
@@ -87,11 +123,11 @@ describe 'onEvent()', ->
       text: 'blah',
       ts: '1355517523.000005'
     })
-    setTimeout(( =>
+    setImmediate(( =>
       @stubs.robot.logger.logs?.error.length.should.equal 1
       done()
     ), 0);
-
+  
 describe 'on() - DEPRECATED', ->
   it 'Should register events on the RTM stream', ->
     event = undefined
@@ -112,7 +148,7 @@ describe 'setTopic()', ->
 
   it "Should set the topic in a channel", (done) ->
     @client.setTopic @stubs.channel.id, 'iAmTopic'
-    setTimeout(() =>
+    setImmediate(() =>
       @stubs._topic.should.equal 'iAmTopic'
       done()
     , 0)
@@ -154,6 +190,26 @@ describe 'send()', ->
     @stubs._dmmsg.should.equal 'DM Message'
     @stubs._room.should.equal @stubs.user.id
 
+  it 'should not send a message to a user without an ID', ->
+    @client.send { name: "my_crufty_username" }, "don't program with usernames"
+    @stubs._sendCount.should.equal 0
+
+  it 'should log an error when chat.postMessage fails (plain string)', ->
+    @client.send { room: @stubs.channelWillFailChatPost }, "Message"
+    @stubs._sendCount.should.equal 0
+    setImmediate(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
+
+  it 'should log an error when chat.postMessage fails (object)', ->
+    @client.send { room: @stubs.channelWillFailChatPost }, { text: "textMessage" }
+    @stubs._sendCount.should.equal 0
+    setImmediate(( =>
+      @stubs.robot.logger.logs?.error.length.should.equal 1
+      done()
+    ), 0);
+
 describe 'loadUsers()', ->
   it 'should make successive calls to users.list', ->
     @client.loadUsers (err, result) =>
@@ -163,3 +219,119 @@ describe 'loadUsers()', ->
     @stubs._listError = true
     @client.loadUsers (err, result) =>
       err.should.be.an.Error
+
+describe 'Users data', ->
+  it 'Should add a user data', ->
+    @client.updateUserInBrain(@stubs.user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+  it 'Should add a user data (user with no profile)', ->
+    @client.updateUserInBrain(@stubs.usernoprofile)
+
+    user = @slackbot.robot.brain.data.users[@stubs.usernoprofile.id]
+    should.equal user.id, @stubs.usernoprofile.id
+    should.equal user.name, @stubs.usernoprofile.name
+    should.equal user.real_name, @stubs.usernoprofile.real_name
+    should.equal user.slack.misc, @stubs.usernoprofile.misc
+    (user).should.not.have.ownProperty('email_address')
+
+  it 'Should add a user data (user with no email in profile)', ->
+    @client.updateUserInBrain(@stubs.usernoemail)
+
+    user = @slackbot.robot.brain.data.users[@stubs.usernoemail.id]
+    should.equal user.id, @stubs.usernoemail.id
+    should.equal user.name, @stubs.usernoemail.name
+    should.equal user.real_name, @stubs.usernoemail.real_name
+    should.equal user.slack.misc, @stubs.usernoemail.misc
+    (user).should.not.have.ownProperty('email_address')
+
+  it 'Should modify a user data', ->
+    @client.updateUserInBrain(@stubs.user)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, @stubs.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, @stubs.user.misc
+
+    client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
+
+    user_change_event =
+      type: 'user_change'
+      user:
+        id: @stubs.user.id
+        name: 'modified_name'
+        real_name: @stubs.user.real_name
+        profile:
+          email: @stubs.user.profile.email
+
+    @client.updateUserInBrain(user_change_event)
+
+    user = @slackbot.robot.brain.data.users[@stubs.user.id]
+    should.equal user.id, @stubs.user.id
+    should.equal user.name, user_change_event.user.name
+    should.equal user.real_name, @stubs.user.real_name
+    should.equal user.email_address, @stubs.user.profile.email
+    should.equal user.slack.misc, undefined
+    should.equal user.slack.client, undefined
+
+describe 'fetchBotUser()', ->
+  it 'should return user representation from map', ->
+    user = @stubs.user
+    @client.botUserIdMap[@stubs.bot.id] = user
+    @client.fetchBotUser @stubs.bot.id
+    .then((res) ->
+      res.id.should.equal user.id
+    )
+
+  it 'should return promise if no user representation exists in map', ->
+    result = @client.fetchBotUser @stubs.bot.id
+    result.should.be.Promise()
+
+describe 'fetchUser()', ->
+  it 'should return user representation from brain', ->
+    user = @stubs.user
+    @client.updateUserInBrain(user)
+    @client.fetchUser user.id
+    .then((res) ->
+      res.id.should.equal user.id
+    )
+
+  it 'should return promise if no user exists in brain', ->
+    result = @client.fetchUser @stubs.user.id
+    result.should.be.Promise()
+
+describe 'fetchConversation()', ->
+  it 'Should remove expired conversation info', ->
+    channel = @stubs.channel
+    client = @client
+    client.channelData[channel.id] = {
+      channel: {id: 'C123', name: 'foo'},
+      updated: @stubs.expired_timestamp
+    }
+    client.fetchConversation channel.id
+    .then((res) ->
+      res.name.should.equal channel.name
+      client.channelData.should.have.key('C123')
+      client.channelData['C123'].channel.name.should.equal channel.name
+    )
+  it 'Should return conversation info if not expired', ->
+    channel = @stubs.channel
+    client = @client
+    client.channelData[channel.id] = {
+      channel: {id: 'C123', name: 'foo'},
+      updated: Date.now()
+    }
+    client.fetchConversation channel.id
+    .then((res) ->
+      res.id.should.equal channel.id
+      client.channelData.should.have.key('C123')
+      client.channelData['C123'].channel.name.should.equal 'foo'
+    )

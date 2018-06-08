@@ -218,7 +218,7 @@ module.exports = (robot) ->
 
   robot.presenceChange (res) ->
 
-    # res.message is a PresenceMessssage instance that represents the presence change Hubot just heard
+    # res.message is a PresenceMessage instance that represents the presence change Hubot just heard
     names = (user.name for user in res.message.users).join ", "
 
     message = if res.message.presence is "away" then "Bye bye #{names}" else "Glad you are back #{names}"

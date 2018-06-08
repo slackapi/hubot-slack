@@ -3,16 +3,17 @@
 
 ###*
 # Adds a Listener for ReactionMessages with the provided matcher, options, and callback
+#
 # @public
 # @param {Function} [matcher] - a function to determine if the listener should run. must return something
 # truthy if it should and that value with be available on `response.match`.
 # @param {Object} [options] - an object of additional parameters keyed on extension name.
 # @param {Function} callback - a function that is called with a Response object if the matcher function returns true
 ###
-Robot::react = (matcher, options, callback) ->
+Robot::hearReaction = (matcher, options, callback) ->
   matchReaction = (msg) -> msg instanceof ReactionMessage
 
-  if arguments.length == 1
+  if not options and not callback
     return @listen matchReaction, matcher
 
   else if matcher instanceof Function
@@ -25,7 +26,25 @@ Robot::react = (matcher, options, callback) ->
   @listen matchReaction, options, callback
 
 ###*
+# DEPRECATED Adds a listener for ReactionMessages with the provided matcher, options, and callback.
+#
+# This method is deprecated in favor of Robot#hearReaction(), which is exactly the same, except with a clearer name.
+#
+# @deprecated
+# @public
+# @param {Function} [matcher] - a function to determine if the listener should run. must return something
+# truthy if it should and that value with be available on `response.match`.
+# @param {Object} [options] - an object of additional parameters keyed on extension name.
+# @param {Function} callback - a function that is called with a Response object if the matcher function returns true
+###
+Robot::react = (matcher, options, callback) ->
+  @logger.warning "Robot#react() is a deprecated method and will be removed in the next major version of " +
+    "hubot-slack. It is recommended to use Robot#hearReaction() which behaves exactly the same, but has a clearer name."
+  @hearReaction(matcher, options, callback)
+
+###*
 # Adds a Listener for PresenceMessages with the provided matcher, options, and callback
+#
 # @public
 # @param {Function} [matcher] - A Function that determines whether to call the callback.
 # Expected to return a truthy value if the callback should be executed (optional).

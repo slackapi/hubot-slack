@@ -17,14 +17,15 @@ require '../src/extensions'
 beforeEach ->
   @stubs = {}
 
-  @stubs.send = (room, msg, opts) =>
-    @stubs._room = room
+  @stubs._sendCount = 0
+  @stubs.send = (conversationId, text, opts) =>
+    @stubs._room = conversationId
     @stubs._opts = opts
-    if /^[UD@][\d\w]+/.test(room)
-      @stubs._dmmsg = msg
+    if (/^[UD@][\d\w]+/.test(conversationId)) or (conversationId is @stubs.DM.id)
+      @stubs._dmmsg = text
     else
-      @stubs._msg = msg
-    msg
+      @stubs._msg = text
+    @stubs._sendCount = @stubs._sendCount + 1
 
   # These objects are of conversation shape: https://api.slack.com/types/conversation
   @stubs.channel =
@@ -36,6 +37,9 @@ beforeEach ->
   @stubs.group =
     id: 'G12324',
     is_mpim: true
+
+  # These objects are conversation IDs used to siwtch behavior of another stub
+  @stubs.channelWillFailChatPost = "BAD_CHANNEL"
 
   # These objects are of user shape: https://api.slack.com/types/user
   @stubs.user =
@@ -102,6 +106,7 @@ beforeEach ->
       email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
+  @stubs.expired_timestamp = 1528238205453
 
   # Slack client
   @stubs.client =
@@ -149,12 +154,15 @@ beforeEach ->
           when @stubs.channel.id then @stubs.channel
           when @stubs.DM.id then @stubs.DM
   @stubs.chatMock =
-    postMessage: (msg, room, opts) =>
-      @stubs.send(msg, room, opts)
+    postMessage: (conversationId, text, opts) =>
+      return Promise.reject(new Error("stub error")) if conversationId is @stubs.channelWillFailChatPost
+      @stubs.send(conversationId, text, opts)
+      Promise.resolve()
   @stubs.conversationsMock =
     setTopic: (id, topic) =>
       @stubs._topic = topic
       if @stubs.receiveMock.onTopic? then @stubs.receiveMock.onTopic @stubs._topic
+      Promise.resolve()
     info: (conversationId) =>
       if conversationId == @stubs.channel.id
         return Promise.resolve({ok: true, channel: @stubs.channel})
@@ -232,6 +240,7 @@ beforeEach ->
     robot.listeners = []
     robot.listen = Robot.prototype.listen.bind(robot)
     robot.react = Robot.prototype.react.bind(robot)
+    robot.hearReaction = Robot.prototype.hearReaction.bind(robot)
     robot.presenceChange = Robot.prototype.presenceChange.bind(robot)
     robot
   @stubs.callback = do ->
@@ -253,7 +262,9 @@ beforeEach ->
 
   @formatter = new SlackFormatter @stubs.client.dataStore, @stubs.robot
 
-  @slacktextmessage = new SlackTextMessage @stubs.self, undefined, undefined, {text: undefined}, undefined, undefined, @slackbot.client
+  @slacktextmessage = new SlackTextMessage @stubs.self, undefined, undefined, {text: undefined}, @stubs.channel.id, undefined, @slackbot.client
+
+  @slacktextmessage_invalid_conversation = new SlackTextMessage @stubs.self, undefined, undefined, {text: undefined}, 'C888', undefined, @slackbot.client
 
   @client = new SlackClient {token: 'xoxb-faketoken'}, @stubs.robot
   _.merge @client.rtm, @stubs.rtm
