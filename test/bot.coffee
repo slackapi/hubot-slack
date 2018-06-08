@@ -28,6 +28,28 @@ describe 'Connect', ->
     @slackbot.run()
     @stubs._connected.should.be.true
 
+describe 'Authenticate', ->
+  it 'Should authenticate successfully', ->
+    {logger} = @slackbot.robot
+    start = self: {
+      id: @stubs.self.id
+      name: @stubs.self.name
+    },
+    team: {
+      id: @stubs.team.id,
+      name: @stubs.team.name
+    },
+    users: [
+      @stubs.self,
+      @stubs.user
+    ]
+
+    @slackbot.authenticated start
+    @slackbot.self.id.should.equal @stubs.self.id
+    @slackbot.robot.name.should.equal @stubs.self.name
+    logger.logs["info"].length.should.be.above(0)
+    logger.logs["info"][logger.logs["info"].length-1].should.equal "Logged in as @#{@stubs.self.name} in workspace #{@stubs.team.name}"
+
 describe 'Logger', ->
   it 'It should log missing token error', ->
     {logger} = @slackbot.robot

@@ -106,6 +106,7 @@ beforeEach ->
       email: 'org_not_in_workspace@example.com'
   @stubs.team =
     name: 'Example Team'
+    id: 'T123'
   @stubs.expired_timestamp = 1528238205453
 
   # Slack client
