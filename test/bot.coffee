@@ -46,16 +46,24 @@ describe 'Logger', ->
 describe 'Disable Sync', ->
   it 'Should sync users by default', ->
     @slackbot.run()
-    @stubs.client.dataStore.users.length.should.equal 4
-    # XXX: OK that this is 4, but it's also 4 when you don't run run()!
-    @slackbot.client.web.users.list().then (data) ->
-      data.length.should.equal 4
-      # XXX: Error: invalid_auth
-    # @slackbot.robot.brain.data.users.should.equal 4
-    # XXX: expected {} to equal 4
-  it 'Should not sync users when disabled'
-  it 'Should still sync interacting users when disabled'
+    @slackbot.robot.brain.data.users.should.have.keys('1','2','3','4')
 
+  it 'Should not sync users when disabled', ->
+    @slackbot.options.disableUserSync = true
+    @slackbot.run()
+    @slackbot.robot.brain.data.users.should.be.empty()
+  
+  it 'Should still sync interacting users when disabled', (done) ->
+    slackbot = @slackbot
+    @stubs.receiveMock.onReceived = (msg) ->
+      msg.text.should.equal 'foo'
+      slackbot.robot.brain.data.users.should.have.keys('U123')
+      done()
+    @slackbot.options.disableUserSync = true
+    @slackbot.run()
+    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel.id }
+    return
+    
 describe 'Send Messages', ->
 
   it 'Should send a message', ->

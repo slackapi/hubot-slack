@@ -256,6 +256,7 @@ beforeEach ->
   _.merge @slackbot.client, @stubs.client
   _.merge @slackbot.client.rtm, @stubs.rtm
   _.merge @slackbot.client.web.chat, @stubs.chatMock
+  _.merge @slackbot.client.web.users, @stubs.usersMock
   _.merge @slackbot.client.web.conversations, @stubs.conversationsMock
   _.merge @slackbot, @stubs.receiveMock
   @slackbot.self = @stubs.self
