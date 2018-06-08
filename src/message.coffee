@@ -61,13 +61,13 @@ class SlackTextMessage extends TextMessage
   # @param {string} rawMessage.ts
   # @param {string} [rawMessage.thread_ts] - the identifier for the thread the message is a part of
   # @param {string} [rawMessage.attachments] - Slack message attachments
-  # @param {SlackConversationInfo} channel - The conversation where this message was sent.
+  # @param {string} channel_id - The conversation where this message was sent.
   # @param {string} robot_name - The Slack username for this robot
   # @param {string} robot_alias - The alias for this robot
   ###
-  constructor: (@user, @text, rawText, @rawMessage, channel, robot_name, robot_alias) ->
+  constructor: (@user, @text, rawText, @rawMessage, channel_id, robot_name, robot_alias) ->
     # private instance properties
-    @_channel = channel
+    @_channel_id = channel_id
     @_robot_name = robot_name
     @_robot_alias = robot_alias
 
@@ -95,16 +95,20 @@ class SlackTextMessage extends TextMessage
       text = text + "\n" + attachment_text
 
     # Replace links in text async to fetch user and channel info (if present)
-    @replaceLinks(client, text)
-      .then (replacedText) =>
+    mentionFormatting = @replaceLinks(client, text)
+    # Fetch conversation info
+    fetchingConversationInfo = client.fetchConversation(@_channel_id)
+    Promise.all([mentionFormatting, fetchingConversationInfo])
+      .then (results) =>
+        [ replacedText, conversationInfo ] = results
         text = replacedText
-        text = text.replace /&lt;/g, '<'
-        text = text.replace /&gt;/g, '>'
-        text = text.replace /&amp;/g, '&'
+        text = text.replace /&lt;/g, "<"
+        text = text.replace /&gt;/g, ">"
+        text = text.replace /&amp;/g, "&"
 
         # special handling for message text when inside a DM conversation
-        if @_channel?.is_im
-          startOfText = if text.indexOf('@') == 0 then 1 else 0
+        if conversationInfo.is_im
+          startOfText = if text.indexOf("@") == 0 then 1 else 0
           robotIsNamed = text.indexOf(@_robot_name) == startOfText || text.indexOf(@_robot_alias) == startOfText
           # Assume it was addressed to us even if it wasn't
           if not robotIsNamed
@@ -112,6 +116,9 @@ class SlackTextMessage extends TextMessage
 
         @text = text
         cb()
+      .catch (error) =>
+        client.robot.logger.error "An error occurred while building text: #{error.message}"
+        cb(error)
 
   ###*
   # Replace links inside of text
@@ -179,13 +186,10 @@ class SlackTextMessage extends TextMessage
   # @returns {Promise<string>} - a string that can be placed into the text for this mention
   ###
   replaceUser: (client, id, mentions) ->
-    client.web.users.info(id)
+    client.fetchUser(id)
       .then (res) =>
-        if res?.user?
-          user = res.user
-          mentions.push(new SlackMention(user.id, "user", user))
-          return "@#{user.name}"
-        else return "<@#{id}>"
+        mentions.push(new SlackMention(res.id, "user", res))
+        return "@#{res.name}"
       .catch (error) =>
         client.robot.logger.error "Error getting user info #{id}: #{error.message}"
         return "<@#{id}>"
@@ -200,11 +204,10 @@ class SlackTextMessage extends TextMessage
   # @returns {Promise<string>} - a string that can be placed into the text for this mention
   ###
   replaceConversation: (client, id, mentions) ->
-    client.web.conversations.info(id)
-      .then (res) =>
-        if res?.channel?
-          conversation = res.channel
-          mentions.push(new SlackMention(conversation.id, 'conversation', conversation))
+    client.fetchConversation(id)
+      .then (conversation) =>
+        if conversation?
+          mentions.push(new SlackMention(conversation.id, "conversation", conversation))
           return "\##{conversation.name}"
         else return "<\##{id}>"
       .catch (error) =>
@@ -224,19 +227,23 @@ class SlackTextMessage extends TextMessage
   # @param {string} rawMessage.ts
   # @param {string} [rawMessage.thread_ts] - the identifier for the thread the message is a part of
   # @param {string} [rawMessage.attachments] - Slack message attachments
-  # @param {SlackConversationInfo} channel - The conversation where this message was sent.
+  # @param {string} channel_id - The conversation where this message was sent.
   # @param {string} robot_name - The Slack username for this robot
   # @param {string} robot_alias - The alias for this robot
   # @param {SlackClient} client - client used to fetch more data
   # @param {function} cb - callback to return the result
   ###
-  @makeSlackTextMessage: (@user, text, rawText, @rawMessage, channel, robot_name, robot_alias, client, cb) ->
-    message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel, robot_name, robot_alias, client)
+  @makeSlackTextMessage: (@user, text, rawText, @rawMessage, channel_id, robot_name, robot_alias, client, cb) ->
+    message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel_id, robot_name, robot_alias, client)
 
-    if not message.text? then message.buildText client, () ->
-      setImmediate(() -> cb(message))
+    # creates a completion function that consistently calls the callback after this function has returned
+    done = (message) -> setImmediate(() -> cb(null, message))
+
+    if not message.text? then message.buildText client, (error) ->
+      return cb(error) if error
+      done(message)
     else
-      setImmediate(() -> cb(message))
+      done(message)
 
 exports.SlackTextMessage = SlackTextMessage
 exports.ReactionMessage = ReactionMessage

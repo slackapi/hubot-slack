@@ -38,7 +38,6 @@ class SlackBot extends Adapter
     @client.rtm.on "close", @close
     @client.rtm.on "error", @error
     @client.rtm.on "authenticated", @authenticated
-    @client.rtm.on "user_change", @updateUserInBrain
     @client.onEvent @eventHandler
 
     # Synchronize workspace users to brain
@@ -208,8 +207,7 @@ class SlackBot extends Adapter
   # @param {Object} event
   # @param {string} event.type - this specifies the event type
   # @param {SlackUserInfo} [event.user] - the description of the user creating this event as returned by `users.info`
-  # @param {SlackConversationInfo} [event.channel] - the description of the conversation where the event happened as
-  # returned by `conversations.info`
+  # @param {string} [event.channel] - the conversation ID for where this event took place
   # @param {SlackBotInfo} [event.bot] - the description of the bot creating this event as returned by `bots.info`
   ###
   eventHandler: (event) =>
@@ -230,39 +228,41 @@ class SlackBot extends Adapter
     # real_name {String}:       Name of Slack user or bot
     # room {String}:            Slack channel ID for event (will be empty string if no channel in event)
     ###
-    user = if user? then @updateUserInBrain user else {}
+    user = if user? then @client.updateUserInBrain user else {}
 
     # Send to Hubot based on message type
     if event.type is "message"
 
       # Hubot expects all user objects to have a room property that is used in the envelope for the message after it
       # is received
-      user.room = if channel? then channel.id else ""
+      user.room = if channel? then channel else ""
 
       switch event.subtype
         when "bot_message"
-          @robot.logger.debug "Received text message in channel: #{channel.id}, from: #{user.id} (bot)"
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
+          @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (bot)"
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (error, message) =>
+            return @robot.logger.error "Dropping message due to error #{error.message}" if error
             @receive message
           )
 
         # NOTE: channel_join should be replaced with a member_joined_channel event
         when "channel_join", "group_join"
-          @robot.logger.debug "Received enter message for user: #{user.id}, joining: #{channel.id}"
+          @robot.logger.debug "Received enter message for user: #{user.id}, joining: #{channel}"
           @receive new EnterMessage user
 
         # NOTE: channel_leave should be replaced with a member_left_channel event
         when "channel_leave", "group_leave"
-          @robot.logger.debug "Received leave message for user: #{user.id}, leaving: #{channel.id}"
+          @robot.logger.debug "Received leave message for user: #{user.id}, leaving: #{channel}"
           @receive new LeaveMessage user
 
         when "channel_topic", "group_topic"
-          @robot.logger.debug "Received topic change message in conversation: #{channel.id}, new topic: #{event.topic}, set by: #{user.id}"
+          @robot.logger.debug "Received topic change message in conversation: #{channel}, new topic: #{event.topic}, set by: #{user.id}"
           @receive new TopicMessage user, event.topic, event.ts
 
         when undefined
-          @robot.logger.debug "Received text message in channel: #{channel.id}, from: #{user.id} (human)"
-          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (message) =>
+          @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (human)"
+          SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (error, message) =>
+            return @robot.logger.error "Dropping message due to error #{error.message}" if error
             @receive message
           )
 
@@ -306,48 +306,6 @@ class SlackBot extends Adapter
     if err || !res.members.length
       @robot.logger.error "Can't fetch users"
       return
-    @updateUserInBrain member for member in res.members
-
-  ###*
-  # Update user record in the Hubot Brain. This may be called as a handler for `user_change` events or to update a
-  # a single user with its latest SlackUserInfo object.
-  #
-  # @private
-  # @param {SlackUserInfo|SlackUserChangeEvent} event_or_user - an object containing information about a Slack user
-  # that should be updated in the brain
-  ###
-  updateUserInBrain: (event_or_user) =>
-    # NOTE: why is this line here and why would this method be called without any parameter?
-    return unless event_or_user
-
-    # if this method was invoked as a `user_change` event handler, unwrap the user from the event
-    user = if event_or_user.type == 'user_change' then event_or_user.user else event_or_user
-
-    # create a full representation of the user in the shape we persist for Hubot brain based on the parameter
-    # all top-level properties of the user are meant to be shared across adapters
-    newUser =
-      id: user.id
-      name: user.name
-      real_name: user.real_name
-      slack: {}
-    # don't create keys for properties that have no value, because the empty value will become authoritative
-    newUser.email_address = user.profile.email if user.profile?.email?
-    # all "non-standard" keys of a user are namespaced inside the slack property, so they don't interfere with other
-    # adapters (in case this hubot switched between adapters)
-    for key, value of user
-      newUser.slack[key] = value
-
-    # merge any existing representation of this user already stored in the brain into the new representation
-    if user.id of @robot.brain.data.users
-      for key, value of @robot.brain.data.users[user.id]
-        # the merge strategy is to only copy over data for keys that do not exist in the new representation
-        # this means the entire `slack` property is treated as one value
-        unless key of newUser
-          newUser[key] = value
-
-    # remove the existing representation and write the new representation to the brain
-    delete @robot.brain.data.users[user.id]
-    @robot.brain.userForId user.id, newUser
-
+    @client.updateUserInBrain member for member in res.members
 
 module.exports = SlackBot
