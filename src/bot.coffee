@@ -96,7 +96,7 @@ class SlackBot extends Adapter
     for message in messages
       if message isnt ""
         # TODO: channel prefix matching should be removed
-        message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is "D"
+        message = "<@#{envelope.message.rawMessage.user.id}>: #{message}" unless envelope.room[0] is 'D'
         @client.send envelope, message
 
   ###*
