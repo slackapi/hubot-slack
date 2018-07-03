@@ -91,7 +91,7 @@ class SlackTextMessage extends TextMessage
 
     # flatten any attachments into text
     if @rawMessage.attachments
-      attachment_text = @rawMessage.attachments.map(a -> a.fallback).join("\n")
+      attachment_text = @rawMessage.attachments.map((a) -> a.fallback).join("\n")
       text = text + "\n" + attachment_text
 
     # Replace links in text async to fetch user and channel info (if present)
