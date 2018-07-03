@@ -129,6 +129,17 @@ describe 'buildText()', ->
     message.buildText @client, () ->
       client.robot.logger.logs?.error.length.should.equal 1
 
+  it 'Should flatten attachments', ->
+    message = @slacktextmessage
+    client = @client
+    message.rawMessage.text = 'foo bar'
+    message.rawMessage.attachments = [
+      { fallback: 'first' },
+      { fallback: 'second' }
+    ]
+    message.buildText @client, () ->
+      message.text.should.equal 'foo bar\nfirst\nsecond'
+
 
 describe 'replaceLinks()', ->
 
