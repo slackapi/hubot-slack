@@ -75,16 +75,8 @@ describe 'Disable Sync', ->
     @slackbot.run()
     @slackbot.robot.brain.data.users.should.be.empty()
   
-  it 'Should still sync interacting users when disabled', (done) ->
-    slackbot = @slackbot
-    @stubs.receiveMock.onReceived = (msg) ->
-      msg.text.should.equal 'foo'
-      slackbot.robot.brain.data.users.should.have.keys('U123')
-      done()
-    @slackbot.options.disableUserSync = true
-    @slackbot.run()
-    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel.id }
-    return
+  # Test moved to fetchUsers() in client.coffee because of change in code logic
+  #it 'Should still sync interacting users when disabled'
     
 describe 'Send Messages', ->
 

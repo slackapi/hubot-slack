@@ -324,6 +324,16 @@ describe 'fetchUser()', ->
   it 'should return promise if no user exists in brain', ->
     result = @client.fetchUser @stubs.user.id
     result.should.be.Promise()
+  
+  it.only 'Should sync interacting users when syncing disabled', ->
+    slackbot = @slackbot
+    slackbot.options.disableUserSync = true
+    slackbot.run()
+
+    @client.fetchUser @stubs.user.id
+    .then((res) ->
+      slackbot.robot.brain.data.users.should.have.keys('U123')
+    )
 
 describe 'fetchConversation()', ->
   it 'Should remove expired conversation info', ->
