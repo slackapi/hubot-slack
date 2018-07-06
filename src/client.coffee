@@ -254,7 +254,18 @@ class SlackClient
     )
 
   ###*
-  # Update user record in the Hubot Brain. This may be called as a handler for `user_change` events or to update a
+  # Will return a Hubot user object in Brain.
+  # User can represent a Slack human user or bot user
+  #
+  # The returned user from a message or reaction event is guaranteed to contain:
+  #
+  # id {String}:              Slack user ID
+  # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
+  # name {String}:            Slack username
+  # real_name {String}:       Name of Slack user or bot
+  # room {String}:            Slack channel ID for event (will be empty string if no channel in event)
+  #
+  # This may be called as a handler for `user_change` events or to update a
   # a single user with its latest SlackUserInfo object.
   #
   # @private
@@ -335,8 +346,10 @@ class SlackClient
             else
               # bot doesn't have an associated user id
               @botUserIdMap[event.bot_id] = false
-          return event
+          else
+            event.user = {}
 
+          return event
         # once the event is fully populated...
         .then (fetchedEvent) =>
           # hand the event off to the eventHandler
