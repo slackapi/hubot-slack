@@ -325,7 +325,7 @@ describe 'fetchUser()', ->
     result = @client.fetchUser @stubs.user.id
     result.should.be.Promise()
   
-  it.only 'Should sync interacting users when syncing disabled', ->
+  it 'Should sync interacting users when syncing disabled', ->
     slackbot = @slackbot
     slackbot.options.disableUserSync = true
     slackbot.run()
