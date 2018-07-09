@@ -224,20 +224,6 @@ class SlackBot extends Adapter
     # Ignore anything we sent
     return if user?.id is @self.id
 
-    ###*
-    # Hubot user object in Brain.
-    # User can represent a Slack human user or bot user
-    #
-    # The returned user from a message or reaction event is guaranteed to contain:
-    #
-    # id {String}:              Slack user ID
-    # slack.is_bot {Boolean}:   Flag indicating whether user is a bot
-    # name {String}:            Slack username
-    # real_name {String}:       Name of Slack user or bot
-    # room {String}:            Slack channel ID for event (will be empty string if no channel in event)
-    ###
-    user = if user? then @client.updateUserInBrain user else {}
-
     # Send to Hubot based on message type
     if event.type is "message"
 

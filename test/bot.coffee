@@ -75,16 +75,8 @@ describe 'Disable Sync', ->
     @slackbot.run()
     @slackbot.robot.brain.data.users.should.be.empty()
   
-  it 'Should still sync interacting users when disabled', (done) ->
-    slackbot = @slackbot
-    @stubs.receiveMock.onReceived = (msg) ->
-      msg.text.should.equal 'foo'
-      slackbot.robot.brain.data.users.should.have.keys('U123')
-      done()
-    @slackbot.options.disableUserSync = true
-    @slackbot.run()
-    @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel.id }
-    return
+  # Test moved to fetchUsers() in client.coffee because of change in code logic
+  #it 'Should still sync interacting users when disabled'
     
 describe 'Send Messages', ->
 
@@ -311,11 +303,11 @@ describe 'Handling incoming messages', ->
     @slackbot.eventHandler reactionMessage
     should.equal @stubs._received, undefined
 
-  it 'Should handle undefined users as envisioned', (done)->
+  it 'Should handle empty users as envisioned', (done)->
     @stubs.receiveMock.onReceived = (msg) ->
       should.equal (msg instanceof SlackTextMessage), true
       done()
-    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: undefined, channel: @stubs.channel.id, text: 'Foo'}
+    @slackbot.eventHandler {type: 'message', subtype: 'bot_message', user: {}, channel: @stubs.channel.id, text: 'Foo'}
     return
 
   it 'Should handle reaction events from users who are in different workspace in shared channel', ->

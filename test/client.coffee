@@ -68,7 +68,7 @@ describe 'onEvent()', ->
       done()
     @client.rtm.emit('message', {
       type: 'message',
-      bot_id: 'B789'
+      bot_id: 'B789',
       channel: @stubs.channel.id,
       text: 'blah'
     })
@@ -76,6 +76,23 @@ describe 'onEvent()', ->
     setTimeout(( =>
       @stubs.robot.logger.logs.should.not.have.property('error')
     ), 0);
+
+  it 'should handle undefined users as envisioned', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      message.channel.should.equal @stubs.channel.id
+      done()
+    @client.rtm.emit('message', {
+      type: 'message',
+      user: undefined,
+      channel: @stubs.channel.id,
+      text: 'eat more veggies'
+    })
+
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+
   it 'should update bot id to user representation map', (done) ->
     @client.onEvent (message) =>
       message.should.be.ok
@@ -307,6 +324,16 @@ describe 'fetchUser()', ->
   it 'should return promise if no user exists in brain', ->
     result = @client.fetchUser @stubs.user.id
     result.should.be.Promise()
+  
+  it 'Should sync interacting users when syncing disabled', ->
+    slackbot = @slackbot
+    slackbot.options.disableUserSync = true
+    slackbot.run()
+
+    @client.fetchUser @stubs.user.id
+    .then((res) ->
+      slackbot.robot.brain.data.users.should.have.keys('U123')
+    )
 
 describe 'fetchConversation()', ->
   it 'Should remove expired conversation info', ->
