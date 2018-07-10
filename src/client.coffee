@@ -27,7 +27,7 @@ class SlackClient
     # @rtm.dataStore property is publically accessible, so the recommended settings cannot be used without breaking
     # this object's API. The property is no longer used internally.
     @rtm = new RtmClient options.token, options.rtm
-    @web = new WebClient options.token
+    @web = new WebClient options.token, { maxRequestConcurrency: 1 }
 
     @robot.logger.debug "RtmClient initialized with options: #{JSON.stringify(options.rtm)}"
     @rtmStartOpts = options.rtmStart || {}
@@ -37,7 +37,7 @@ class SlackClient
     # be removed without breaking this object's API. The property is no longer used internally.
     @format = new SlackFormatter(@rtm.dataStore, @robot)
 
-    # Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom 
+    # Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom
     # integrations and apps without a bot user
     @botUserIdMap = {}
 
@@ -213,7 +213,7 @@ class SlackClient
   fetchUser: (userId) ->
     # User exists in the brain - retrieve this representation
     return Promise.resolve(@robot.brain.data.users[userId]) if @robot.brain.data.users[userId]?
-    
+
     # User is not in brain - call users.info
     # The user will be added to the brain in EventHandler
     @web.users.info(userId).then((r) => @updateUserInBrain(r.user))
@@ -237,14 +237,14 @@ class SlackClient
     expiration = Date.now() - (5 * 60 * 1000)
 
     # Check whether conversation is held in client's channelData map and whether information is expired
-    return Promise.resolve(@channelData[conversationId].channel) if @channelData[conversationId]?.channel? and 
+    return Promise.resolve(@channelData[conversationId].channel) if @channelData[conversationId]?.channel? and
       expiration < @channelData[conversationId]?.updated
 
     # Delete data from map if it's expired
     delete @channelData[conversationId] if @channelData[conversationId]?
 
     # Return conversations.info promise
-    @web.conversations.info(conversationId).then((r) => 
+    @web.conversations.info(conversationId).then((r) =>
       if r.channel?
         @channelData[conversationId] = {
           channel: r.channel,
@@ -327,7 +327,7 @@ class SlackClient
             # messages sent from human users, apps with a bot user and using the bot token, and slackbot have the user
             # property: this is preferred if its available
             event.user = fetched.user
-          # fetched.bot will exist and be false if bot_id in @botUserIdMap 
+          # fetched.bot will exist and be false if bot_id in @botUserIdMap
           # but is from custom integration or app without bot user
           else if fetched.bot
             # fetched.bot is user representation of bot since it exists in botToUserMap
