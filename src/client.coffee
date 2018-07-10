@@ -346,6 +346,7 @@ class SlackClient
             else
               # bot doesn't have an associated user id
               @botUserIdMap[event.bot_id] = false
+              event.user = {}
           else
             event.user = {}
 
