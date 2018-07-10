@@ -87,12 +87,12 @@ class SlackTextMessage extends TextMessage
   ###
   buildText: (client, cb) ->
     # base text
-    text = @rawMessage.text
+    text = if @rawMessage.text? then @rawMessage.text else ""
 
     # flatten any attachments into text
     if @rawMessage.attachments
       attachment_text = @rawMessage.attachments.map((a) -> a.fallback).join("\n")
-      text = text + "\n" + attachment_text
+      text = text + "\n" + attachment_text if attachment_text?
 
     # Replace links in text async to fetch user and channel info (if present)
     mentionFormatting = @replaceLinks(client, text)
@@ -233,8 +233,8 @@ class SlackTextMessage extends TextMessage
   # @param {SlackClient} client - client used to fetch more data
   # @param {function} cb - callback to return the result
   ###
-  @makeSlackTextMessage: (@user, text, rawText, @rawMessage, channel_id, robot_name, robot_alias, client, cb) ->
-    message = new SlackTextMessage(@user, text, rawText, @rawMessage, channel_id, robot_name, robot_alias, client)
+  @makeSlackTextMessage: (user, text, rawText, rawMessage, channel_id, robot_name, robot_alias, client, cb) ->
+    message = new SlackTextMessage(user, text, rawText, rawMessage, channel_id, robot_name, robot_alias)
 
     # creates a completion function that consistently calls the callback after this function has returned
     done = (message) -> setImmediate(() -> cb(null, message))
