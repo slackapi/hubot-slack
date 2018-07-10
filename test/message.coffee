@@ -71,7 +71,7 @@ describe 'buildText()', ->
     message.rawMessage.text = 'foo'
     message.rawMessage.attachments = []
     message.buildText @client, () ->
-      message.text.should.equal 'foo\n'
+      message.text.should.equal 'foo'
 
   it 'Should change multiple links at once', ->
     message = @slacktextmessage
