@@ -66,6 +66,13 @@ describe 'buildText()', ->
     message.buildText @client, () ->
       message.text.should.equal '\nfirst'
 
+  it 'Should handle an empty set of attachments', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo'
+    message.rawMessage.attachments = []
+    message.buildText @client, () ->
+      message.text.should.equal 'foo\n'
+
   it 'Should change multiple links at once', ->
     message = @slacktextmessage
     message.rawMessage.text = 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
