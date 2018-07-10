@@ -57,6 +57,15 @@ describe 'buildText()', ->
     message.buildText @client, () ->
       message.text.should.equal 'foo name@example.com bar'
 
+  it 'Should handle empty text with attachments', ->
+    message = @slacktextmessage
+    message.rawMessage.text = undefined
+    message.rawMessage.attachments = [
+      { fallback: 'first' },
+    ]
+    message.buildText @client, () ->
+      message.text.should.equal '\nfirst'
+
   it 'Should change multiple links at once', ->
     message = @slacktextmessage
     message.rawMessage.text = 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
