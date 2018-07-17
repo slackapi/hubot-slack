@@ -50,6 +50,8 @@ class SlackClient
     @rtm.on "reaction_added", @eventWrapper, this
     @rtm.on "reaction_removed", @eventWrapper, this
     @rtm.on "presence_change", @eventWrapper, this
+    @rtm.on "member_joined_channel", @eventWrapper, this
+    @rtm.on "member_left_channel", @eventWrapper, this
     @rtm.on "user_change", @updateUserInBrain, this
     @eventHandler = undefined
 
