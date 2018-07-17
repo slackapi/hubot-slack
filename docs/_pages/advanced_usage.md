@@ -7,6 +7,7 @@ headings:
     - title: Customizing rtm.start options
     - title: Customizing the RTM Client
     - title: Activate logging for debugging
+    - title: Running Hubot behind an HTTP Proxy
     - title: Accessing more API methods and distribution
 ---
 
@@ -76,4 +77,15 @@ initialization of the `WebClient` object to the following:
 
 ```coffeescript
   web = new WebClient process.env.SLACK_OAUTH_TOKEN
+```
+
+## Running Hubot behind an HTTP Proxy
+
+You might find the need to run Hubot inside a firewall, where the internet is only accessible via a specific proxy.
+Have no fear, environment variable configuration is here. Just add the `https_proxy` environment variable to your
+startup (we'll just do this on the command line for this example) with the address and authentication information of
+your proxy.
+
+```
+$ https_proxy="http://user:pass@localhost:8888" HUBOT_SLACK_TOKEN=xoxb-xxxxx ./bin/hubot --adapter slack
 ```
