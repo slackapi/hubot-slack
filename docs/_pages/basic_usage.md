@@ -207,6 +207,18 @@ module.exports = (robot) ->
         timestamp: res.message.item.ts
 ```
 
+When using `robot.react` as shown above, the `res.message` value is of type `ReactionMessage`. In addition to the normal
+message properties, this type has a few really helpful properties you might want to use in your script:
+
+*  `type`: This is either `"added"` or `"removed"`, depending on whether, you guessed it, the reaction was added or
+   removed.
+*  `reaction`: The name of the emoji reaction. For example, when adding a 👍 reaction, this value is
+   `"thumbsup"`.
+*  `item`: This is either the message, the file, or the comment where this reaction took place.
+*  `item_user`: The user who created the item. This value can be `undefined` if the item was created by a custom
+   integration (not a Slack App).
+*  `event_ts`: The timestamp of when this reaction message took place.
+
 --------
 
 ## Presence changes

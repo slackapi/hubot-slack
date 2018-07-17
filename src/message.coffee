@@ -12,8 +12,9 @@ class ReactionMessage extends Message
   # @param {string} type - A String indicating 'reaction_added' or 'reaction_removed'
   # @param {User} user - A User instance that reacted to the item.
   # @param {string} reaction - A String identifying the emoji reaction.
-  # @param {User} item_user - A String indicating the user that posted the item.
   # @param {Object} item - An Object identifying the target message, file, or comment item.
+  # @param {User} [item_user] - A String indicating the user that posted the item. If the item was created by a
+  # custom integration (not part of a Slack app with a bot user), then this value will be undefined.
   # @param {string} event_ts - A String of the reaction event timestamp.
   ###
   constructor: (@type, @user, @reaction, @item_user, @item, @event_ts) ->
