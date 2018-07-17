@@ -50,7 +50,7 @@ class SlackBot extends Adapter
       @client.loadUsers @usersLoaded
     else
       @isLoaded = true
-    
+
     # Brain will emit 'loaded' the first time it connects to its storage and then again each time a key is set
     @robot.brain.on "loaded", () =>
       if not @brainIsLoaded
@@ -239,16 +239,6 @@ class SlackBot extends Adapter
             @receive message
           )
 
-        # NOTE: channel_join should be replaced with a member_joined_channel event
-        when "channel_join", "group_join"
-          @robot.logger.debug "Received enter message for user: #{user.id}, joining: #{channel}"
-          @receive new EnterMessage user
-
-        # NOTE: channel_leave should be replaced with a member_left_channel event
-        when "channel_leave", "group_leave"
-          @robot.logger.debug "Received leave message for user: #{user.id}, leaving: #{channel}"
-          @receive new LeaveMessage user
-
         when "channel_topic", "group_topic"
           @robot.logger.debug "Received topic change message in conversation: #{channel}, new topic: #{event.topic}, set by: #{user.id}"
           @receive new TopicMessage user, event.topic, event.ts
@@ -259,6 +249,18 @@ class SlackBot extends Adapter
             return @robot.logger.error "Dropping message due to error #{error.message}" if error
             @receive message
           )
+
+    else if event.type is "member_joined_channel"
+      # this event type always has a channel
+      user.room = channel
+      @robot.logger.debug "Received enter message for user: #{user.id}, joining: #{channel}"
+      @receive new EnterMessage user
+
+    else if event.type is "member_left_channel"
+      # this event type always has a channel
+      user.room = channel
+      @robot.logger.debug "Received leave message for user: #{user.id}, joining: #{channel}"
+      @receive new LeaveMessage user
 
     else if event.type is "reaction_added" or event.type is "reaction_removed"
 
