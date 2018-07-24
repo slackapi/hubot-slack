@@ -48,7 +48,7 @@ Next, you'll need a token from Slack to authenticate your Hubot. Use one of the 
   room for your Hubot to grow. To begin, you just need a Bot User.
 
     1. Create a new app at the [app management page](https://api.slack.com/apps). Pick a clever name and choose the
-       a the workspace you want Hubot installed in.
+       workspace you want Hubot installed in.
     2. Navigate to the Bot User page and add a bot user. The display name is the name your team will use to mention
        your Hubot in Slack.
     3. Navigate to the Install App page and install the app into the workspace. Once you've authorized the installation,
