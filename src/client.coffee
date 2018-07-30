@@ -166,20 +166,31 @@ class SlackClient
 
     @robot.logger.debug "SlackClient#send() room: #{room}, message: #{message}"
 
+    text = if typeof message is 'string' then message else message.text
+    attachment = if (text.match(/^https?:\/\/\S+\.(?:jpg|jpe|jpeg|png|gif|bmp|dib)/) or
+                     text.match(/^https?:\/\/images.duckduckgo.com\//)) and
+                     !text.match(/https:\/\/files\.slack\.com/)
+      @robot.logger.debug "Sending to #{envelope.room} as image: #{text}"
+      {image_url: text, fallback: text}
+    else
+      @robot.logger.debug "Sending to #{envelope.room}: #{text}"
+      {text: text, mrkdwn_in: ['text'], fallback: text}
+
     options =
       as_user: true,
       link_names: 1,
       # when the incoming message was inside a thread, send responses as replies to the thread
       # NOTE: consider building a new (backwards-compatible) format for room which includes the thread_ts.
       # e.g. "#{conversationId} #{thread_ts}" - this would allow a portable way to say the message is in a thread
-      thread_ts: envelope.message?.thread_ts
+      thread_ts: envelope.message?.thread_ts,
+      attachments: [attachment]
 
     if typeof message isnt "string"
-      @web.chat.postMessage(room, message.text, _.defaults(message, options))
+      @web.chat.postMessage(room, "", _.defaults(message, options))
         .catch (error) =>
           @robot.logger.error "SlackClient#send() error: #{error.message}"
     else
-      @web.chat.postMessage(room, message, options)
+      @web.chat.postMessage(room, "", options)
         .catch (error) =>
           @robot.logger.error "SlackClient#send() error: #{error.message}"
 
