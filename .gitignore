@@ -1,5 +1,7 @@
-node_modules/
+node_modules
+package-lock.json
 .idea
-coverage/
+coverage
 *.log
-.DS_Store
+docs/_site
+docs/.ruby-version

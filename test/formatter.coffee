@@ -6,10 +6,6 @@ describe 'incoming()', ->
     foo = @formatter.incoming {text: 'foo'}
     foo.should.equal 'foo'
 
-
-    
-
-
 describe 'links()', ->
 
   it 'Should decode entities', ->
@@ -96,8 +92,6 @@ describe 'links()', ->
     foo = @formatter.links 'foo <@U123|label> bar <#C123> <!channel> <https://www.example.com|label>'
     foo.should.equal 'foo @label bar #general @channel label (https://www.example.com)'
 
-
-
 describe 'flatten()', ->
 
   it 'Should return a basic message passed untouched', ->
@@ -107,3 +101,10 @@ describe 'flatten()', ->
   it 'Should concatenate attachments', ->
     foo = @formatter.flatten {text: 'foo', attachments: [{fallback: 'bar'}, {fallback: 'baz'}, {fallback: 'qux'}]}
     foo.should.equal 'foo\nbar\nbaz\nqux'
+
+describe 'warnForDeprecation()', ->
+
+  it 'Should warn of deprecation', ->
+    {logger} = @slackbot.robot
+    @formatter.warnForDeprecation()
+    @stubs.robot.logger.logs?.warning.length.should.equal 1

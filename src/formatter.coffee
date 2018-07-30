@@ -1,16 +1,25 @@
 MESSAGE_RESERVED_KEYWORDS = ['channel','group','everyone','here']
 
 
-# https://api.slack.com/docs/formatting
 class SlackFormatter
 
-  constructor: (@dataStore) ->
-
-
+  ###*
+  # SlackFormatter transforms raw message text into a flat string representation by removing special formatting.
+  # For example, a user mention would be encoded as "<@U123456|username>" in the input text, and corresponding output
+  # would read "@username". See: <https://api.slack.com/docs/formatting>
+  #
+  # @deprecated This class is no longer used for internal operations since 4.5.0. It will be removed in 5.0.0.
+  #
+  # @param {SlackDataStore} dataStore - an RTM client DataStore instance
+  # @param {Robot} robot - a Hubot robot instance
   ###
-  Formats links and ids
+  constructor: (@dataStore, @robot) ->
+
+  ###*
+  # Formats links and ids
   ###
-  links: (text) ->    
+  links: (text) ->
+    @warnForDeprecation
     regex = ///
       <              # opening angle bracket
       ([@#!])?       # link type
@@ -55,10 +64,11 @@ class SlackFormatter
     text = text.replace /&amp;/g, '&'
 
 
-  ###
-  Flattens message text and attachments into a multi-line string
+  ###*
+  # Flattens message text and attachments into a multi-line string
   ###
   flatten: (message) ->
+    @warnForDeprecation
     text = []
 
     # basic text messages
@@ -66,18 +76,27 @@ class SlackFormatter
 
     # append all attachments
     for attachment in message.attachments or []
-      text.push(attachment.fallback)    
+      text.push(attachment.fallback)
 
     # flatten array
     text.join('\n')
 
 
-  ###
-  Formats an incoming Slack message
+  ###*
+  # Formats an incoming Slack message
   ###
   incoming: (message) ->
+    @warnForDeprecation
     @links @flatten message
 
-
+  ###*
+  # Logs the deprecation warning
+  ###
+  warnForDeprecation: () ->
+    if (@robot)
+        @robot.logger.warning "SlackFormatter is deprecated and will be removed in the next major version of " +
+          "hubot-slack. This class was tightly coupled to the now-deprecated dataStore. Formatting functionality has " +
+          "been moved to the SlackTextMessage class. If that class does not suit your needs, please file an issue " +
+          "<https://github.com/slackapi/hubot-slack/issues>"
 
 module.exports = SlackFormatter
