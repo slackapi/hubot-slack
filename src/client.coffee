@@ -4,6 +4,8 @@ Promise                = require "bluebird"
 SlackFormatter         = require "./formatter"
 
 class SlackClient
+  @MAX_MESSAGE_LENGTH = 8000
+
   ###*
   # Number used for limit when making paginated requests to Slack Web API list methods
   # @private
@@ -167,6 +169,7 @@ class SlackClient
     @robot.logger.debug "SlackClient#send() room: #{room}, message: #{message}"
 
     text = if typeof message is 'string' then message else message.text
+    text = text.substring(0, SlackClient.MAX_MESSAGE_LENGTH)
     attachment = if (text.match(/^https?:\/\/\S+\.(?:jpg|jpe|jpeg|png|gif|bmp|dib)/) or
                      text.match(/^https?:\/\/images.duckduckgo.com\//)) and
                      !text.match(/https:\/\/files\.slack\.com/)
