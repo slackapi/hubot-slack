@@ -312,6 +312,12 @@ describe 'fetchBotUser()', ->
     result = @client.fetchBotUser @stubs.bot.id
     result.should.be.Promise()
 
+  it 'should return false if id is slackbots id', ->
+    @client.fetchBotUser @stubs.slack_bot.id
+    .then((res) ->
+      res.should.equal false
+    )
+
 describe 'fetchUser()', ->
   it 'should return user representation from brain', ->
     user = @stubs.user
