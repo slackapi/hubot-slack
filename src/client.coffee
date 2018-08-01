@@ -39,7 +39,9 @@ class SlackClient
 
     # Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom
     # integrations and apps without a bot user
-    @botUserIdMap = {}
+    @botUserIdMap = {
+      "B01": { id: "B01", user_id: "USLACKBOT" }
+    }
 
     # Map to convert conversation IDs to conversation representations
     @channelData = {}
@@ -225,7 +227,6 @@ class SlackClient
   # @public
   ###
   fetchBotUser: (botId) ->
-    return Promise.resolve(false) if (botId == "B01")
     return Promise.resolve(@botUserIdMap[botId]) if @botUserIdMap[botId]?
 
     # Bot user is not in mapping - call bots.info

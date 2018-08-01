@@ -312,10 +312,11 @@ describe 'fetchBotUser()', ->
     result = @client.fetchBotUser @stubs.bot.id
     result.should.be.Promise()
 
-  it 'should return false if id is slackbots id', ->
+  it 'should return constant data if id is slackbots id', ->
     @client.fetchBotUser @stubs.slack_bot.id
     .then((res) ->
-      res.should.equal false
+      res.id.should.equal @stubs.slack_bot.id
+      res.user_id.should.equal @stubs.slack_bot.user_id
     )
 
 describe 'fetchUser()', ->
