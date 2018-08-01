@@ -225,6 +225,7 @@ class SlackClient
   # @public
   ###
   fetchBotUser: (botId) ->
+    return Promise.resolve(false) if (botId == "B01")
     return Promise.resolve(@botUserIdMap[botId]) if @botUserIdMap[botId]?
 
     # Bot user is not in mapping - call bots.info
