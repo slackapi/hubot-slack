@@ -83,6 +83,10 @@ beforeEach ->
   @stubs.undefined_user_bot =
     name: 'testbot'
     id: 'B789'
+  @stubs.slack_bot =
+    name: 'slackbot'
+    id: 'B01'
+    user_id: 'USLACKBOT'
   @stubs.self =
     name: 'self'
     id: 'U456'
