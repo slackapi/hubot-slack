@@ -1,12 +1,12 @@
 {
   "name": "hubot-slack",
-  "version": "4.3.3",
+  "version": "4.5.3",
   "description": "A Slack adapter for hubot",
   "main": "./slack",
   "scripts": {
     "test": "npm run mocha && istanbul report text-summary lcov",
     "codecov": "codecov",
-    "mocha": "mocha --compilers coffee:coffee-script/register  --require coffee-coverage/register-istanbul --reporter spec test"
+    "mocha": "mocha --compilers coffee:coffeescript/register --require coffee-coverage/register-istanbul --reporter spec test"
   },
   "keywords": [
     "hubot",
@@ -24,26 +24,26 @@
     "url": "https://github.com/slackapi/hubot-slack/issues"
   },
   "dependencies": {
-    "@slack/client": "^3.4.0",
+    "@slack/client": "3.16.1-sec",
+    "bluebird": "^3.5.1",
     "lodash": "^4.17.10"
   },
+  "peerDependencies": {
+    "hubot": "^2.0.0"
+  },
   "devDependencies": {
-    "coffee-coverage": "~1.0.1",
-    "coffee-script": "~1.7.1",
-    "codecov": "~1.0.1",
-    "grunt": "~0.4.1",
-    "grunt-cli": "^0.1.13",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-release": "~0.6.0",
-    "grunt-shell": "~0.5.0",
-    "hubot": "~2.19",
+    "chai": "^3.5.0",
+    "coffee-coverage": "^2.0.0",
+    "coffeescript": "^1.12.7",
+    "codecov": "^2.3.1",
+    "hubot": "^2.19.0",
     "istanbul": "^0.4.3",
-    "mocha": "~1.13.0",
-    "should": "~2.0.2"
+    "mocha": "^3.5.3",
+    "should": "^8.0.0"
   },
   "engines": {
-    "node": ">= 0.10.x",
-    "npm": ">= 1.1.x"
+    "node": ">= 0.12",
+    "npm": ">= 2.0.0"
   },
   "contributors": [
     {
@@ -74,6 +74,17 @@
     {
       "email": "jagan@slack-corp.com",
       "name": "John Agan"
+    },
+    {
+      "email": "aoberoi@gmail.com",
+      "name": "Ankur Oberoi"
+    },
+    {
+      "email": "sdewael@slack-corp.com",
+      "name": "Shane DeWael"
+    },
+    {
+      "name": "Siôn le Roux"
     }
   ]
 }
