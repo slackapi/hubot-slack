@@ -24,7 +24,7 @@
     "url": "https://github.com/slackapi/hubot-slack/issues"
   },
   "dependencies": {
-    "@slack/client": "3.16.1-sec",
+    "@slack/client": "3.16.1-sec.2",
     "bluebird": "^3.5.1",
     "lodash": "^4.17.10"
   },
