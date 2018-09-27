@@ -8,5 +8,9 @@ node_js:
   - "5"
   - "4"
   - "4.2"
+env:
+  - HUBOT_VERSION=">=2.0 <3"
+  - HUBOT_VERSION="^3.0"
 after_success:
   - npm run codecov
+script: npm install && npm install hubot@"$HUBOT_VERSION" && npm test
