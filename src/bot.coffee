@@ -49,7 +49,7 @@ class SlackBot extends Adapter
       # Synchronize workspace users to brain
       @client.loadUsers @usersLoaded
     else
-      @isLoaded = true
+      @brainIsLoaded = true
 
     # Brain will emit 'loaded' the first time it connects to its storage and then again each time a key is set
     @robot.brain.on "loaded", () =>
