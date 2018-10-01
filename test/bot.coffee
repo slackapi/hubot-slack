@@ -209,22 +209,22 @@ describe 'Handling incoming messages', ->
 
   it 'Should handle member_joined_channel events as envisioned', ->
     @slackbot.eventHandler {type: 'member_joined_channel', user: @stubs.user, channel: @stubs.channel.id}
-    should.equal (@stubs._received instanceof EnterMessage), true
+    should.equal @stubs._received.constructor.name, "EnterMessage"
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle member_left_channel events as envisioned', ->
     @slackbot.eventHandler {type: 'member_left_channel', user: @stubs.user, channel: @stubs.channel.id}
-    should.equal (@stubs._received instanceof LeaveMessage), true
+    should.equal @stubs._received.constructor.name, "LeaveMessage"
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle channel_topic events as envisioned', ->
     @slackbot.eventHandler {type: 'message', subtype: 'channel_topic', user: @stubs.user, channel: @stubs.channel.id}
-    should.equal (@stubs._received instanceof TopicMessage), true
+    should.equal @stubs._received.constructor.name, "TopicMessage"
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle group_topic events as envisioned', ->
     @slackbot.eventHandler {type: 'message', subtype: 'group_topic', user: @stubs.user, channel: @stubs.channel.id}
-    should.equal (@stubs._received instanceof TopicMessage), true
+    should.equal @stubs._received.constructor.name, "TopicMessage"
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle reaction_added events as envisioned', ->
