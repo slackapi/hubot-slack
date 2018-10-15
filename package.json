@@ -26,7 +26,8 @@
   "dependencies": {
     "@slack/client": "3.16.1-sec.2",
     "bluebird": "^3.5.1",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.10",
+    "es6-promise": "~4.2.5"
   },
   "peerDependencies": {
     "hubot": ">= 2.0.0"

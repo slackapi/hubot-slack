@@ -106,6 +106,10 @@ describe 'Send Messages', ->
     @stubs._dmmsg.should.eql 'message'
     @stubs._room.should.eql @stubs.user.id
 
+  it 'Should send a message with a callback', (done) ->
+    @slackbot.send {room: @stubs.channel.id}, 'message', done
+    @stubs._sendCount.should.equal 1
+    @stubs._msg.should.equal 'message'
 
 describe 'Client sending message', ->
   it 'Should append as_user = true', ->
@@ -135,6 +139,11 @@ describe 'Reply to Messages', ->
     @slackbot.reply {user: @stubs.user, room: @stubs.DM.id }, 'message'
     @stubs._sendCount.should.equal 1
     @stubs._dmmsg.should.equal "message"
+
+  it 'Should call the callback', (done) ->
+    @slackbot.reply {user: @stubs.user, room: @stubs.channel.id}, 'message', done
+    @stubs._sendCount.should.equal 1
+    @stubs._msg.should.equal "<@#{@stubs.user.id}>: message"
 
 describe 'Setting the channel topic', ->
 
