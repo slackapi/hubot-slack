@@ -236,6 +236,7 @@ class SlackBot extends Adapter
           @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (bot)"
           SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (error, message) =>
             return @robot.logger.error "Dropping message due to error #{error.message}" if error
+            @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (bot), message: #(message.text)"
             @receive message
           )
 
@@ -247,6 +248,7 @@ class SlackBot extends Adapter
           @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (human)"
           SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (error, message) =>
             return @robot.logger.error "Dropping message due to error #{error.message}" if error
+            @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (human), message: #(message.text)"
             @receive message
           )
 
