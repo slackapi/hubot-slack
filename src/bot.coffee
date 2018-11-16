@@ -84,10 +84,11 @@ class SlackBot extends Adapter
     callback = ->
     if typeof(messages[messages.length - 1]) == 'function'
       callback = messages.pop()
-    for message in messages
+    messagePromises = messages.map(message) ->
+      return Promise.resolve() if message?()
       # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
       @client.send(envelope, message) unless message is ""
-    Promise.all(messages).then(callback.bind(null, null), callback)
+    Promise.all(messagePromises).then(callback.bind(null, null), callback)
 
   ###*
   # Hubot is replying to a Slack message
@@ -99,12 +100,13 @@ class SlackBot extends Adapter
     callback = ->
     if typeof(messages[messages.length - 1]) == 'function'
       callback = messages.pop()
-    for message in messages
+    messagePromises = messages.map(message) ->
+      return Promise.resolve() if message?()
       if message isnt ""
         # TODO: channel prefix matching should be removed
         message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is "D"
         @client.send envelope, message
-    Promise.all(messages).then(callback.bind(null, null), callback)
+    Promise.all(messagePromises).then(callback.bind(null, null), callback)
 
   ###*
   # Hubot is setting the Slack conversation topic
