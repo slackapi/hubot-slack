@@ -84,7 +84,7 @@ class SlackBot extends Adapter
     callback = ->
     if typeof(messages[messages.length - 1]) == 'function'
       callback = messages.pop()
-    messagePromises = messages.map(message) ->
+    messagePromises = messages.map (message) ->
       return Promise.resolve() if message?()
       # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
       @client.send(envelope, message) unless message is ""
@@ -100,7 +100,7 @@ class SlackBot extends Adapter
     callback = ->
     if typeof(messages[messages.length - 1]) == 'function'
       callback = messages.pop()
-    messagePromises = messages.map(message) ->
+    messagePromises = messages.map (message) ->
       return Promise.resolve() if message?()
       if message isnt ""
         # TODO: channel prefix matching should be removed
