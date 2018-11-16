@@ -2,7 +2,7 @@
 {SlackTextMessage, ReactionMessage, PresenceMessage}                              = require "./message"
 SlackClient                                                                       = require "./client"
 pkg                                                                               = require "../package"
-Promise = global.Promise || require('es6-promise')
+Promise = require("bluebird");
 
 class SlackBot extends Adapter
 
