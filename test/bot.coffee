@@ -1,7 +1,7 @@
 should = require 'should'
 chai = require 'chai'
 { EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
-{ SlackTextMessage, ReactionMessage, PresenceMessage } = require '../src/message'
+{ SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage } = require '../src/message'
 SlackClient = require '../src/client'
 _ = require 'lodash'
 
@@ -22,6 +22,13 @@ describe 'Adapter', ->
     # This is a sanity check to ensure the @slackbot.robot stub is proper.
     @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
     @slackbot.robot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
+    
+  it 'Should add the `fileShared` method to the hubot `Robot` prototype', ->
+    Robot.prototype.fileShared.should.be.an.instanceOf(Function).with.lengthOf(3)
+    
+    # This is a sanity check to ensure the @slackbot.robot stub is proper.
+    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
+    @slackbot.robot.fileShared.should.be.an.instanceOf(Function).with.lengthOf(3)
 
 describe 'Connect', ->
   it 'Should connect successfully', ->
@@ -315,6 +322,16 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.item_user.id, @stubs.self.id
     should.equal @stubs._received.type, 'added'
     should.equal @stubs._received.reaction, 'thumbsup'
+    
+  it 'Should handle file_shared events as envisioned', ->
+    fileMessage = {
+      type: 'file_shared', user: @stubs.user,
+      file_id: 'F2147483862', event_ts: '1360782804.083113'
+    }
+    @slackbot.eventHandler fileMessage
+    should.equal (@stubs._received instanceof FileSharedMessage), true
+    should.equal @stubs._received.user.id, @stubs.user.id
+    should.equal @stubs._received.file_id, 'F2147483862'
 
 describe 'Robot.react DEPRECATED', ->
   before ->
