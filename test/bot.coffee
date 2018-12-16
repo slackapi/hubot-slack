@@ -379,6 +379,48 @@ describe 'Robot.react DEPRECATED', ->
     @slackbot.robot.react matcher, @handleReaction
     listener = @slackbot.robot.listeners.shift()
     listener.matcher(@reactionMessage).should.be.false
+    
+describe 'Robot.fileShared', ->
+  before -> 
+    user = { id: @stubs.user.id, room: @stubs.channel.id }
+    @fileSharedMessage = { type: "file_shared", file_id: "F2147483862", file: { "id": "F2147483862"} }
+    @handleFileShared = (msg) -> "#{msg.file_id} shared"
+
+  it 'Should register a Listener with callback only', ->
+    @slackbot.robot.fileShared @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: null})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+    
+  it 'Should register a Listener with opts and callback', ->
+    @slackbot.robot.fileShared {id: 'foobar'}, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: 'foobar'})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+
+  it 'Should register a Listener with matcher and callback', ->
+    matcher = (msg) -> msg.file_id == 'F2147483862'
+    @slackbot.robot.fileShared matcher, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: null})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+
+  it 'Should register a Listener with matcher, opts, and callback', ->
+    matcher = (msg) -> msg.file_id == 'F2147483862'
+    @slackbot.robot.fileShared matcher, {id: 'foobar'}, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: 'foobar'})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+
+  it 'Should register a Listener that does not match the ReactionMessage', ->
+    matcher = (msg) -> msg.file_id == 'J12387ALDFK'
+    @slackbot.robot.fileShared matcher, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.false
 
 describe 'Robot.hearReaction', ->
   before ->
