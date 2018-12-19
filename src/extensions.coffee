@@ -1,4 +1,9 @@
 {Robot}           = require.main.require "hubot"
+
+# Requires the es2015 version of Hubot for v3 or higher so the correct prototype is updated
+if Robot.name == "CoffeeScriptCompatibleClass"
+  {Robot} = require.main.require "hubot/es2015"
+
 {ReactionMessage, PresenceMessage} = require "./message"
 
 ###*
