@@ -1,34 +1,33 @@
 should = require 'should'
 chai = require 'chai'
-{ EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
+mockery = require 'mockery'
+hubotSlackMock = require '../slack.coffee'
+mockery.registerMock('hubot-slack', hubotSlackMock);
+
+{ EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot, loadBot } = require.main.require 'hubot'
 { SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage } = require '../src/message'
 SlackClient = require '../src/client'
 _ = require 'lodash'
 
 describe 'Adapter', ->
+  before ->
+    mockery.enable({
+      warnOnUnregistered: false
+    });
+  
+  after ->
+    mockery.disable()
+  
   it 'Should initialize with a robot', ->
     @slackbot.robot.should.eql @stubs.robot
 
-  it 'Should add the `react` method to the hubot `Robot` prototype', ->
-    Robot.prototype.react.should.be.an.instanceOf(Function).with.lengthOf(3)
-
-    # This is a sanity check to ensure the @slackbot.robot stub is proper.
-    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
-    @slackbot.robot.react.should.be.an.instanceOf(Function).with.lengthOf(3)
-
-  it 'Should add the `presenceChange` method to the hubot `Robot` prototype', ->
-    Robot.prototype.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
-
-    # This is a sanity check to ensure the @slackbot.robot stub is proper.
-    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
-    @slackbot.robot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
+  it 'Should load an instance of Robot with extended methods', ->
+    loadedRobot = loadBot('', 'slack', false, 'Hubot')
     
-  it 'Should add the `fileShared` method to the hubot `Robot` prototype', ->
-    Robot.prototype.fileShared.should.be.an.instanceOf(Function).with.lengthOf(3)
-    
-    # This is a sanity check to ensure the @slackbot.robot stub is proper.
-    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
-    @slackbot.robot.fileShared.should.be.an.instanceOf(Function).with.lengthOf(3)
+    # Check to make sure presenceChange and react are loaded to Robot
+    loadedRobot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
+    loadedRobot.react.should.be.an.instanceOf(Function).with.lengthOf(3)
+    loadedRobot.fileShared.should.be.an.instanceOf(Function).with.lengthOf(3)
 
 describe 'Connect', ->
   it 'Should connect successfully', ->
