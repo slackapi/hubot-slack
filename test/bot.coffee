@@ -382,7 +382,7 @@ describe 'Robot.react DEPRECATED', ->
 describe 'Robot.fileShared', ->
   before -> 
     user = { id: @stubs.user.id, room: @stubs.channel.id }
-    @fileSharedMessage = { type: "file_shared", file_id: "F2147483862", file: { "id": "F2147483862"} }
+    @fileSharedMessage = new FileSharedMessage(user, "F2147483862", '1360782804.083113')
     @handleFileShared = (msg) -> "#{msg.file_id} shared"
 
   it 'Should register a Listener with callback only', ->
