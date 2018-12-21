@@ -54,6 +54,7 @@ class SlackClient
     @rtm.on "presence_change", @eventWrapper, this
     @rtm.on "member_joined_channel", @eventWrapper, this
     @rtm.on "member_left_channel", @eventWrapper, this
+    @rtm.on "file_shared", @eventWrapper, this
     @rtm.on "user_change", @updateUserInBrain, this
     @eventHandler = undefined
 

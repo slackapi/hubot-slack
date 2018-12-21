@@ -1,10 +1,9 @@
 {Robot}           = require.main.require "hubot"
+{ReactionMessage, PresenceMessage, FileSharedMessage} = require "./message"
 
 # Requires the es2015 version of Hubot for v3 or higher so the correct prototype is updated
 if Robot.name == "CoffeeScriptCompatibleClass"
   {Robot} = require.main.require "hubot/es2015"
-
-{ReactionMessage, PresenceMessage} = require "./message"
 
 ###*
 # Adds a Listener for ReactionMessages with the provided matcher, options, and callback
@@ -71,5 +70,29 @@ Robot::presenceChange = (matcher, options, callback) ->
     options = matcher
 
   @listen matchPresence, options, callback
+  
+###*
+# Adds a Listener for FileSharedMessages with the provided matcher, options, and callback
+#
+# @public
+# @param {Function} [matcher] - a function to determine if the listener should run. must return something
+# truthy if it should and that value with be available on `response.match`.
+# @param {Object} [options] - an object of additional parameters keyed on extension name.
+# @param {Function} callback - a function that is called with a Response object if the matcher function returns true
+###
+Robot::fileShared = (matcher, options, callback) ->
+  matchFileShare = (msg) -> msg instanceof FileSharedMessage
+
+  if not options and not callback
+    return @listen matchFileShare, matcher
+
+  else if matcher instanceof Function
+    matchFileShare = (msg) -> msg instanceof FileSharedMessage && matcher(msg)
+
+  else
+    callback = options
+    options = matcher
+
+  @listen matchFileShare, options, callback
 
 # NOTE: extend Response type with a method for creating a new thread from the incoming message
