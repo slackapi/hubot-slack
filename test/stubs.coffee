@@ -247,6 +247,7 @@ beforeEach ->
     robot.react = Robot.prototype.react.bind(robot)
     robot.hearReaction = Robot.prototype.hearReaction.bind(robot)
     robot.presenceChange = Robot.prototype.presenceChange.bind(robot)
+    robot.fileShared = Robot.prototype.fileShared.bind(robot)
     robot
   @stubs.callback = do ->
     return "done"
