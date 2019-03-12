@@ -1,5 +1,5 @@
 {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage} = require.main.require "hubot"
-{SlackTextMessage, ReactionMessage, PresenceMessage}                              = require "./message"
+{SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage}           = require "./message"
 SlackClient                                                                       = require "./client"
 pkg                                                                               = require "../package"
 Promise = require("bluebird");
@@ -296,6 +296,18 @@ class SlackBot extends Adapter
 
       @robot.logger.debug "Received presence update message for users: #{u.id for u in users} with status: #{event.presence}"
       @receive new PresenceMessage(users, event.presence)
+      
+    else if event.type is "file_shared"
+    
+      # Once again Hubot expects all user objects to have a room property that is used in the envelope for the message
+      # after it is received. If the reaction is to a message, then the `event.item.channel` contain a conversation ID.
+      # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a
+      # conversation. In that situation we fallback to an empty string.
+      user.room = event.channel_id
+
+      @robot.logger.debug "Received file_shared message from: #{user.id}, file_id: #{event.file_id}"
+      @receive new FileSharedMessage(user, event.file_id, event.event_ts)
+
 
     # NOTE: we may want to wrap all other incoming events as a generic Message
     # else
