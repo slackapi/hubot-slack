@@ -13,6 +13,17 @@ class SlackClient
   @PAGE_SIZE = 100
 
   ###*
+  # Number of milliseconds which the information returned by `conversations.info` is considered to be valid. The default
+  # value is 5 minutes, and it can be customized by setting the `HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS` environment
+  # variable. Setting this number higher will reduce the number of requests made to the Web API, which may be helpful
+  # if your Hubot is experiencing rate limiting errors. However, setting this number too high will result in stale data
+  # being referenced, and your scripts may experience errors related to channel info (like the name) being incorrect
+  # after a user changes it in Slack.
+  # @private
+  ###
+  @CONVERSATION_CACHE_TTL_MS = process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS || (5 * 60 * 1000)
+
+  ###*
   # @constructor
   # @param {Object} options - Configuration options for this SlackClient instance
   # @param {string} options.token - Slack API token for authentication
@@ -56,6 +67,7 @@ class SlackClient
     @rtm.on "presence_change", @eventWrapper, this
     @rtm.on "member_joined_channel", @eventWrapper, this
     @rtm.on "member_left_channel", @eventWrapper, this
+    @rtm.on "file_shared", @eventWrapper, this
     @rtm.on "user_change", @updateUserInBrain, this
     @eventHandler = undefined
 
@@ -253,8 +265,8 @@ class SlackClient
   # @public
   ###
   fetchConversation: (conversationId) ->
-    # Current date minus 5 minutes (time of expiration for conversation info)
-    expiration = Date.now() - (5 * 60 * 1000)
+    # Current date minus time of expiration for conversation info
+    expiration = Date.now() - SlackClient.CONVERSATION_CACHE_TTL_MS
 
     # Check whether conversation is held in client's channelData map and whether information is expired
     return Promise.resolve(@channelData[conversationId].channel) if @channelData[conversationId]?.channel? and

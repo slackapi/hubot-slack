@@ -1,27 +1,33 @@
 should = require 'should'
 chai = require 'chai'
-{ EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot } = require.main.require 'hubot'
-{ SlackTextMessage, ReactionMessage, PresenceMessage } = require '../src/message'
+mockery = require 'mockery'
+hubotSlackMock = require '../slack.coffee'
+mockery.registerMock('hubot-slack', hubotSlackMock);
+
+{ EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot, loadBot } = require.main.require 'hubot'
+{ SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage } = require '../src/message'
 SlackClient = require '../src/client'
 _ = require 'lodash'
 
 describe 'Adapter', ->
+  before ->
+    mockery.enable({
+      warnOnUnregistered: false
+    });
+  
+  after ->
+    mockery.disable()
+  
   it 'Should initialize with a robot', ->
     @slackbot.robot.should.eql @stubs.robot
 
-  it 'Should add the `react` method to the hubot `Robot` prototype', ->
-    Robot.prototype.react.should.be.an.instanceOf(Function).with.lengthOf(3)
-
-    # This is a sanity check to ensure the @slackbot.robot stub is proper.
-    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
-    @slackbot.robot.react.should.be.an.instanceOf(Function).with.lengthOf(3)
-
-  it 'Should add the `presenceChange` method to the hubot `Robot` prototype', ->
-    Robot.prototype.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
-
-    # This is a sanity check to ensure the @slackbot.robot stub is proper.
-    @slackbot.robot.listen.should.be.an.instanceOf(Function).with.lengthOf(3)
-    @slackbot.robot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
+  it 'Should load an instance of Robot with extended methods', ->
+    loadedRobot = loadBot('', 'slack', false, 'Hubot')
+    
+    # Check to make sure presenceChange and react are loaded to Robot
+    loadedRobot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3)
+    loadedRobot.react.should.be.an.instanceOf(Function).with.lengthOf(3)
+    loadedRobot.fileShared.should.be.an.instanceOf(Function).with.lengthOf(3)
 
 describe 'Connect', ->
   it 'Should connect successfully', ->
@@ -315,6 +321,16 @@ describe 'Handling incoming messages', ->
     should.equal @stubs._received.item_user.id, @stubs.self.id
     should.equal @stubs._received.type, 'added'
     should.equal @stubs._received.reaction, 'thumbsup'
+    
+  it 'Should handle file_shared events as envisioned', ->
+    fileMessage = {
+      type: 'file_shared', user: @stubs.user,
+      file_id: 'F2147483862', event_ts: '1360782804.083113'
+    }
+    @slackbot.eventHandler fileMessage
+    should.equal (@stubs._received instanceof FileSharedMessage), true
+    should.equal @stubs._received.user.id, @stubs.user.id
+    should.equal @stubs._received.file_id, 'F2147483862'
 
 describe 'Robot.react DEPRECATED', ->
   before ->
@@ -362,6 +378,48 @@ describe 'Robot.react DEPRECATED', ->
     @slackbot.robot.react matcher, @handleReaction
     listener = @slackbot.robot.listeners.shift()
     listener.matcher(@reactionMessage).should.be.false
+    
+describe 'Robot.fileShared', ->
+  before -> 
+    user = { id: @stubs.user.id, room: @stubs.channel.id }
+    @fileSharedMessage = new FileSharedMessage(user, "F2147483862", '1360782804.083113')
+    @handleFileShared = (msg) -> "#{msg.file_id} shared"
+
+  it 'Should register a Listener with callback only', ->
+    @slackbot.robot.fileShared @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: null})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+    
+  it 'Should register a Listener with opts and callback', ->
+    @slackbot.robot.fileShared {id: 'foobar'}, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: 'foobar'})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+
+  it 'Should register a Listener with matcher and callback', ->
+    matcher = (msg) -> msg.file_id == 'F2147483862'
+    @slackbot.robot.fileShared matcher, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: null})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+
+  it 'Should register a Listener with matcher, opts, and callback', ->
+    matcher = (msg) -> msg.file_id == 'F2147483862'
+    @slackbot.robot.fileShared matcher, {id: 'foobar'}, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.true
+    listener.options.should.eql({id: 'foobar'})
+    listener.callback(@fileSharedMessage).should.eql('F2147483862 shared')
+
+  it 'Should register a Listener that does not match the ReactionMessage', ->
+    matcher = (msg) -> msg.file_id == 'J12387ALDFK'
+    @slackbot.robot.fileShared matcher, @handleFileShared
+    listener = @slackbot.robot.listeners.shift()
+    listener.matcher(@fileSharedMessage).should.be.false
 
 describe 'Robot.hearReaction', ->
   before ->
