@@ -398,4 +398,7 @@ class SlackClient
 # @param {Array<SlackUserInfo>} results.members
 ###
 
+if SlackClient.CONVERSATION_CACHE_TTL_MS is NaN
+  throw new Error('HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS must be a number. It could not be parsed.')
+
 module.exports = SlackClient
