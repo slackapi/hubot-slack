@@ -18,6 +18,9 @@ dev4slack_channel: sdk-hubot-slack
 twitter_username: SlackAPI
 github_username:  SlackAPI
 
+google_analytics: UA-56978219-13
+google_tag_manager: GTM-KFZ5MK7
+
 include: ['_pages']
 
 # Build settings
