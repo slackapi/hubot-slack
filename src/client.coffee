@@ -15,13 +15,16 @@ class SlackClient
   ###*
   # Number of milliseconds which the information returned by `conversations.info` is considered to be valid. The default
   # value is 5 minutes, and it can be customized by setting the `HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS` environment
-  # variable. Setting this number higher will reduce the number of requests made to the Web API, which may be helpful
-  # if your Hubot is experiencing rate limiting errors. However, setting this number too high will result in stale data
+  # variable. Setting this number higher will reduce the number of requests made to the Web API, which may be helpful if
+  # your Hubot is experiencing rate limiting errors. However, setting this number too high will result in stale data
   # being referenced, and your scripts may experience errors related to channel info (like the name) being incorrect
   # after a user changes it in Slack.
   # @private
   ###
-  @CONVERSATION_CACHE_TTL_MS = process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS || (5 * 60 * 1000)
+  @CONVERSATION_CACHE_TTL_MS =
+    if process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS
+    then parseInt(process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS, 10)
+    else (5 * 60 * 1000)
 
   ###*
   # @constructor
@@ -410,5 +413,8 @@ class SlackClient
 # @param {Object} results
 # @param {Array<SlackUserInfo>} results.members
 ###
+
+if SlackClient.CONVERSATION_CACHE_TTL_MS is NaN
+  throw new Error('HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS must be a number. It could not be parsed.')
 
 module.exports = SlackClient
