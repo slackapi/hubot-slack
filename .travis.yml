@@ -18,7 +18,4 @@ after_success:
 # by the `env` specified in the matrix. That lets us test against
 # multiple Hubot versions. This is a bit messy, but works around
 # package.json only being able to specify one version.
-script:
-  - npm install &&\
-    npm install hubot@"$HUBOT_VERSION" coffeescript@"$COFFEESCRIPT_VERSION" &&\
-    npm test
+script: npm install && npm install hubot@"$HUBOT_VERSION" coffeescript@"$COFFEESCRIPT_VERSION" && npm test
