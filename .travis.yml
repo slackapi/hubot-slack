@@ -9,12 +9,16 @@ node_js:
   - "4"
   - "4.2"
 env:
-  - HUBOT_VERSION=">=2.0 <3"
-  - HUBOT_VERSION="^3.0"
+  - HUBOT_VERSION=">=2.0 <3" COFFEESCRIPT_VERSION=">=1.6.3 <2.0"
+  - HUBOT_VERSION="^3.0" COFFEESCRIPT_VERSION=">=1.6.3 <2.0"
+  - HUBOT_VERSION="^3.0" COFFEESCRIPT_VERSION="^2.0"
 after_success:
   - npm run codecov
 # The second step here installs the specific hubot version determined
 # by the `env` specified in the matrix. That lets us test against
 # multiple Hubot versions. This is a bit messy, but works around
 # package.json only being able to specify one version.
-script: npm install && npm install hubot@"$HUBOT_VERSION" && npm test
+script:
+  - npm install &&\
+    npm install hubot@"$HUBOT_VERSION" coffeescript@"$COFFEESCRIPT_VERSION" &&\
+    npm test
