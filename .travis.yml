@@ -12,6 +12,10 @@ env:
   - HUBOT_VERSION=">=2.0 <3" COFFEESCRIPT_VERSION=">=1.6.3 <2.0"
   - HUBOT_VERSION="^3.0" COFFEESCRIPT_VERSION=">=1.6.3 <2.0"
   - HUBOT_VERSION="^3.0" COFFEESCRIPT_VERSION="^2.0"
+# Excluding tests with Coffeescript 2 on nodejs version <= 5
+# because the syntax incompatible issue. Coffeescript 2 use
+# destructuring assignment syntax at https://git.io/fjcq2 but
+# nodejs <= 5 doesn't support.
 matrix:
   exclude:
     - node_js: "4.2"
