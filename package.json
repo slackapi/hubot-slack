@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npm run mocha && istanbul report text-summary lcov",
     "codecov": "codecov",
-    "mocha": "mocha --compilers coffee:coffeescript/register --require coffee-coverage/register-istanbul --reporter spec test"
+    "mocha": "mocha --require coffeescript/register --require coffee-coverage/register-istanbul --reporter spec test/*.coffee"
   },
   "keywords": [
     "hubot",
