@@ -3,6 +3,8 @@
 SlackClient                                                                       = require "./client"
 pkg                                                                               = require "../package"
 
+Events      = require("@slack/client").CLIENT_EVENTS
+
 class SlackBot extends Adapter
 
   ###*
@@ -39,6 +41,7 @@ class SlackBot extends Adapter
     @client.rtm.on "close", @close
     @client.rtm.on "disconnect", @disconnect
     @client.rtm.on "error", @error
+    @client.web.on Events.WEB.RATE_LIMITED, @rate_limited
     @client.rtm.on "authenticated", @authenticated
     @client.onEvent @eventHandler
 
@@ -206,9 +209,20 @@ class SlackBot extends Adapter
   error: (error) =>
     @robot.logger.error "Slack RTM error: #{JSON.stringify error}"
     # Assume that scripts can handle slowing themselves down, all other errors are bubbled up through Hubot
-    # NOTE: should rate limit errors also bubble up?
     if error.code isnt -1
       @robot.emit "error", error
+    else
+      # The actual duration of the rate limit isn't exposed. :(
+      @rate_limited(-1)
+
+  ###*
+  # Bubbles up rate-limit info, allowing the bot to react
+  #
+  # @private
+  # @param {number seconds}
+  ###
+  rate_limited: (seconds) ->
+    @robot.emit "slack-rate-limit", seconds
 
   ###*
   # Incoming Slack event handler
