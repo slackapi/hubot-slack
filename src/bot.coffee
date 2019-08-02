@@ -3,7 +3,7 @@
 SlackClient                                                                       = require "./client"
 pkg                                                                               = require "../package"
 
-Events      = require("@slack/client").CLIENT_EVENTS
+Events                                                                            = require("@slack/client").CLIENT_EVENTS
 
 class SlackBot extends Adapter
 
