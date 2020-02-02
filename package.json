@@ -1,12 +1,12 @@
 {
   "name": "hubot-slack",
-  "version": "4.6.0",
+  "version": "4.7.1",
   "description": "A Slack adapter for hubot",
   "main": "./slack",
   "scripts": {
     "test": "npm run mocha && istanbul report text-summary lcov",
     "codecov": "codecov",
-    "mocha": "mocha --compilers coffee:coffeescript/register --require coffee-coverage/register-istanbul --reporter spec test"
+    "mocha": "mocha --require coffeescript/register --require coffee-coverage/register-istanbul --reporter spec test/*.coffee"
   },
   "keywords": [
     "hubot",
@@ -33,12 +33,12 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "codecov": "^2.3.1",
+    "codecov": "^3.2.0",
     "coffee-coverage": "^2.0.0",
     "coffeescript": "^1.12.7",
     "hubot": ">= 2.19.0",
     "istanbul": "^0.4.3",
-    "mocha": "^3.5.3",
+    "mocha": "^4.1.0",
     "mockery": "^2.1.0",
     "should": "^8.0.0"
   },
