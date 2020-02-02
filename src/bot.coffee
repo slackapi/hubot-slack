@@ -83,10 +83,10 @@ class SlackBot extends Adapter
   ###
   send: (envelope, messages...) ->
     callback = ->
-    if typeof(messages[messages.length - 1]) == 'function'
+    if typeof(messages[messages.length - 1]) == "function"
       callback = messages.pop()
     messagePromises = messages.map (message) =>
-      return Promise.resolve() if typeof(message) is 'function'
+      return Promise.resolve() if typeof(message) is "function"
       # NOTE: perhaps do envelope manipulation here instead of in the client (separation of concerns)
       @client.send(envelope, message) unless message is ""
     Promise.all(messagePromises).then(callback.bind(null, null), callback)
@@ -99,10 +99,10 @@ class SlackBot extends Adapter
   ###
   reply: (envelope, messages...) ->
     callback = ->
-    if typeof(messages[messages.length - 1]) == 'function'
+    if typeof(messages[messages.length - 1]) == "function"
       callback = messages.pop()
     messagePromises = messages.map (message) =>
-      return Promise.resolve() if typeof(message) is 'function'
+      return Promise.resolve() if typeof(message) is "function"
       if message isnt ""
         # TODO: channel prefix matching should be removed
         message = "<@#{envelope.user.id}>: #{message}" unless envelope.room[0] is "D"
