@@ -245,6 +245,7 @@ class SlackClient
     return Promise.resolve(@botUserIdMap[botId]) if @botUserIdMap[botId]?
 
     # Bot user is not in mapping - call bots.info
+    @robot.logger.debug "SlackClient#fetchBotUser() Calling bots.info API for bot_id: #{botId}"
     @web.bots.info(bot: botId).then((r) => r.bot)
 
   ###*
@@ -331,9 +332,13 @@ class SlackClient
     if @eventHandler
       # fetch full representations of the user, bot, and potentially the item_user.
       fetches = {}
-      fetches.user = @fetchUser event.user if event.user
-      fetches.bot = @fetchBotUser event.bot_id if event.bot_id
-      fetches.item_user = @fetchUser event.item_user if event.item_user
+      if event.bot_id
+        fetches.bot = @fetchBotUser event.bot_id
+      else if event.user
+        fetches.user = @fetchUser event.user
+
+      if event.item_user
+        fetches.item_user = @fetchUser event.item_user
 
       # after fetches complete...
       Promise.props(fetches)
