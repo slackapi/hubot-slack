@@ -238,7 +238,7 @@ class SlackBot extends Adapter
 
       # Hubot expects all user objects to have a room property that is used in the envelope for the message after it
       # is received
-      user.room = if channel? then channel else ""
+      user.room = channel ? ""
 
       switch event.subtype
         when "bot_message"
