@@ -15,8 +15,9 @@ class SlackBot extends Adapter
   # @param {Object} options.rtm - RTM configuration options for SlackClient
   # @param {Object} options.rtmStart - options for `rtm.start` Web API method
   ###
-  constructor: (@robot, @options) ->
-    super
+  constructor: (robot, @options) ->
+    super robot
+    @robot = robot
     @robot.logger.info "hubot-slack adapter v#{pkg.version}"
     @client = new SlackClient @options, @robot
 
@@ -296,9 +297,9 @@ class SlackBot extends Adapter
 
       @robot.logger.debug "Received presence update message for users: #{u.id for u in users} with status: #{event.presence}"
       @receive new PresenceMessage(users, event.presence)
-      
+
     else if event.type is "file_shared"
-    
+
       # Once again Hubot expects all user objects to have a room property that is used in the envelope for the message
       # after it is received. If the reaction is to a message, then the `event.item.channel` contain a conversation ID.
       # Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a
