@@ -281,13 +281,17 @@ class SlackBot extends Adapter
       # this event type always has a channel
       user.room = channel
       @robot.logger.debug "Received enter message for user: #{user.id}, joining: #{channel}"
-      @receive new EnterMessage user
+      msg = new EnterMessage user
+      msg.ts = event.ts
+      @receive msg
 
     else if event.type is "member_left_channel"
       # this event type always has a channel
       user.room = channel
       @robot.logger.debug "Received leave message for user: #{user.id}, joining: #{channel}"
-      @receive new LeaveMessage user
+      msg = new LeaveMessage user
+      msg.ts = event.ts
+      @receive msg
 
     else if event.type is "reaction_added" or event.type is "reaction_removed"
 

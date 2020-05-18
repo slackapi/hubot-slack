@@ -223,13 +223,23 @@ describe 'Handling incoming messages', ->
     return
 
   it 'Should handle member_joined_channel events as envisioned', ->
-    @slackbot.eventHandler {type: 'member_joined_channel', user: @stubs.user, channel: @stubs.channel.id}
+    @slackbot.eventHandler
+      type: 'member_joined_channel'
+      user: @stubs.user
+      channel: @stubs.channel.id
+      ts: @stubs.event_timestamp
     should.equal @stubs._received.constructor.name, "EnterMessage"
+    should.equal @stubs._received.ts, @stubs.event_timestamp
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle member_left_channel events as envisioned', ->
-    @slackbot.eventHandler {type: 'member_left_channel', user: @stubs.user, channel: @stubs.channel.id}
+    @slackbot.eventHandler
+      type: 'member_left_channel'
+      user: @stubs.user
+      channel: @stubs.channel.id
+      ts: @stubs.event_timestamp
     should.equal @stubs._received.constructor.name, "LeaveMessage"
+    should.equal @stubs._received.ts, @stubs.event_timestamp
     @stubs._received.user.id.should.equal @stubs.user.id
 
   it 'Should handle channel_topic events as envisioned', ->
