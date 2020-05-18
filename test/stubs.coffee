@@ -112,6 +112,7 @@ beforeEach ->
     name: 'Example Team'
     id: 'T123'
   @stubs.expired_timestamp = 1528238205453
+  @stubs.event_timestamp = '1360782804.083113'
 
   # Slack client
   @stubs.client =
