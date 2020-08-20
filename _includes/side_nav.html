@@ -1,0 +1,22 @@
+<div id="api_sections">
+
+    {% assign sorted_pages = site.pages | where_exp:"page", "page.name != 'style.scss'" | where_exp:"page", "page.name != 'docs.css'" | sort:"order" %}
+    
+    {% for node in sorted_pages %}
+        {% if node.hidden != true %}
+    <div class="sidebar_menu">
+        <h5><a href="{{ node.url | prepend: site.baseurl }}" class="{% if page.url == node.url %}is_active{% endif %}">{% if node.title %}{{ node.title }}{% else %}{{ site.title }}{% endif %}</a></h5>
+        <ul class="sidebar_menu_list">
+            {% if node.headings %}
+                {% for heading in node.headings %}
+                    {% assign anchor = heading.title | downcase | replace: " ", "-" | remove: ":" |  remove: "," | remove: "'" | remove: "." | remove: "?" | remove: "!" %}
+                    <li><a href="{{ node.url | prepend: site.baseurl }}#{{ anchor }}" class="sidebar_menu_list_item">{{ heading.title }}</a></li>
+                {% endfor %}
+                {% endif %}
+            
+        </ul>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+</div>
