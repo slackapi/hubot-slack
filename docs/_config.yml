@@ -12,7 +12,7 @@ email: opensource@slack.com
 description: >
   Write Hubot scripts to run in your Slack team.
 baseurl: /hubot-slack
-url: http://slackapi.github.io
+url: http://slack.dev
 repo_name: hubot-slack
 dev4slack_channel: sdk-hubot-slack
 twitter_username: SlackAPI
