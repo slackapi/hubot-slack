@@ -49,7 +49,7 @@ Next, you'll need a token from Slack to authenticate your Hubot. Use one of the 
     2. Navigate to the Bot User page and add a bot user. The display name is the name your team will use to mention your Hubot in Slack.
     3. Navigate to the Install App page and install the app into the workspace. Once you've authorized the installation, you'll be taken back to the Install App page, but this time you'll have a **Bot OAuth Access Token**. Copy that value, it will be your Slack token.
 
-    **⚠️** Although the admin pages encourages you to upgrade your app's OAuth scopes to the latest model, please do not upgrade as long as you use it along with Hubot. The latest permission model doesn't support RTM API, the underlying API of Hubot adapter.
+    **⚠️** Although the admin page encourages you to upgrade your app's OAuth scope, please do not do so. The latest permission model does not support the RTM API, which is the underlying API of the Hubot adapter.
 
 - **Create a configuration of the Hubot Integration**: The [Hubot Integration](https://my.slack.com/apps/A0F7XDU93-hubot) is an older way to use the Slack platform. It's main advantage is you get more permissions out of the box. For some more-security-sensitive people, this might be a disadvantage. From the above link click Install, choose a username, and finish by clicking Add Hubot Integration. Onthe next page, you'll see an **API Token**. Copy that value, it will be your Slack token.
 
