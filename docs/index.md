@@ -51,7 +51,9 @@ Next, you'll need a token from Slack to authenticate your Hubot. Use one of the 
 
     **⚠️** Although the admin page encourages you to upgrade your app's OAuth scope, please do not do so. The latest permission model does not support the RTM API, which is the underlying API of the Hubot adapter.
 
-- **Create a configuration of the Hubot Integration**: The [Hubot Integration](https://my.slack.com/apps/A0F7XDU93-hubot) is an older way to use the Slack platform. It's main advantage is you get more permissions out of the box. For some more-security-sensitive people, this might be a disadvantage. From the above link click Install, choose a username, and finish by clicking Add Hubot Integration. Onthe next page, you'll see an **API Token**. Copy that value, it will be your Slack token.
+- **Create a configuration of the Hubot Integration**: The [Hubot Integration](https://my.slack.com/apps/A0F7XDU93-hubot) is an older way to use the Slack platform. Its main advantage is that you get more permissions out of the box. For those concerned with security, this may be undesirable and should be taken into consideration. 
+
+From the link above, click Install, choose a username, and finish by clicking Add Hubot Integration. On the following page, you'll see an **API Token**. Copy that value, as it will be your Slack token.
 
 ## Running Hubot
 
