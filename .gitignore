@@ -5,3 +5,5 @@ coverage
 *.log
 docs/_site
 docs/.ruby-version
+docs/vendor/
+.vscode/
