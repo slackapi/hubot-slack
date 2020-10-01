@@ -43,7 +43,7 @@ Yeoman will ask you a few easy questions about your project and fill your direct
 
 Next, you'll need a token from Slack to authenticate your Hubot. Use one of the following choices:
 
-- **Create a [Classic Slack App]((https://api.slack.com/authentication/migration#classic)) with a Bot User (recommended)**: Slack apps are a container for many capabilities in the Slack platform, and let you access those capabilities in a single place. This is the recommended choice because it allows room for your Hubot to grow. To begin, you just need a Bot User.
+- **Create a [Classic Slack App](https://api.slack.com/authentication/migration#classic) with a Bot User (recommended)**: Slack apps are a container for many capabilities in the Slack platform, and let you access those capabilities in a single place. This is the recommended choice because it allows room for your Hubot to grow. To begin, you just need a Bot User.
 
     1. Create a new [Classic Slack app](https://api.slack.com/authentication/migration#classic) at the [app management page](https://api.slack.com/apps?new_classic_app=1). Pick a clever name and choose the workspace you want Hubot installed in.
     2. Navigate to the Bot User page and add a bot user. The display name is the name your team will use to mention your Hubot in Slack.
