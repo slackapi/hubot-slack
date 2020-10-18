@@ -188,6 +188,13 @@ describe 'Handling incoming messages', ->
     @slackbot.eventHandler {type: 'message', text: 'foo', user: @stubs.user, channel: @stubs.channel.id }
     return
 
+  it 'Should handle broadcasted messages', (done) ->
+    @stubs.receiveMock.onReceived = (msg) ->
+      msg.text.should.equal 'foo'
+      done()
+    @slackbot.eventHandler {type: 'message', text: 'foo', subtype: 'thread_broadcast', user: @stubs.user, channel: @stubs.channel.id }
+    return
+
   it 'Should prepend our name to a name-lacking message addressed to us in a DM', ->
     bot_name = @slackbot.robot.name
     @stubs.receiveMock.onReceived = (msg) ->
