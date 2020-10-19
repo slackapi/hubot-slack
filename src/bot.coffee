@@ -270,7 +270,7 @@ class SlackBot extends Adapter
           @robot.logger.debug "Received topic change message in conversation: #{channel}, new topic: #{event.topic}, set by: #{user.id}"
           @receive new TopicMessage user, event.topic, event.ts
 
-        when undefined
+        when "thread_broadcast", undefined
           @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (human)"
           SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, @robot.name, @robot.alias, @client, (error, message) =>
             return @robot.logger.error "Dropping message due to error #{error.message}" if error
