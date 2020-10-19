@@ -6,9 +6,10 @@ node_js:
   - "8"
   - "7"
   - "6"
-  - "5"
-  - "4"
-  - "4.2"
+  # https://github.com/slackapi/hubot-slack/pull/610#issuecomment-711818918
+  #- "5"
+  #- "4"
+  #- "4.2"
 env:
   - HUBOT_VERSION=">=2.0 <3"
   - HUBOT_VERSION="^3.0"
