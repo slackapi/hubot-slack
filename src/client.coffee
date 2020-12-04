@@ -28,6 +28,7 @@ class SlackClient
   # @constructor
   # @param {Object} options - Configuration options for this SlackClient instance
   # @param {string} options.token - Slack API token for authentication
+  # @param {string} options.apiPageSize - Slack API page size
   # @param {Object} [options.rtm={}] - Configuration options for owned RtmClient instance
   # @param {Object} [options.rtmStart={}] - Configuration options for RtmClient#start() method
   # @param {boolean} [options.noRawText=false] - Deprecated: All SlackTextMessages (subtype of TextMessage) will contain
@@ -42,6 +43,9 @@ class SlackClient
     # this object's API. The property is no longer used internally.
     @rtm = new RtmClient options.token, options.rtm
     @web = new WebClient options.token, { maxRequestConcurrency: 1 }
+
+    unless isNaN(options.apiPageSize)
+      SlackClient.PAGE_SIZE = parseInt(options.apiPageSize, 10)
 
     @robot.logger.debug "RtmClient initialized with options: #{JSON.stringify(options.rtm)}"
     @rtmStartOpts = options.rtmStart || {}
