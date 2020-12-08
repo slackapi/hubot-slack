@@ -5,12 +5,6 @@ SlackFormatter         = require "./formatter"
 
 class SlackClient
   ###*
-  # Number used for limit when making paginated requests to Slack Web API list methods
-  # @private
-  ###
-  @PAGE_SIZE = 100
-
-  ###*
   # Number of milliseconds which the information returned by `conversations.info` is considered to be valid. The default
   # value is 5 minutes, and it can be customized by setting the `HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS` environment
   # variable. Setting this number higher will reduce the number of requests made to the Web API, which may be helpful if
@@ -28,7 +22,7 @@ class SlackClient
   # @constructor
   # @param {Object} options - Configuration options for this SlackClient instance
   # @param {string} options.token - Slack API token for authentication
-  # @param {string} options.apiPageSize - Slack API page size
+  # @param {string} options.apiPageSize - Number used for limit when making paginated requests to Slack Web API list methods
   # @param {Object} [options.rtm={}] - Configuration options for owned RtmClient instance
   # @param {Object} [options.rtmStart={}] - Configuration options for RtmClient#start() method
   # @param {boolean} [options.noRawText=false] - Deprecated: All SlackTextMessages (subtype of TextMessage) will contain
@@ -43,9 +37,10 @@ class SlackClient
     # this object's API. The property is no longer used internally.
     @rtm = new RtmClient options.token, options.rtm
     @web = new WebClient options.token, { maxRequestConcurrency: 1 }
-
+    
+    @apiPageSize = 100
     unless isNaN(options.apiPageSize)
-      SlackClient.PAGE_SIZE = parseInt(options.apiPageSize, 10)
+      @apiPageSize = parseInt(options.apiPageSize, 10)
 
     @robot.logger.debug "RtmClient initialized with options: #{JSON.stringify(options.rtm)}"
     @rtmStartOpts = options.rtmStart || {}
@@ -221,13 +216,13 @@ class SlackClient
       if results?.response_metadata?.next_cursor
         # fetch next page
         @web.users.list({
-          limit: SlackClient.PAGE_SIZE,
+          limit: @apiPageSize,
           cursor: results.response_metadata.next_cursor
         }, pageLoaded)
       else
         # pagination complete, run callback with results
         callback(null, combinedResults)
-    @web.users.list({ limit: SlackClient.PAGE_SIZE }, pageLoaded)
+    @web.users.list({ limit: @apiPageSize }, pageLoaded)
 
   ###*
   # Fetch user info from the brain. If not available, call users.info
