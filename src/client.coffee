@@ -38,7 +38,7 @@ class SlackClient
     @rtm = new RtmClient options.token, options.rtm
     @web = new WebClient options.token, { maxRequestConcurrency: 1 }
     
-    @apiPageSize = 200
+    @apiPageSize = 100
     unless isNaN(options.apiPageSize)
       @apiPageSize = parseInt(options.apiPageSize, 10)
 
