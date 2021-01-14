@@ -332,10 +332,10 @@ class SlackClient
     if @eventHandler
       # fetch full representations of the user, bot, and potentially the item_user.
       fetches = {}
-      if event.bot_id
-        fetches.bot = @fetchBotUser event.bot_id
-      else if event.user
+      if event.user
         fetches.user = @fetchUser event.user
+      else if event.bot_id
+        fetches.bot = @fetchBotUser event.bot_id
 
       if event.item_user
         fetches.item_user = @fetchUser event.item_user
