@@ -25,3 +25,8 @@ jobs:
     - name: Run tests
       run: |
         npm test
+    - name: Send code coverage
+      run: |
+        if [[ "${{ matrix.hubot-version }}" == "^3.0" && "${{ matrix.node-version }}" == "14.x" ]]; then
+          npm run codecov
+        fi
