@@ -1,6 +1,6 @@
 {
   "name": "hubot-slack",
-  "version": "4.8.1",
+  "version": "4.9.0",
   "description": "A Slack adapter for hubot",
   "main": "./slack",
   "scripts": {
