@@ -13,6 +13,7 @@ class SlackBot extends Adapter
   # @param {Object} options - configuration options for the adapter
   # @param {string} options.token - authentication token for Slack APIs
   # @param {Boolean} options.disableUserSync - disables syncing all user data on start
+  # @param {string} options.apiPageSize - sets Slack API page size
   # @param {Boolean} options.installedTeamOnly - reacts to only messages by insalled workspace users in a shared channel
   # @param {Object} options.rtm - RTM configuration options for SlackClient
   # @param {Object} options.rtmStart - options for `rtm.start` Web API method
