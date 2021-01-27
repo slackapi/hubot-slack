@@ -21,7 +21,7 @@ coffeescript syntax. This ensures that backwards compatibility is tested and the
 ### Generating Documentation
 
 The source files are contained in the `docs` directory.  The documentation is built using [Jekyll](https://jekyllrb.com/) and hosted with GitHub Pages. The documentation is built automatically with each
-merge to `master` on GitHub.
+merge to `main` on GitHub.
 
 ### Releasing
 
@@ -31,11 +31,11 @@ merge to `master` on GitHub.
     *  Commit with a message including the new version number. For example `v1.0.8`.
     *  Tag the commit with the version number. For example `v1.0.8`.
 
-2.  Merge into master repository
+2.  Merge into main repository
     *  Create a pull request with the commit that was just made. Be certain to include the tag. For
-       example: `git push username master:rel-v1.0.8 && git push --tags username`.
+       example: `git push username main:rel-v1.0.8 && git push --tags username`.
     *  Once tests pass and a reviewer has approved, merge the pull request. You will also want to
-       update your local `master` branch.
+       update your local `main` branch.
 
 3.  Distribute the release
     *  Publish to the package manager. Once you have permission to publish on npm, you can run `npm publish`.
@@ -58,7 +58,7 @@ using git.
 
 ### Branches
 
-`master` is where active development occurs. Long running named feature branches are occasionally
+`main` is where active development occurs. Long running named feature branches are occasionally
 created for collaboration on a feature that has a large scope (because everyone cannot push commits
 to another person's open Pull Request). At some point in the future after a major version increment,
 there may be maintenance branches for older major versions.
