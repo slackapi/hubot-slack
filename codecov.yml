@@ -1,3 +1,11 @@
 ignore:
   - slack.coffee
   - test/*
+coverage:
+  status:
+    project:
+      default:
+        threshold: 2.0%
+    patch:
+      default:
+        target: 50%
