@@ -145,6 +145,26 @@ describe 'onEvent()', ->
       done()
     ), 0);
   
+  it 'should use user instead of bot_id', (done) ->
+    @client.onEvent (message) =>
+      message.should.be.ok
+      message.user.id.should.equal @stubs.user.id
+      done()
+
+    @client.botUserIdMap[@stubs.bot.id] = @stubs.userperiod
+    @client.rtm.emit('message', {
+      type: 'message',
+      bot_id: @stubs.bot.id,
+      user: @stubs.user.id,
+      channel: @stubs.channel.id,
+      text: 'blah'
+    })
+
+    setTimeout(( =>
+      @stubs.robot.logger.logs.should.not.have.property('error')
+    ), 0);
+
+
 describe 'on() - DEPRECATED', ->
   it 'Should register events on the RTM stream', ->
     event = undefined
