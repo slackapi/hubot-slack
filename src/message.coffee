@@ -103,6 +103,22 @@ class SlackTextMessage extends TextMessage
     # base text
     text = if @rawMessage.text? then @rawMessage.text else ""
 
+    # Catch and consume thread arguments
+    pos = text.indexOf(" --thread_broadcast")
+    if pos > -1
+      text = text.substring(0, pos) + text.substring(pos + 19)
+      @requestedThreadStyle = 2
+
+    pos = text.indexOf(" --nothread")
+    if pos > -1
+      text = text.substring(0, pos) + text.substring(pos + 11)
+      @requestedThreadStyle = 0
+
+    pos = text.indexOf(" --thread")
+    if pos > -1
+      text = text.substring(0, pos) + text.substring(pos + 9)
+      @requestedThreadStyle = 1
+
     # flatten any attachments into text
     if @rawMessage.attachments
       attachment_text = @rawMessage.attachments.map((a) -> a.fallback).join("\n")

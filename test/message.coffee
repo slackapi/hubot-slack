@@ -156,6 +156,33 @@ describe 'buildText()', ->
     message.buildText @client, () ->
       message.text.should.equal 'foo bar\nfirst\nsecond'
 
+  it 'Should ignore requestedThreadStyle if not set', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo bar'
+    message.buildText @client, () ->
+      message.text.should.equal('foo bar')
+      should.equal message.requestedThreadStyle, undefined
+
+  it 'Should consume `--thread` argument', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo --thread'
+    message.buildText @client, () ->
+      message.text.should.equal('foo')
+      message.requestedThreadStyle.should.equal 1
+
+  it 'Should consume `--thread_broadcast` argument', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo --thread_broadcast'
+    message.buildText @client, () ->
+      message.text.should.equal('foo')
+      message.requestedThreadStyle.should.equal 2
+
+  it 'Should consume `--nothread` argument', ->
+    message = @slacktextmessage
+    message.rawMessage.text = 'foo --nothread'
+    message.buildText @client, () ->
+      message.text.should.equal('foo')
+      message.requestedThreadStyle.should.equal 0
 
 describe 'replaceLinks()', ->
 

@@ -188,7 +188,8 @@ class SlackClient
       # when the incoming message was inside a thread, send responses as replies to the thread
       # NOTE: consider building a new (backwards-compatible) format for room which includes the thread_ts.
       # e.g. "#{conversationId} #{thread_ts}" - this would allow a portable way to say the message is in a thread
-      thread_ts: envelope.message?.thread_ts
+      thread_ts: envelope.message?.thread_ts,
+      reply_broadcast: envelope.message?.reply_broadcast
 
     if typeof message isnt "string"
       @web.chat.postMessage(room, message.text, _.defaults(message, options))
