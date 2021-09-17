@@ -15,5 +15,4 @@ jobs:
           java --version
           google-chrome --version
           npm install -g yo generator-hubot
-          mkdir my-awesome-hubot && cd my-awesome-hubot
           yo hubot $HUBOT_SLACK_TOKEN --adapter=slack
