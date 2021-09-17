@@ -7,8 +7,8 @@ orbs:
 workflows:
   sample:
     jobs:
-      - node/test:
-          version: '15.1'
+      - node/run:
+          version: '16.4.1'
           # This is the node version to use for the `cimg/node` tag
           # Relevant tags can be found on the CircleCI Developer Hub
           # https://circleci.com/developer/images/image/cimg/node
