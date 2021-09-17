@@ -14,5 +14,5 @@ jobs:
           node --version
           java --version
           google-chrome --version
-          npm install -g yo generator-hubot
+          npm ci install -g yo generator-hubot
           yo hubot $HUBOT_SLACK_TOKEN --adapter=slack
