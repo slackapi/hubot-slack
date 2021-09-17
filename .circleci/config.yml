@@ -20,4 +20,3 @@ jobs:
           mkdir my-awesome-hubot && cd my-awesome-hubot
           npm fund
           npm install npm@7.23.0 
-          yo hubot $HUBOT_SLACK_TOKEN --adapter=slack
