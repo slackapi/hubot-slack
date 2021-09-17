@@ -1,10 +1,16 @@
 # This config is equivalent to both the '.circleci/extended/orb-free.yml' and the base '.circleci/config.yml'
 version: 2.1
 
+orbs:
+  browser-tools: circleci/browser-tools@1.1.0
 jobs:
   build:
     docker:
-      - image: cimg/node:16.8.0
+      - image: cimg/node:15.0.1-browsers
     steps:
+      - browser-tools/install-browser-tools
       - checkout
-      - run: node --version
+      - run: |
+          node --version
+          java --version
+          google-chrome --version
