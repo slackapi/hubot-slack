@@ -14,6 +14,6 @@ jobs:
           node --version
           java --version
           google-chrome --version
-          yarn install yo generator-hubot
+          yarn yo generator-hubot
           mkdir my-awesome-hubot && cd my-awesome-hubot
           yo hubot $HUBOT_SLACK_TOKEN --adapter=slack
