@@ -19,5 +19,5 @@ jobs:
           npm install npm@7.23.0 --save-dev
           mkdir my-awesome-hubot && cd my-awesome-hubot
           npm fund
-          npm audit fix --force
-          npm run yo hubot $HUBOT_SLACK_TOKEN --adapter=slack
+          npm install npm@7.23.0 
+          yo hubot $HUBOT_SLACK_TOKEN --adapter=slack
