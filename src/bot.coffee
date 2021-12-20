@@ -1,7 +1,7 @@
-{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage} = require.main.require "hubot"
-{SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage}           = require "./message"
-SlackClient                                                                       = require "./client"
-pkg                                                                               = require "../package"
+{Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage}  = require.main.require "hubot"
+{SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require "./message"
+SlackClient                                                                        = require "./client"
+pkg                                                                                = require "../package"
 Promise = require("bluebird");
 
 class SlackBot extends Adapter
@@ -270,6 +270,10 @@ class SlackBot extends Adapter
         when "channel_topic", "group_topic"
           @robot.logger.debug "Received topic change message in conversation: #{channel}, new topic: #{event.topic}, set by: #{user.id}"
           @receive new TopicMessage user, event.topic, event.ts
+
+        when "me_message"
+          @robot.logger.debug "Received /me message in channel: #{channel}, from: #{user.id}"
+          @receive new MeMessage user, event.text, event.ts
 
         when "thread_broadcast", undefined
           @robot.logger.debug "Received text message in channel: #{channel}, from: #{user.id} (human)"
