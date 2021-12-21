@@ -1,5 +1,5 @@
 {Robot}           = require.main.require "hubot"
-{ReactionMessage, PresenceMessage, FileSharedMessage} = require "./message"
+{ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require "./message"
 
 # Requires the es2015 version of Hubot for v3 or higher so the correct prototype is updated
 if Robot.name == "CoffeeScriptCompatibleClass"
@@ -28,6 +28,30 @@ Robot::hearReaction = (matcher, options, callback) ->
     options = matcher
 
   @listen matchReaction, options, callback
+
+###*
+# Adds a Listener for MeMessages with the provided matcher, options, and callback
+#
+# @public
+# @param {Function} [matcher] - a function to determine if the listener should run. must return something
+# truthy if it should and that value with be available on `response.match`.
+# @param {Object} [options] - an object of additional parameters keyed on extension name.
+# @param {Function} callback - a function that is called with a Response object if the matcher function returns true
+###
+Robot::hearMeMessage = (matcher, options, callback) ->
+  matchMeMessage = (msg) -> msg instanceof MeMessage
+
+  if not options and not callback
+    return @listen matchMeMessage, matcher
+
+  else if matcher instanceof Function
+    matchMeMessage = (msg) -> msg instanceof MeMessage && matcher(msg)
+
+  else
+    callback = options
+    options = matcher
+
+  @listen matchMeMessage, options, callback
 
 ###*
 # DEPRECATED Adds a listener for ReactionMessages with the provided matcher, options, and callback.
