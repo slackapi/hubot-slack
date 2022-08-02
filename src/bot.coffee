@@ -332,7 +332,7 @@ class SlackBot extends Adapter
       # conversation. In that situation we fallback to an empty string.
       user.room = event.channel_id
 
-      @robot.logger.debug "Received file_shared message from: #{user.id}, file_id: #{event.file_id}"
+      @robot.logger.debug "Received file_shared message from: #{event.user_id}, file_id: #{event.file_id}"
       @receive new FileSharedMessage(user, event.file_id, event.event_ts)
 
 
