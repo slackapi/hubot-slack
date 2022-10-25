@@ -18,6 +18,10 @@ your very own scriptable, pluggable bot.
 quicker and easier. It's an application you host on a server that uses the Slack platform and behaves however you
 script it to.
 
+### Important Notice
+
+**This project is no longer under active development.** If you’re just getting started, we recommend taking a look at [Bolt for JS with Socket Mode](https://slack.dev/bolt-js/concepts#socket-mode) first. If you’ve been using this project, only critical issues (such as severe security issues) will be addressed, but we advise planning to migrate to the newer SDK.
+
 ## Basic Setup
 
 To get started, you'll need [Node.js](https://nodejs.org/en/) installed.
