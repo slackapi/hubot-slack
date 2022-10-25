@@ -221,6 +221,8 @@ class SlackBot extends Adapter
     # NOTE: should rate limit errors also bubble up?
     if error.code isnt -1
       @robot.emit "error", error
+    else
+      @robot.emit "slack-rate-limit"
 
   ###*
   # Incoming Slack event handler

@@ -191,10 +191,13 @@ class SlackClient
       thread_ts: envelope.message?.thread_ts
 
     if typeof message isnt "string"
-      @web.chat.postMessage(room, message.text, _.defaults(message, options))
+      messageOptions = _.defaults(message, options)
+      @robot.emit "postMessage", room, message.text, messageOptions
+      @web.chat.postMessage(room, message.text, messageOptions)
         .catch (error) =>
           @robot.logger.error "SlackClient#send() error: #{error.message}"
     else
+      @robot.emit "postMessage", room, message, options
       @web.chat.postMessage(room, message, options)
         .catch (error) =>
           @robot.logger.error "SlackClient#send() error: #{error.message}"
