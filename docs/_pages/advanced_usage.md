@@ -76,8 +76,8 @@ and using it to initialize a new `WebClient` object, as described in
 example, if you put the new token in an environment variable called `SLACK_OAUTH_TOKEN`, you'd simply change the
 initialization of the `WebClient` object to the following:
 
-```coffeescript
-  web = new WebClient process.env.SLACK_OAUTH_TOKEN
+```javascript
+  const web = new WebClient(process.env.SLACK_OAUTH_TOKEN)
 ```
 
 ## Running Hubot behind an HTTP Proxy

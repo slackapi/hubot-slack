@@ -1,5 +1,5 @@
 ignore:
-  - slack.coffee
+  - slack.js
   - test/*
 coverage:
   status:

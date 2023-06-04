@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npm run mocha && istanbul report text-summary lcov",
     "codecov": "codecov",
-    "mocha": "mocha --require coffeescript/register --require coffee-coverage/register-istanbul --reporter spec test/*.coffee"
+    "mocha": "mocha --reporter spec test/*.js"
   },
   "keywords": [
     "hubot",
@@ -29,13 +29,11 @@
     "lodash": "^4.17.10"
   },
   "peerDependencies": {
-    "hubot": ">= 2.0.0"
+    "hubot": ">= 3.0.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "codecov": "^3.2.0",
-    "coffee-coverage": "^2.0.0",
-    "coffeescript": "^1.12.7",
     "hubot": ">= 2.19.0",
     "istanbul": "^0.4.3",
     "mocha": "^4.1.0",

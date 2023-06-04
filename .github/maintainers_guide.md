@@ -15,8 +15,7 @@ All you need to work with this project is a supported version of [Node.js](https
 
 This package has unit tests for most modules (files) in the `test` directory. The structure mirrors the `src` directory closely. You can run the entire test suite using the npm script `npm test`. This command is also executed by Travis, the continuous integration service, for every Pull Request and branch. The coverage is computed with the `istanbul` package. The tests themselves are run using the `mocha` test runner.
 
-Test code should be written in syntax that runs on the oldest supported Node.js version in the oldest supported
-coffeescript syntax. This ensures that backwards compatibility is tested and the APIs look reasonable in versions of Node.js that do not support the most modern syntax.
+Test code should be written in syntax that runs on the oldest supported Node.js version. This ensures that backwards compatibility is tested and the APIs look reasonable in versions of Node.js that do not support the most modern syntax.
 
 ### Generating Documentation
 

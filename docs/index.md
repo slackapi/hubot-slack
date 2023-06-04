@@ -77,7 +77,7 @@ _Windows users_: The above command sets an environment variable correctly for Li
 Hubot has many pre-written scripts that you can easy add by naming them in `external-scripts.json`. Take a look at all
 the possibilites with the [hubot-scripts keyword in npm](https://www.npmjs.com/search?q=keywords:hubot-scripts).
 
-Feeling inspired? You can jump into writing your own scripts by modifying `scripts/example.coffee`. It had tons of
+Feeling inspired? You can jump into writing your own scripts by modifying `scripts/example.js`. It had tons of
 helpful comments to guide you. You might also find the [Hubot scripting docs](https://hubot.github.com/docs/scripting/)
 useful.
 
