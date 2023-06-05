@@ -21,18 +21,17 @@ shown in
 2. Version 3 of {{ site.product_name }} supported attachments by emitting a `slack.attachment` event. In version 4, you
 use `msg.send`, passing an object with an `attachments` array:
 
-    ```coffeescript
-      robot.respond /send attachments/i, (msg) ->
-        msg.send(
-          attachments: [
-            {
-              text: '*error*: something bad happened'
-              fallback: 'error: something bad happened'
-              color: 'danger'
-              mrkdwn_in: ['text']
-            }
-          ]
-        )
+    ```javascript
+      robot.respond(/send attachments/i, msg => msg.send({
+        attachments: [
+          {
+            text: '*error*: something bad happened',
+            fallback: 'error: something bad happened',
+            color: 'danger',
+            mrkdwn_in: ['text']
+          }
+        ]
+      }));
     ```
 
 ## Upgrading from version 2 or earlier

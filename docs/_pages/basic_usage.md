@@ -28,14 +28,13 @@ Nevertheless, we'll cover the basics, as well as some interesting Slack-specific
 You can listen for messages in any channel that your Hubot has been invited into very simply, by using `robot.hear` with
 a RegExp to match against. Any message that matches the RegExp will trigger the function.
 
-```coffeescript
-module.exports = (robot) ->
-
-  # Any message that contains "badger" will trigger the following function
-  robot.hear /badger/i, (res) ->
-
-    # res.message is a SlackTextMessage instance that represents the incoming message Hubot just heard
-    robot.logger.debug "Received message #{res.message.text}"
+```javascript
+module.exports = robot => // Any message that contains "badger" will trigger the following function
+robot.hear(
+  /badger/i,
+  res => // res.message is a SlackTextMessage instance that represents the incoming message Hubot just heard
+  robot.logger.debug(`Received message ${res.message.text}`)
+);
 ```
 
 Hubot will only hear messages in converastions where it is a member. A human must invite Hubot into conversations
@@ -48,13 +47,13 @@ Hubot will only hear messages in converastions where it is a member. A human mus
 If you want to specifically listen for messages that mention your Hubot, use the `robot.respond` method. You can also
 be more specific using a RegExp (or don't be more specific, `/.*/` will match all messages).
 
-```coffeescript
-module.exports = (robot) ->
-
-  # Any message that contains "badger" and is directed at Hubot (in a DM or starting with its name)
-  # will trigger the following function
-  robot.respond /badger/i, (res) ->
-    robot.logger.debug "Received message #{res.message.text}"
+```javascript
+module.exports = robot => // Any message that contains "badger" and is directed at Hubot (in a DM or starting with its name)
+// will trigger the following function
+robot.respond(
+  /badger/i,
+  res => robot.logger.debug(`Received message ${res.message.text}`)
+);
 ```
 
 --------
@@ -64,12 +63,9 @@ module.exports = (robot) ->
 Responding to a message is straightforward, regardless of whether the message was sent to your Hubot specifically or to
 anyone in general.
 
-```coffeescript
-module.exports = (robot) ->
-
-  robot.hear /badger/i, (res) ->
-    # Hubot sends a response to the same channel it heard the incoming message
-    res.send "Yes, more badgers please!"
+```javascript
+module.exports = robot => robot.hear(/badger/i, res => // Hubot sends a response to the same channel it heard the incoming message
+res.send("Yes, more badgers please!"));
 ```
 
 --------
@@ -85,28 +81,32 @@ write mentions that have the user's preferred display name.
 Each incoming message has a `mentions` array that contains the ID and any other information known about the user or
 conversation that was mentioned.
 
-```coffeescript
-module.exports = (robot) ->
-  # A map of user IDs to scores
-  thank_scores = {}
+```javascript
+mmodule.exports = function(robot) {
+  // A map of user IDs to scores
+  const thank_scores = {};
 
-  robot.hear /thanks/i, (res) ->
-    # filter mentions to just user mentions
-    user_mentions = (mention for mention in res.message.mentions when mention.type is "user")
+  return robot.hear(/thanks/i, function(res) {
+    // filter mentions to just user mentions
+    const user_mentions = (Array.from(res.message.mentions).filter((mention) => mention.type === "user"));
 
-    # when there are user mentions...
-    if user_mentions.length > 0
-      response_text = ""
+    // when there are user mentions...
+    if (user_mentions.length > 0) {
+      let response_text = "";
 
-      # process each mention
-      for { id } in user_mentions
-        # increment the thank score
-        thank_scores[id] = if thank_scores[id]? then (thank_scores[id] + 1) else 1
-        # show the total score in the message with a properly formatted mention (uses display name)
-        response_text += "<@#{id}> has been thanked #{thank_scores[id]} times!\n"
+      // process each mention
+      for (let { id } of Array.from(user_mentions)) {
+        // increment the thank score
+        thank_scores[id] = (thank_scores[id] != null) ? (thank_scores[id] + 1) : 1;
+        // show the total score in the message with a properly formatted mention (uses display name)
+        response_text += `<@${id}> has been thanked ${thank_scores[id]} times!\n`;
+      }
 
-      # send the response
-      res.send response_text
+      // send the response
+      return res.send(response_text);
+    }
+  });
+};
 ```
 
 --------
@@ -122,29 +122,29 @@ npm install --save @slack/client
 
 Next, modify your script to instatiate a `WebClient` object using the same token your Hubot used to connect.
 
-```coffeescript
-# Import the Slack Developer Kit
-{WebClient} = require "@slack/client"
+```javascript
+// Import the Slack Developer Kit
+const {WebClient} = require("@slack/client");
 
-module.exports = (robot) ->
-  web = new WebClient robot.adapter.options.token
-
-  # remainder of your script...
+module.exports = function(robot) {
+  let web;
+  return web = new WebClient(robot.adapter.options.token);
+};
 ```
 
 Finally, anytime you'd like to call a Web API method, call it like a method on `web`.
 
-```coffeescript
-# Import the Slack Developer Kit
-{WebClient} = require "@slack/client"
+```javascript
+// Import the Slack Developer Kit
+const {WebClient} = require("@slack/client");
 
-module.exports = (robot) ->
-  web = new WebClient robot.adapter.options.token
+module.exports = function(robot) {
+  const web = new WebClient(robot.adapter.options.token);
 
-  robot.hear /test/i, (res) ->
-    web.api.test()
-      .then () -> res.send "Your connection to the Slack API is working!"
-      .catch (error) -> res.send "Your connection to the Slack API failed :("
+  return robot.hear(/test/i, res => web.api.test()
+    .then(() => res.send("Your connection to the Slack API is working!"))
+    .catch(error => res.send("Your connection to the Slack API failed :(")));
+};
 ```
 
 You only have access to the Web API methods that your bot token is authorized to use. Depending on
@@ -164,17 +164,17 @@ directly designed to support. However, with a little bit of knowledge about the 
 new threads and send messages into a thread using Hubot.
 
 
-```coffeescript
-module.exports = (robot) ->
-
-  robot.hear /badger/i, (res) ->
-    if res.message.thread_ts?
-      # The incoming message was inside a thread, responding normally will continue the thread
-      res.send "Did someone say BADGER?"
-    else
-      # The incoming message was not inside a thread, so lets respond by creating a new thread
-      res.message.thread_ts = res.message.rawMessage.ts
-      res.send "Slight digression, we need to talk about these BADGERS"
+```javascript
+module.exports = robot => robot.hear(/badger/i, function(res) {
+  if (res.message.thread_ts != null) {
+    // The incoming message was inside a thread, responding normally will continue the thread
+    return res.send("Did someone say BADGER?");
+  } else {
+    // The incoming message was not inside a thread, so lets respond by creating a new thread
+    res.message.thread_ts = res.message.rawMessage.ts;
+    return res.send("Slight digression, we need to talk about these BADGERS");
+  }
+});
 ```
 
 If you want to use the `reply_broadcast` feature of threads, you'll have to
@@ -189,22 +189,26 @@ Of course, Slack is more than just text messages. Users can send
 can both listen for these from other users, and send reactions of its own. Here is a recipe to listen for
 emoji reactions and add the same reaction back to the same message.
 
-```coffeescript
-{WebClient} = require "@slack/client"
+```javascript
+const {WebClient} = require("@slack/client");
 
-module.exports = (robot) ->
-  web = new WebClient robot.adapter.options.token
+module.exports = function(robot) {
+  const web = new WebClient(robot.adapter.options.token);
 
-  robot.react (res) ->
+  return robot.react(function(res) {
 
-    # res.message is a ReactionMessage instance that represents the reaction Hubot just heard
-    if res.message.type == "added" and res.message.item.type == "message"
+    // res.message is a ReactionMessage instance that represents the reaction Hubot just heard
+    if ((res.message.type === "added") && (res.message.item.type === "message")) {
 
-      # res.messsage.reaction is the emoji alias for the reaction Hubot just heard
-      web.reactions.add
+      // res.messsage.reaction is the emoji alias for the reaction Hubot just heard
+      return web.reactions.add({
         name: res.message.reaction,
         channel: res.message.item.channel,
         timestamp: res.message.item.ts
+      });
+    }
+  });
+};
 ```
 
 When using `robot.react` as shown above, the `res.message` value is of type `ReactionMessage`. In addition to the normal
@@ -225,16 +229,15 @@ message properties, this type has a few really helpful properties you might want
 
 Each time a user changes from away to active, or vice-versa, Hubot can listen that event.
 
-```coffeescript
-module.exports = (robot) ->
+```javascript
+module.exports = robot => robot.presenceChange(function(res) {
 
-  robot.presenceChange (res) ->
+  // res.message is a PresenceMessage instance that represents the presence change Hubot just heard
+  const names = (Array.from(res.message.users).map((user) => user.name)).join(", ");
 
-    # res.message is a PresenceMessage instance that represents the presence change Hubot just heard
-    names = (user.name for user in res.message.users).join ", "
-
-    message = if res.message.presence is "away" then "Bye bye #{names}" else "Glad you are back #{names}"
-    robot.logger.debug message
+  const message = res.message.presence === "away" ? `Bye bye ${names}` : `Glad you are back ${names}`;
+  return robot.logger.debug(message);
+});
 ```
 
 --------
@@ -249,34 +252,33 @@ we use the Web API to translate to default named channel to an ID and then store
 set up that can update that variable based on an incoming message. Then a new listener is used to send data into
 the current channel in the variable, no matter where the incoming message is received.
 
-```coffeescript
-{WebClient} = require "@slack/client"
+```javascript
+const {WebClient} = require("@slack/client");
 
-module.exports = (robot) ->
-  web = new WebClient robot.adapter.options.token
+module.exports = function(robot) {
+  const web = new WebClient(robot.adapter.options.token);
 
-  # When the script starts up, there is no notification room
-  notification_room = undefined
+  // When the script starts up, there is no notification room
+  let notification_room = undefined;
 
-  # Immediately, a request is made to the Slack Web API to translate a default channel name into an ID
-  default_channel_name = "general"
+  // Immediately, a request is made to the Slack Web API to translate a default channel name into an ID
+  const default_channel_name = "general";
   web.channels.list()
-    .then (api_response) ->
-      # List is searched for the channel with the right name, and the notification_room is updated
-      room = api_response.channels.find (channel) -> channel.name is default_channel_name
-      notification_room = room.id if room?
+    .then(function(api_response) {
+      // List is searched for the channel with the right name, and the notification_room is updated
+      const room = api_response.channels.find(channel => channel.name === default_channel_name);
+      if (room != null) { return notification_room = room.id; }}).catch(error => robot.logger.error(error.message));
 
-    # NOTE: for workspaces with a large number of channels, this result in a timeout error. Use pagination.
-    .catch (error) -> robot.logger.error error.message
+  // Any message that says "send updates here" will change the notification room
+  robot.hear(/send updates here/i, res => notification_room = res.message.rawMessage.channel.id);
 
-  # Any message that says "send updates here" will change the notification room
-  robot.hear /send updates here/i, (res) ->
-    notification_room = res.message.rawMessage.channel.id
-
-  # Any message that says "my update" will cause Hubot to echo that message to the notification room
-  robot.hear /my update/i, (res) ->
-    if notification_room?
-      robot.messageRoom(notification_room, "An update from: <@#{res.message.user.id}>: '#{res.message.text}'")
+  // Any message that says "my update" will cause Hubot to echo that message to the notification room
+  return robot.hear(/my update/i, function(res) {
+    if (notification_room != null) {
+      return robot.messageRoom(notification_room, `An update from: <@${res.message.user.id}>: '${res.message.text}'`);
+    }
+  });
+};
 ```
 
 --------
@@ -288,14 +290,13 @@ and mentions. This formatting sometimes removes meaningful information from the 
 unaltered text in the incoming message, you can use the `rawText` property. Similarly, if you need to access any other
 property of the incoming Slack message, use the `rawMessage` property.
 
-```coffeescript
-module.exports = (robot) ->
+```javascript
+module.exports = robot => // listen to all incoming messages
+robot.hear(/.*/, function(res) {
+  // find URLs in the rawText
+  const urls = res.message.rawText.match(/https?:\/\/[^\|>\s]+/gi);
 
-  # listen to all incoming messages
-  robot.hear /.*/, (res) ->
-    # find URLs in the rawText
-    urls = res.message.rawText.match /https?:\/\/[^\|>\s]+/gi
-
-    # log each link found
-    robot.logger.debug ("link shared: #{url}" for url in urls).join("\n") if urls
+  // log each link found
+  if (urls) { return robot.logger.debug((Array.from(urls).map((url) => `link shared: ${url}`)).join("\n")); }
+});
 ```
