@@ -1,16 +1,7 @@
-/*
- * decaffeinate suggestions:
- * DS002: Fix invalid constructor
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS206: Consider reworking classes to avoid initClass
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
 const {Message, TextMessage}  = require.main.require("hubot/es2015.js");
-const SlackClient             = require("./client");
-const SlackMention            = require("./mention");
-const Promise                 = require("bluebird");
+const SlackClient = require("./client");
+const SlackMention = require("./mention");
+const Promise = require("bluebird");
 
 class ReactionMessage extends Message {
 
@@ -92,21 +83,6 @@ class PresenceMessage extends Message {
 }
 
 class SlackTextMessage extends TextMessage {
-  static initClass() {
-  
-    this.MESSAGE_REGEX =  new RegExp(`\
-<\
-([@#!])?\
-([^>|]+)\
-(?:\\|\
-([^>]+)\
-)?\
->\
-`, 'g');
-  
-    this.MESSAGE_RESERVED_KEYWORDS = ["channel","group","everyone","here"];
-  }
-
   /**
    * Represents a TextMessage created from the Slack adapter
    *
@@ -138,8 +114,18 @@ class SlackTextMessage extends TextMessage {
     // public instance property initialization
     this.rawText = rawText || this.rawMessage.text;
     if (this.rawMessage.thread_ts != null) { this.thread_ts = this.rawMessage.thread_ts; }
-    this.mentions = [];
+    this.mentions = [];          
   }
+  static MESSAGE_REGEX =  new RegExp(`\
+<\
+([@#!])?\
+([^>|]+)\
+(?:\\|\
+([^>]+)\
+)?\
+>\
+`, 'g');
+  static MESSAGE_RESERVED_KEYWORDS = ["channel","group","everyone","here"];
 
   /**
    * Build the text property, a flat string representation of the contents of this message.
@@ -164,7 +150,7 @@ class SlackTextMessage extends TextMessage {
     const fetchingConversationInfo = client.fetchConversation(this._channel_id);
     return Promise.all([mentionFormatting, fetchingConversationInfo])
       .then(results => {
-        const [ replacedText, conversationInfo ] = Array.from(results);
+        const [ replacedText, conversationInfo ] = results;
         text = replacedText;
         text = text.replace(/&lt;/g, "<");
         text = text.replace(/&gt;/g, ">");
@@ -203,7 +189,7 @@ class SlackTextMessage extends TextMessage {
     const parts = [];
 
     while (result = regex.exec(text)) {
-      var [m, type, link, label] = Array.from(result);
+      var [m, type, link, label] = result;
 
       switch (type) {
         case "@":
@@ -225,7 +211,7 @@ class SlackTextMessage extends TextMessage {
           break;
 
         case "!":
-          if (Array.from(SlackTextMessage.MESSAGE_RESERVED_KEYWORDS).includes(link)) {
+          if (SlackTextMessage.MESSAGE_RESERVED_KEYWORDS.includes(link)) {
             parts.push(text.slice(cursor, result.index), `@${link}`);
           } else if (label) {
             parts.push(text.slice(cursor, result.index), label);
@@ -334,7 +320,6 @@ class SlackTextMessage extends TextMessage {
     }
   }
 }
-SlackTextMessage.initClass();
 
 exports.SlackTextMessage = SlackTextMessage;
 exports.ReactionMessage = ReactionMessage;

@@ -29,12 +29,12 @@
     "lodash": "^4.17.10"
   },
   "peerDependencies": {
-    "hubot": ">= 3.0.0"
+    "hubot": ">= 4.1.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "codecov": "^3.2.0",
-    "hubot": ">= 2.19.0",
+    "hubot": "^4.1.0",
     "istanbul": "^0.4.3",
     "mocha": "^4.1.0",
     "mockery": "^2.1.0",

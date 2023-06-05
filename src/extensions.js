@@ -1,15 +1,5 @@
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
-let {Robot}           = require.main.require("hubot");
+let {Robot} = require.main.require("hubot/es2015.js");
 const {ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require("./message");
-
-// Requires the es2015 version of Hubot for v3 or higher so the correct prototype is updated
-if (Robot.name === "CoffeeScriptCompatibleClass") {
-  ({Robot} = require.main.require("hubot/es2015"));
-}
 
 /**
  * Adds a Listener for ReactionMessages with the provided matcher, options, and callback

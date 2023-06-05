@@ -1,15 +1,4 @@
-/*
- * decaffeinate suggestions:
- * DS206: Consider reworking classes to avoid initClass
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
 class SlackMention {
-	static initClass() {
-	
-		module.exports = SlackMention;
-	}
-
 	/**
 	 * SlackMention is an instance of a mention within a SlackTextMessage.
 	 * @constructor
@@ -20,7 +9,7 @@ class SlackMention {
 	constructor(id, type, info) {
 		this.id = id;
 		this.type = type;
-		this.info = (info != null) ? info : undefined;
+		this.info = info ?? undefined;
 	}
 }
-SlackMention.initClass();
+module.exports = SlackMention;

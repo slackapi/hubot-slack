@@ -1,32 +1,21 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS103: Rewrite code to no longer use __guard__, or convert again using --optional-chaining
- * DS206: Consider reworking classes to avoid initClass
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
-const _                      = require("lodash");
-const Promise                = require("bluebird");
+const _ = require("lodash");
+const Promise = require("bluebird");
 const {RtmClient, WebClient} = require("@slack/client");
 
 class SlackClient {
-  static initClass() {
-    /**
-     * Number of milliseconds which the information returned by `conversations.info` is considered to be valid. The default
-     * value is 5 minutes, and it can be customized by setting the `HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS` environment
-     * variable. Setting this number higher will reduce the number of requests made to the Web API, which may be helpful if
-     * your Hubot is experiencing rate limiting errors. However, setting this number too high will result in stale data
-     * being referenced, and your scripts may experience errors related to channel info (like the name) being incorrect
-     * after a user changes it in Slack.
-     * @private
-     */
-    this.CONVERSATION_CACHE_TTL_MS =
-      process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS
-      ? parseInt(process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS, 10)
-      : (5 * 60 * 1000);
-  }
+  /**
+   * Number of milliseconds which the information returned by `conversations.info` is considered to be valid. The default
+   * value is 5 minutes, and it can be customized by setting the `HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS` environment
+   * variable. Setting this number higher will reduce the number of requests made to the Web API, which may be helpful if
+   * your Hubot is experiencing rate limiting errors. However, setting this number too high will result in stale data
+   * being referenced, and your scripts may experience errors related to channel info (like the name) being incorrect
+   * after a user changes it in Slack.
+   * @private
+   */
+  static CONVERSATION_CACHE_TTL_MS =
+    process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS
+    ? parseInt(process.env.HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS, 10)
+    : (5 * 60 * 1000);
 
   /**
    * @constructor
@@ -235,9 +224,9 @@ class SlackClient {
     var pageLoaded = (error, results) => {
       if (error) { return callback(error); }
       // merge results into combined results
-      for (var member of Array.from(results.members)) { combinedResults.members.push(member); }
+      for (var member of results.members) { combinedResults.members.push(member); }
 
-      if (__guard__(results != null ? results.response_metadata : undefined, x => x.next_cursor)) {
+      if(results?.response_metadata?.next_cursor) {
         // fetch next page
         return this.web.users.list({
           limit: this.apiPageSize,
@@ -428,7 +417,6 @@ class SlackClient {
     }
   }
 }
-SlackClient.initClass();
 
 /**
  * A handler for all incoming Slack events that are meaningful for the Adapter
@@ -453,7 +441,3 @@ if (SlackClient.CONVERSATION_CACHE_TTL_MS === NaN) {
 }
 
 module.exports = SlackClient;
-
-function __guard__(value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
-}

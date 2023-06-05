@@ -1,7 +1,7 @@
 const {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage}  = require.main.require("hubot/es2015.js");
 const {SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require("./message");
-const SlackClient                                                                        = require("./client");
-const pkg                                                                                = require("../package");
+const SlackClient = require("./client");
+const pkg = require("../package");
 const Promise = require("bluebird");
 
 class SlackBot extends Adapter {
@@ -45,11 +45,11 @@ class SlackBot extends Adapter {
     }
 
     // SlackClient event handlers
-    this.client.rtm.on("open", this.open);
-    this.client.rtm.on("close", this.close);
-    this.client.rtm.on("disconnect", this.disconnect);
-    this.client.rtm.on("error", this.error);
-    this.client.rtm.on("authenticated", this.authenticated);
+    this.client.rtm.on("open", this.open.bind(this));
+    this.client.rtm.on("close", this.close.bind(this));
+    this.client.rtm.on("disconnect", this.disconnect.bind(this));
+    this.client.rtm.on("error", this.error.bind(this));
+    this.client.rtm.on("authenticated", this.authenticated.bind(this));
     this.client.onEvent(this.eventHandler.bind(this));
 
     // TODO: set this to false as soon as RTM connection closes (even if reconnect will happen later)
