@@ -21,7 +21,7 @@ require('../src/extensions');
 // as minimal as possible and only provide enough to make the tests possible.
 // Stubs are recreated before each test.
 module.exports = function() {
-  let stubs = {};
+  const stubs = {};
 
   stubs._sendCount = 0;
   stubs.send = (conversationId, text, opts) => {
@@ -321,7 +321,6 @@ module.exports = function() {
   stubs.robot.name = 'bot';
   stubs.robot.listeners = [];
   stubs.robot.listen = Robot.prototype.listen.bind(stubs.robot);
-  stubs.robot.react = Robot.prototype.react.bind(stubs.robot);
   stubs.robot.hearReaction = Robot.prototype.hearReaction.bind(stubs.robot);
   stubs.robot.presenceChange = Robot.prototype.presenceChange.bind(stubs.robot);
   stubs.robot.fileShared = Robot.prototype.fileShared.bind(stubs.robot);
@@ -330,7 +329,9 @@ module.exports = function() {
   stubs.receiveMock = {
     receive: (message, user) => {
       stubs._received = message;
-      if (stubs.receiveMock.onReceived != null) { return stubs.receiveMock.onReceived(message); }
+      if (stubs.receiveMock.onReceived != null) { 
+        return stubs.receiveMock.onReceived(message);
+      }
     }
   };
 

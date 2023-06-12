@@ -195,7 +195,7 @@ const {WebClient} = require("@slack/client");
 module.exports = function(robot) {
   const web = new WebClient(robot.adapter.options.token);
 
-  return robot.react(function(res) {
+  return robot.hearReaction(function(res) {
 
     // res.message is a ReactionMessage instance that represents the reaction Hubot just heard
     if ((res.message.type === "added") && (res.message.item.type === "message")) {
@@ -211,7 +211,7 @@ module.exports = function(robot) {
 };
 ```
 
-When using `robot.react` as shown above, the `res.message` value is of type `ReactionMessage`. In addition to the normal
+When using `robot.hearReaction` as shown above, the `res.message` value is of type `ReactionMessage`. In addition to the normal
 message properties, this type has a few really helpful properties you might want to use in your script:
 
 *  `type`: This is either `"added"` or `"removed"`, depending on whether, you guessed it, the reaction was added or

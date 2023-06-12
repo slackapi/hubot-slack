@@ -1,216 +1,219 @@
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
-const {RtmClient, WebClient, MemoryDataStore} = require('@slack/client');
-const SlackClient = require('../src/client');
-const should = require('should');
-const _ = require('lodash');
+
+const { describe, it, beforeEach } = require('node:test');
+const assert = require('node:assert/strict');
+const Module = require('module');
+
+const hookModuleToReturnMockFromRequire = (module, mock) => {
+  const originalRequire = Module.prototype.require;
+  Module.prototype.require = function() {
+    if (arguments[0] === module) {
+      return mock;
+    }
+    return originalRequire.apply(this, arguments);
+  };
+};
+
+const hubotSlackMock = require('../slack.js');
+hookModuleToReturnMockFromRequire('hubot-slack', hubotSlackMock);
+
+const { RtmClient, WebClient } = require('@slack/client');
 
 describe('Init', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should initialize with an RTM client', function() {
-    (this.client.rtm instanceof RtmClient).should.equal(true);
-    return this.client.rtm._token.should.equal('xoxb-faketoken');
+    assert.ok(client.rtm instanceof RtmClient)
+    assert.deepEqual(client.rtm._token, 'xoxb-faketoken');
   });
 
   it('Should initialize with a Web client', function() {
-    (this.client.web instanceof WebClient).should.equal(true);
-    return this.client.web._token.should.equal('xoxb-faketoken');
+    assert.ok(client.web instanceof WebClient);
+    assert.deepEqual(client.web._token, 'xoxb-faketoken');
   });
 
 });
 
 describe('connect()', () => {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should be able to connect', function() {
-    this.client.connect();
-    return this.stubs._connected.should.be.true;
+    client.connect();
+    assert.ok(stubs._connected);
   });
 });
 
 describe('onEvent()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('should not need to be set', function() {
-    this.client.rtm.emit('message', { fake: 'message' });
-    return (true).should.be.ok;
+    client.rtm.emit('message', { fake: 'message' });
+    assert.ok(true);
   });
-  it('should emit pre-processed messages to the callback', function(done) {
-    this.client.onEvent(message => {
-      message.should.be.ok;
-      message.user.real_name.should.equal(this.stubs.user.real_name);
-      message.channel.should.equal(this.stubs.channel.id);
-      return done();
+  it('should emit pre-processed messages to the callback', function(t, done) {
+    client.onEvent(message => {
+      assert.ok(message);
+      assert.deepEqual(message.user.real_name, stubs.user.real_name);
+      assert.deepEqual(message.channel, stubs.channel.id);
+      done();
     });
     // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    this.client.rtm.emit('message', {
+    client.rtm.emit('message', {
       type: 'message',
-      user: this.stubs.user.id,
-      channel: this.stubs.channel.id,
+      user: stubs.user.id,
+      channel: stubs.channel.id,
       text: 'blah',
       ts: '1355517523.000005'
     });
     // NOTE: the following check does not appear to work as expected
     return setTimeout(( () => {
-      return this.stubs.robot.logger.logs.should.not.have.property('error');
+      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
     }
     ), 0);
   });
-  it('should successfully convert bot users', function(done) {
-    this.client.onEvent(message => {
-      message.should.be.ok;
-      message.user.id.should.equal(this.stubs.user.id);
-      message.channel.should.equal(this.stubs.channel.id);
-      return done();
+  it('should successfully convert bot users', function(t, done) {
+    client.onEvent(message => {
+      assert.ok(message);
+      assert.deepEqual(message.user.id, stubs.user.id);
+      assert.deepEqual(message.channel, stubs.channel.id);
+      done();
     });
     // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    this.client.rtm.emit('message', {
+    client.rtm.emit('message', {
       type: 'message',
       bot_id: 'B123',
-      channel: this.stubs.channel.id,
+      channel: stubs.channel.id,
       text: 'blah'
     });
     // NOTE: the following check does not appear to work as expected
     return setTimeout(( () => {
-      return this.stubs.robot.logger.logs.should.not.have.property('error');
+      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
     }
     ), 0);
   });
 
-  it('should handle undefined bot users', function(done) {
-    this.client.onEvent(message => {
-      message.should.be.ok;
-      message.channel.should.equal(this.stubs.channel.id);
-      return done();
+  it('should handle undefined bot users', function(t, done) {
+    client.onEvent(message => {
+      assert.ok(message);
+      assert.deepEqual(message.channel, stubs.channel.id);
+      done();
     });
-    this.client.rtm.emit('message', {
+    client.rtm.emit('message', {
       type: 'message',
       bot_id: 'B789',
-      channel: this.stubs.channel.id,
+      channel: stubs.channel.id,
       text: 'blah'
     });
 
     return setTimeout(( () => {
-      return this.stubs.robot.logger.logs.should.not.have.property('error');
+      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
     }
     ), 0);
   });
 
-  it('should handle undefined users as envisioned', function(done) {
-    this.client.onEvent(message => {
-      message.should.be.ok;
-      message.channel.should.equal(this.stubs.channel.id);
-      return done();
+  it('should handle undefined users as envisioned', function(t, done) {
+    client.onEvent(message => {
+      assert.ok(message);
+      assert.deepEqual(message.channel, stubs.channel.id);
+      done();
     });
-    this.client.rtm.emit('message', {
+    client.rtm.emit('message', {
       type: 'message',
       user: undefined,
-      channel: this.stubs.channel.id,
+      channel: stubs.channel.id,
       text: 'eat more veggies'
     });
 
     return setTimeout(( () => {
-      return this.stubs.robot.logger.logs.should.not.have.property('error');
+      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
     }
     ), 0);
   });
 
-  it('should update bot id to user representation map', function(done) {
-    this.client.onEvent(message => {
-      message.should.be.ok;
-      this.client.botUserIdMap[this.stubs.bot.id].id.should.equal(this.stubs.user.id);
-      return done();
+  it('should update bot id to user representation map', function(t, done) {
+    client.onEvent(message => {
+      assert.ok(message);
+      assert.deepEqual(client.botUserIdMap[stubs.bot.id].id, stubs.user.id);
+      done();
     });
     
     // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    this.client.rtm.emit('message', {
+    client.rtm.emit('message', {
       type: 'message',
-      bot_id: this.stubs.bot.id,
-      channel: this.stubs.channel.id,
+      bot_id: stubs.bot.id,
+      channel: stubs.channel.id,
       text: 'blah'
     });
 
     return setTimeout(( () => {
-      return this.stubs.robot.logger.logs.should.not.have.property('error');
+      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
     }
     ), 0);
   });
-  it('should use user representation for bot id in map', function(done) {
-    this.client.onEvent(message => {
-      message.should.be.ok;
-      message.user.id.should.equal(this.stubs.user.id);
-      return done();
+  it('should use user representation for bot id in map', function(t, done) {
+    client.onEvent(message => {
+      assert.ok(message);
+      assert.deepEqual(message.user.id, stubs.user.id);
+      done();
     });
     
-    this.client.botUserIdMap[this.stubs.bot.id] = this.stubs.user;
+    client.botUserIdMap[stubs.bot.id] = stubs.user;
     // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    this.client.rtm.emit('message', {
+    client.rtm.emit('message', {
       type: 'message',
-      bot_id: this.stubs.bot.id,
-      channel: this.stubs.channel.id,
+      bot_id: stubs.bot.id,
+      channel: stubs.channel.id,
       text: 'blah'
     });
 
     return setTimeout(( () => {
-      return this.stubs.robot.logger.logs.should.not.have.property('error');
+      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
     }
     ), 0);
   });
-  it('should log an error when expanded info cannot be fetched using the Web API', function(done) {
+  it('should log an error when expanded info cannot be fetched using the Web API', function(t, done) {
     // NOTE: to be certain nothing goes wrong in the rejection handling, the "unhandledRejection" / "rejectionHandled"
     // global events need to be instrumented
-    this.client.onEvent(message => done(new Error('A message was emitted')));
-    this.client.rtm.emit('message', {
+    client.onEvent(message => done(new Error('A message was emitted')));
+    client.rtm.emit('message', {
       type: 'message',
       user: 'NOT A USER',
-      channel:  this.stubs.channel.id,
+      channel:  stubs.channel.id,
       text: 'blah',
       ts: '1355517523.000005'
     });
     return setImmediate(( () => {
-      if (this.stubs.robot.logger.logs != null) {
-        this.stubs.robot.logger.logs.error.length.should.equal(1);
+      if (stubs.robot.logger.logs != null) {
+        assert.deepEqual(stubs.robot.logger.logs.error.length, 1);
       }
-      return done();
+      done();
     }
     ), 0);
   });
   
-  return it('should use user instead of bot_id', function(done) {
-    this.client.onEvent(message => {
-      message.should.be.ok;
-      message.user.id.should.equal(this.stubs.user.id);
-      return done();
+  it('should use user instead of bot_id', function(t, done) {
+    client.onEvent(message => {
+      assert.ok(message);
+      assert.deepEqual(message.user.id, stubs.user.id);
+      done();
     });
 
-    this.client.botUserIdMap[this.stubs.bot.id] = this.stubs.userperiod;
-    this.client.rtm.emit('message', {
+    client.botUserIdMap[stubs.bot.id] = stubs.userperiod;
+    client.rtm.emit('message', {
       type: 'message',
-      bot_id: this.stubs.bot.id,
-      user: this.stubs.user.id,
-      channel: this.stubs.channel.id,
+      bot_id: stubs.bot.id,
+      user: stubs.user.id,
+      channel: stubs.channel.id,
       text: 'blah'
     });
 
     return setTimeout(( () => {
-      return this.stubs.robot.logger.logs.should.not.have.property('error');
+      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
     }
     ), 0);
   });
@@ -218,339 +221,296 @@ describe('onEvent()', function() {
 
 
 describe('on() - DEPRECATED', () => {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should register events on the RTM stream', function() {
     let event = undefined;
-    this.client.on('some_event', e => event = e);
-    this.client.rtm.emit('some_event', {});
-    return event.should.be.ok;
+    client.on('some_event', e => event = e);
+    client.rtm.emit('some_event', {});
+    assert.ok(event);
   });
 });
 
 describe('disconnect()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should disconnect RTM', function() {
-    this.client.disconnect();
-    return this.stubs._connected.should.be.false;
+    client.disconnect();
+    assert.ok(!stubs._connected);
   });
-  return it('should remove all RTM listeners - LEGACY', function() {
-    this.client.on('some_event', _.noop);
-    this.client.disconnect();
-    return this.client.rtm.listeners('some_event', true).should.not.be.ok;
+  it('should remove all RTM listeners - LEGACY', function() {
+    client.on('some_event', () => {});
+    client.disconnect();
+    assert.ok(!client.rtm.listeners('some_event', true))
   });
 });
 
 describe('setTopic()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
-  it("Should set the topic in a channel", function(done) {
-    this.client.setTopic(this.stubs.channel.id, 'iAmTopic');
+  it("Should set the topic in a channel", function(t, done) {
+    client.setTopic(stubs.channel.id, 'iAmTopic');
     return setImmediate(() => {
-      this.stubs._topic.should.equal('iAmTopic');
-      return done();
+      assert.deepEqual(stubs._topic, 'iAmTopic');
+      done();
     }
     , 0);
   });
-  it("should not set the topic in a DM", function(done) {
-    this.client.setTopic(this.stubs.DM.id, 'iAmTopic');
+  it("should not set the topic in a DM", function(t, done) {
+    client.setTopic(stubs.DM.id, 'iAmTopic');
     return setTimeout(() => {
-      this.stubs.should.not.have.property('_topic');
+      assert.deepEqual(stubs['_topic'], undefined);
       // NOTE: no good way to assert that debug log was output
-      return done();
+      done();
     }
     , 0);
   });
-  it("should not set the topic in a MPIM", function(done) {
-    this.client.setTopic(this.stubs.group.id, 'iAmTopic');
+  it("should not set the topic in a MPIM", function(t, done) {
+    client.setTopic(stubs.group.id, 'iAmTopic');
     return setTimeout(() => {
-      this.stubs.should.not.have.property('_topic');
+      assert.deepEqual(stubs['_topic'], undefined);
       // NOTE: no good way to assert that debug log was output
-      return done();
+      done();
     }
     , 0);
   });
-  return it("should log an error if the setTopic web API method fails", function(done) {
-    this.client.setTopic('NOT A CONVERSATION', 'iAmTopic');
+  it("should log an error if the setTopic web API method fails", function(t, done) {
+    client.setTopic('NOT A CONVERSATION', 'iAmTopic');
     return setTimeout(() => {
-      this.stubs.should.not.have.property('_topic');
-      if (this.stubs.robot.logger.logs != null) {
-        this.stubs.robot.logger.logs.error.length.should.equal(1);
+      assert.deepEqual(stubs['_topic'], undefined);
+      if (stubs.robot.logger.logs != null) {
+        assert.deepEqual(stubs.robot.logger.logs.error.length, 1);
       }
-      return done();
+      done();
     }
     , 0);
   });
 });
 
 describe('send()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should send a plain string message to room', function() {
-    this.client.send({room: 'room1'}, 'Message');
-    this.stubs._msg.should.equal('Message');
-    return this.stubs._room.should.equal('room1');
+    client.send({room: 'room1'}, 'Message');
+    assert.deepEqual(stubs._msg, 'Message');
+    assert.deepEqual(stubs._room, 'room1');
   });
 
   it('Should send an object message to room', function() {
-    this.client.send({room: 'room2'}, {text: 'textMessage'});
-    this.stubs._msg.should.equal('textMessage');
-    return this.stubs._room.should.equal('room2');
+    client.send({room: 'room2'}, {text: 'textMessage'});
+    assert.deepEqual(stubs._msg, 'textMessage');
+    assert.deepEqual(stubs._room, 'room2');
   });
 
   it('Should be able to send a DM to a user object', function() {
-    this.client.send(this.stubs.user, 'DM Message');
-    this.stubs._dmmsg.should.equal('DM Message');
-    return this.stubs._room.should.equal(this.stubs.user.id);
+    client.send(stubs.user, 'DM Message');
+    assert.deepEqual(stubs._dmmsg, 'DM Message');
+    assert.deepEqual(stubs._room, stubs.user.id);
   });
 
   it('should not send a message to a user without an ID', function() {
-    this.client.send({ name: "my_crufty_username" }, "don't program with usernames");
-    return this.stubs._sendCount.should.equal(0);
+    client.send({ name: "my_crufty_username" }, "don't program with usernames");
+    assert.deepEqual(stubs._sendCount, 0);
   });
 
-  it('should log an error when chat.postMessage fails (plain string)', function(done) {
-    this.client.send({ room: this.stubs.channelWillFailChatPost }, "Message");
-    this.stubs._sendCount.should.equal(0);
+  it('should log an error when chat.postMessage fails (plain string)', function(t, done) {
+    client.send({ room: stubs.channelWillFailChatPost }, "Message");
+    assert.deepEqual(stubs._sendCount, 0);
     return setImmediate(( () => {
-      if (this.stubs.robot.logger.logs != null) {
-        this.stubs.robot.logger.logs.error.length.should.equal(1);
+      if (stubs.robot.logger.logs != null) {
+        assert.deepEqual(stubs.robot.logger.logs.error.length, 1);
       }
-      return done();
+      done();
     }
     ), 0);
   });
 
-  return it('should log an error when chat.postMessage fails (object)', function(done) {
-    this.client.send({ room: this.stubs.channelWillFailChatPost }, { text: "textMessage" });
-    this.stubs._sendCount.should.equal(0);
+  it('should log an error when chat.postMessage fails (object)', function(t, done) {
+    client.send({ room: stubs.channelWillFailChatPost }, { text: "textMessage" });
+    assert.deepEqual(stubs._sendCount, 0);
     return setImmediate(( () => {
-      if (this.stubs.robot.logger.logs != null) {
-        this.stubs.robot.logger.logs.error.length.should.equal(1);
+      if (stubs.robot.logger.logs != null) {
+        assert.deepEqual(stubs.robot.logger.logs.error.length, 1);
       }
-      return done();
+      done();
     }
     ), 0);
   });
 });
 
 describe('loadUsers()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('should make successive calls to users.list', function() {
-    return this.client.loadUsers((err, result) => {
-      if (this.stubs != null) {
-        this.stubs._listCount.should.equal(2);
+    return client.loadUsers((err, result) => {
+      if (stubs != null) {
+        assert.deepEqual(stubs._listCount, 2);
       }
-      return result.members.length.should.equal(4);
+      assert.deepEqual(result.members.length, 4);
     });
   });
-  return it('should handle errors', function() {
-    this.stubs._listError = true;
-    return this.client.loadUsers((err, result) => {
-      return err.should.be.an.Error;
+  it('should handle errors', function() {
+    stubs._listError = true;
+    return client.loadUsers((err, result) => {
+      assert.ok(err instanceof Error);
     });
   });
 });
 
 describe('Users data', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should add a user data', function() {
-    this.client.updateUserInBrain(this.stubs.user);
-    const user = this.slackbot.robot.brain.data.users[this.stubs.user.id];
-    should.equal(user.id, this.stubs.user.id);
-    should.equal(user.name, this.stubs.user.name);
-    should.equal(user.real_name, this.stubs.user.real_name);
-    should.equal(user.email_address, this.stubs.user.profile.email);
-    return should.equal(user.slack.misc, this.stubs.user.misc);
+    client.updateUserInBrain(stubs.user);
+    const user = slackbot.robot.brain.data.users[stubs.user.id];
+    assert.deepEqual(user.id, stubs.user.id);
+    assert.deepEqual(user.name, stubs.user.name);
+    assert.deepEqual(user.real_name, stubs.user.real_name);
+    assert.deepEqual(user.email_address, stubs.user.profile.email);
+    assert.deepEqual(user.slack.misc, stubs.user.misc);
   });
 
   it('Should add a user data (user with no profile)', function() {
-    this.client.updateUserInBrain(this.stubs.usernoprofile);
-    const user = this.slackbot.robot.brain.data.users[this.stubs.usernoprofile.id];
-    should.equal(user.id, this.stubs.usernoprofile.id);
-    should.equal(user.name, this.stubs.usernoprofile.name);
-    should.equal(user.real_name, this.stubs.usernoprofile.real_name);
-    should.equal(user.slack.misc, this.stubs.usernoprofile.misc);
-    return (user).should.not.have.ownProperty('email_address');
+    client.updateUserInBrain(stubs.usernoprofile);
+    const user = slackbot.robot.brain.data.users[stubs.usernoprofile.id];
+    assert.deepEqual(user.id, stubs.usernoprofile.id);
+    assert.deepEqual(user.name, stubs.usernoprofile.name);
+    assert.deepEqual(user.real_name, stubs.usernoprofile.real_name);
+    assert.deepEqual(user.slack.misc, stubs.usernoprofile.misc);
+    assert.ok(user.email_address == undefined);
   });
 
   it('Should add a user data (user with no email in profile)', function() {
-    this.client.updateUserInBrain(this.stubs.usernoemail);
+    client.updateUserInBrain(stubs.usernoemail);
 
-    const user = this.slackbot.robot.brain.data.users[this.stubs.usernoemail.id];
-    should.equal(user.id, this.stubs.usernoemail.id);
-    should.equal(user.name, this.stubs.usernoemail.name);
-    should.equal(user.real_name, this.stubs.usernoemail.real_name);
-    should.equal(user.slack.misc, this.stubs.usernoemail.misc);
-    return (user).should.not.have.ownProperty('email_address');
+    const user = slackbot.robot.brain.data.users[stubs.usernoemail.id];
+    assert.deepEqual(user.id, stubs.usernoemail.id);
+    assert.deepEqual(user.name, stubs.usernoemail.name);
+    assert.deepEqual(user.real_name, stubs.usernoemail.real_name);
+    assert.deepEqual(user.slack.misc, stubs.usernoemail.misc);
+    assert.ok(user.email_address == undefined);
   });
 
-  return it('Should modify a user data', function() {
-    this.client.updateUserInBrain(this.stubs.user);
+  it('Should modify a user data', function() {
+    client.updateUserInBrain(stubs.user);
 
-    let user = this.slackbot.robot.brain.data.users[this.stubs.user.id];
-    should.equal(user.id, this.stubs.user.id);
-    should.equal(user.name, this.stubs.user.name);
-    should.equal(user.real_name, this.stubs.user.real_name);
-    should.equal(user.email_address, this.stubs.user.profile.email);
-    should.equal(user.slack.misc, this.stubs.user.misc);
+    let user = slackbot.robot.brain.data.users[stubs.user.id];
+    assert.deepEqual(user.id, stubs.user.id);
+    assert.deepEqual(user.name, stubs.user.name);
+    assert.deepEqual(user.real_name, stubs.user.real_name);
+    assert.deepEqual(user.email_address, stubs.user.profile.email);
+    assert.deepEqual(user.slack.misc, stubs.user.misc);
 
     const user_change_event = {
       type: 'user_change',
       user: {
-        id: this.stubs.user.id,
+        id: stubs.user.id,
         name: 'modified_name',
-        real_name: this.stubs.user.real_name,
+        real_name: stubs.user.real_name,
         profile: {
-          email: this.stubs.user.profile.email
+          email: stubs.user.profile.email
         }
       }
     };
 
-    this.client.updateUserInBrain(user_change_event);
+    client.updateUserInBrain(user_change_event);
 
-    user = this.slackbot.robot.brain.data.users[this.stubs.user.id];
-    should.equal(user.id, this.stubs.user.id);
-    should.equal(user.name, user_change_event.user.name);
-    should.equal(user.real_name, this.stubs.user.real_name);
-    should.equal(user.email_address, this.stubs.user.profile.email);
-    should.equal(user.slack.misc, undefined);
-    return should.equal(user.slack.client, undefined);
+    user = slackbot.robot.brain.data.users[stubs.user.id];
+    assert.deepEqual(user.id, stubs.user.id);
+    assert.deepEqual(user.name, user_change_event.user.name);
+    assert.deepEqual(user.real_name, stubs.user.real_name);
+    assert.deepEqual(user.email_address, stubs.user.profile.email);
+    assert.deepEqual(user.slack.misc, undefined);
+    assert.deepEqual(user.slack.client, undefined);
   });
 });
 
 describe('fetchBotUser()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
-  it('should return user representation from map', function() {
+  it('should return user representation from map', async function() {
     const {
       user
-    } = this.stubs;
-    this.client.botUserIdMap[this.stubs.bot.id] = user;
-    return this.client.fetchBotUser(this.stubs.bot.id)
-    .then(res => res.id.should.equal(user.id));
+    } = stubs;
+    client.botUserIdMap[stubs.bot.id] = user;
+    const res = await client.fetchBotUser(stubs.bot.id)
+    assert.deepEqual(res.id, user.id);
   });
 
-  it('should return promise if no user representation exists in map', function() {
-    const result = this.client.fetchBotUser(this.stubs.bot.id);
-    return result.should.be.Promise();
-  });
-
-  return it('should return constant data if id is slackbots id', function() {
-    const user = this.stubs.slack_bot;
-    return this.client.fetchBotUser(this.stubs.slack_bot.id)
-    .then(function(res) {
-      res.id.should.equal(user.id);
-      return res.user_id.should.equal(user.user_id);
-    });
+  it('should return constant data if id is slackbots id', async function() {
+    const user = stubs.slack_bot;
+    const res = await client.fetchBotUser(stubs.slack_bot.id)
+    assert.deepEqual(res.id, user.id);
+    assert.deepEqual(res.user_id, user.user_id);
   });
 });
 
 describe('fetchUser()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
-  it('should return user representation from brain', function() {
+  it('should return user representation from brain', async function() {
     const {
       user
-    } = this.stubs;
-    this.client.updateUserInBrain(user);
-    return this.client.fetchUser(user.id)
-    .then(res => res.id.should.equal(user.id));
-  });
-
-  it('should return promise if no user exists in brain', function() {
-    const result = this.client.fetchUser(this.stubs.user.id);
-    return result.should.be.Promise();
+    } = stubs;
+    client.updateUserInBrain(user);
+    const res = await client.fetchUser(user.id)
+    assert.deepEqual(res.id, user.id);
   });
   
-  return it('Should sync interacting users when syncing disabled', function() {
-    const {
-      slackbot
-    } = this;
+  it('Should sync interacting users when syncing disabled', async function() {
     slackbot.options.disableUserSync = true;
     slackbot.run();
 
-    return this.client.fetchUser(this.stubs.user.id)
-    .then(res => slackbot.robot.brain.data.users.should.have.keys('U123'));
+    const res = await client.fetchUser(stubs.user.id)
+    assert.ok(Object.keys(slackbot.robot.brain.data.users).includes('U123'));
   });
 });
 
 describe('fetchConversation()', function() {
+  let stubs, slackbox, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({ stubs, slackbot, client } = require('./stubs.js')());
   });
-  it('Should remove expired conversation info', function() {
+  it('Should remove expired conversation info', async function() {
     const {
       channel
-    } = this.stubs;
-    const {
-      client
-    } = this;
+    } = stubs;
     client.channelData[channel.id] = {
       channel: {id: 'C123', name: 'foo'},
-      updated: this.stubs.expired_timestamp
+      updated: stubs.expired_timestamp
     };
-    return client.fetchConversation(channel.id)
-    .then(function(res) {
-      res.name.should.equal(channel.name);
-      client.channelData.should.have.key('C123');
-      return client.channelData['C123'].channel.name.should.equal(channel.name);
-    });
+    const res = await client.fetchConversation(channel.id)
+    assert.deepEqual(res.name, channel.name);
+    assert.ok(Object.keys(client.channelData).includes('C123'));
+    assert.deepEqual(client.channelData['C123'].channel.name, channel.name);
   });
-  return it('Should return conversation info if not expired', function() {
+  it('Should return conversation info if not expired', async function() {
     const {
       channel
-    } = this.stubs;
-    const {
-      client
-    } = this;
+    } = stubs;
     client.channelData[channel.id] = {
       channel: {id: 'C123', name: 'foo'},
       updated: Date.now()
     };
-    return client.fetchConversation(channel.id)
-    .then(function(res) {
-      res.id.should.equal(channel.id);
-      client.channelData.should.have.key('C123');
-      return client.channelData['C123'].channel.name.should.equal('foo');
-    });
+    const res = await client.fetchConversation(channel.id)
+    assert.deepEqual(res.id, channel.id);
+    assert.ok(Object.keys(client.channelData).includes('C123'));
+    assert.deepEqual(client.channelData['C123'].channel.name, 'foo');
   });
 });

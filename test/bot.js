@@ -1,131 +1,127 @@
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
-const should = require('should');
-const chai = require('chai');
-const mockery = require('mockery');
-const hubotSlackMock = require('../slack.js');
-mockery.registerMock('hubot-slack', hubotSlackMock);
+const {describe, it, beforeEach, before, after} = require('node:test');
+const assert = require('node:assert/strict');
+const Module = require('module');
 
-const { EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, Robot, loadBot, Adapter } = require.main.require('hubot');
+const hookModuleToReturnMockFromRequire = (module, mock) => {
+  const originalRequire = Module.prototype.require;
+  Module.prototype.require = function() {
+    if (arguments[0] === module) {
+      return mock;
+    }
+    return originalRequire.apply(this, arguments);
+  };
+};
+
+
+const hubotSlackMock = require('../slack.js');
+hookModuleToReturnMockFromRequire('hubot-slack', hubotSlackMock);
+
+const { loadBot } = require.main.require('hubot');
 const { SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage } = require('../src/message');
-const SlackClient = require('../src/client');
-const _ = require('lodash');
-const SlackBot = require('../src/bot.js');
 
 describe('Adapter', function() {
-  
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
-  
-  before(() => mockery.enable({
-    warnOnUnregistered: false
-  }));
-  
-  after(() => mockery.disable());
-  
+    
   it('Should initialize with a robot', function() {
-    return this.slackbot.robot.should.eql(this.stubs.robot);
+    assert.deepEqual(slackbot.robot, stubs.robot);
   });
 
-  return it('Should load an instance of Robot with extended methods', function() {
+  it('Should load an instance of Robot with extended methods', function() {
     const loadedRobot = loadBot('', 'slack', false, 'Hubot');
     
     // Check to make sure presenceChange and react are loaded to Robot
-    loadedRobot.presenceChange.should.be.an.instanceOf(Function).with.lengthOf(3);
-    loadedRobot.react.should.be.an.instanceOf(Function).with.lengthOf(3);
-    return loadedRobot.fileShared.should.be.an.instanceOf(Function).with.lengthOf(3);
+    assert.ok(loadedRobot.presenceChange instanceof Function);
+    assert.deepEqual(loadedRobot.presenceChange.length, 3);
+    assert.ok(loadedRobot.hearReaction instanceof Function);
+    assert.deepEqual(loadedRobot.hearReaction.length, 3);
+    assert.ok(loadedRobot.fileShared instanceof Function);
+    assert.deepEqual(loadedRobot.fileShared.length, 3);
   });
 });
 
 describe('Connect', () => {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
+
   it('Should connect successfully', function() {
-    this.slackbot.run();
-    return this.stubs._connected.should.be.true;
+    slackbot.run();
+    assert.ok(stubs._connected);
   })
 });
 
 describe('Authenticate', () => {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
 
   it('Should authenticate successfully', function() {
-    const {logger} = this.slackbot.robot;
+    const {logger} = slackbot.robot;
     const start = { self: {
-      id: this.stubs.self.id,
-      name: this.stubs.self.name
+      id: stubs.self.id,
+      name: stubs.self.name
     },
     team: {
-      id: this.stubs.team.id,
-      name: this.stubs.team.name
+      id: stubs.team.id,
+      name: stubs.team.name
     },
     users: [
-      this.stubs.self,
-      this.stubs.user
+      stubs.self,
+      stubs.user
     ]
   };
 
-    this.slackbot.authenticated(start);
-    this.slackbot.self.id.should.equal(this.stubs.self.id);
-    this.slackbot.robot.name.should.equal(this.stubs.self.name);
-    logger.logs["info"].length.should.be.above(0);
-    return logger.logs["info"][logger.logs["info"].length-1].should.equal(`Logged in as @${this.stubs.self.name} in workspace ${this.stubs.team.name}`);
+    slackbot.authenticated(start);
+    assert.deepEqual(slackbot.self.id, stubs.self.id);
+    assert.deepEqual(slackbot.robot.name, stubs.self.name);
+    assert.ok(logger.logs["info"].length > 0)
+    assert.deepEqual(logger.logs["info"][logger.logs["info"].length-1], `Logged in as @${stubs.self.name} in workspace ${stubs.team.name}`);
   });
 });
 
 describe('Logger', function() {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
 
   it('It should log missing token error', function() {
-    const {logger} = this.slackbot.robot;
-    this.slackbot.options.token = null;
-    this.slackbot.run();
-    logger.logs["error"].length.should.be.above(0);
-    return logger.logs["error"][logger.logs["error"].length-1].should.equal('No token provided to Hubot');
+    const {logger} = slackbot.robot;
+    slackbot.options.token = null;
+    slackbot.run();
+    assert.ok(logger.logs["error"].length > 0);
+    assert.deepEqual(logger.logs["error"][logger.logs["error"].length-1], 'No token provided to Hubot');
   });
 
-  return it('It should log invalid token error', function() {
-    const {logger} = this.slackbot.robot;
-    this.slackbot.options.token = "ABC123";
-    this.slackbot.run() -
-    logger.logs["error"].length.should.be.above(0);
-    return logger.logs["error"][logger.logs["error"].length-1].should.equal('Invalid token provided, please follow the upgrade instructions');
+  it('It should log invalid token error', function() {
+    const {logger} = slackbot.robot;
+    slackbot.options.token = "ABC123";
+    slackbot.run() -
+    assert.ok(logger.logs["error"].length > 0);
+    assert.deepEqual(logger.logs["error"][logger.logs["error"].length-1], 'Invalid token provided, please follow the upgrade instructions');
   });
 });
 
 describe('Disable Sync', function() {
+  let slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
 
   it('Should sync users by default', function() {
-    this.slackbot.run();
-    return this.slackbot.robot.brain.data.users.should.have.keys('1','2','3','4');
+    slackbot.run();
+    assert.deepEqual(Object.keys(slackbot.robot.brain.data.users), ['1','2','3','4']);
   });
 
-  return it('Should not sync users when disabled', function() {
-    this.slackbot.options.disableUserSync = true;
-    this.slackbot.run();
-    return this.slackbot.robot.brain.data.users.should.be.empty();
+  it('Should not sync users when disabled', function() {
+    slackbot.options.disableUserSync = true;
+    slackbot.run();
+    assert.deepEqual(Object.keys(slackbot.robot.brain.data.users).length, 0);
   });
 });
 
@@ -133,565 +129,505 @@ describe('Disable Sync', function() {
   //it 'Should still sync interacting users when disabled'
 
 describe('Send Messages', function() {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
 
   it('Should send a message', function() {
-    this.slackbot.send({room: this.stubs.channel.id}, 'message');
-    this.stubs._sendCount.should.equal(1);
-    return this.stubs._msg.should.equal('message');
+    slackbot.send({room: stubs.channel.id}, 'message');
+    assert.deepEqual(stubs._sendCount, 1);
+    assert.deepEqual(stubs._msg, 'message');
   });
 
   it('Should send multiple messages', function() {
-    this.slackbot.send({room: this.stubs.channel.id}, 'one', 'two', 'three');
-    return this.stubs._sendCount.should.equal(3);
+    slackbot.send({room: stubs.channel.id}, 'one', 'two', 'three');
+    assert.deepEqual(stubs._sendCount, 3);
   });
 
   it('Should not send empty messages', function() {
-    this.slackbot.send({room: this.stubs.channel.id}, 'Hello', '', '', 'world!');
-    return this.stubs._sendCount.should.equal(2);
+    slackbot.send({room: stubs.channel.id}, 'Hello', '', '', 'world!');
+    assert.deepEqual(stubs._sendCount, 2);
   });
 
   it('Should not fail for inexistant user', function() {
-    return chai.expect(() => this.slackbot.send({room: 'U987'}, 'Hello')).to.not.throw();
+    assert.doesNotThrow(() => slackbot.send({room: 'U987'}, 'Hello'));
   });
 
   it('Should open a DM channel if needed', function() {
     const msg = 'Test';
-    this.slackbot.send({room: this.stubs.user.id}, msg);
-    return this.stubs._dmmsg.should.eql(msg);
+    slackbot.send({room: stubs.user.id}, msg);
+    assert.deepEqual(stubs._dmmsg, msg);
   });
 
   it('Should send a message to a user', function() {
-    this.slackbot.send(this.stubs.user, 'message');
-    this.stubs._dmmsg.should.eql('message');
-    return this.stubs._room.should.eql(this.stubs.user.id);
+    slackbot.send(stubs.user, 'message');
+    assert.deepEqual(stubs._dmmsg, 'message');
+    assert.deepEqual(stubs._room, stubs.user.id);
   });
 
-  return it('Should send a message with a callback', function(done) {
-    this.slackbot.send({room: this.stubs.channel.id}, 'message', done);
-    this.stubs._sendCount.should.equal(1);
-    return this.stubs._msg.should.equal('message');
+  it('Should send a message with a callback', function(t, done) {
+    slackbot.send({room: stubs.channel.id}, 'message with a callback', function() {
+      assert.ok(true);
+      done();
+    });
+    assert.deepEqual(stubs._sendCount, 1);
+    assert.deepEqual(stubs._msg, 'message with a callback');
   });
 });
 
 describe('Client sending message', function() {
+  let stubs, client;
   beforeEach(function() {
-    const { stubs, slackbot, client } = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    this.client = client;
+    ({stubs, client} = require('./stubs.js')());
   });
 
   it('Should append as_user = true', function() {
-    this.client.send({room: this.stubs.channel.id}, {text: 'foo', user: this.stubs.user, channel: this.stubs.channel.id});
-    return this.stubs._opts.as_user.should.eql(true);
+    client.send({room: stubs.channel.id}, {text: 'foo', user: stubs.user, channel: stubs.channel.id});
+    assert.ok(stubs._opts.as_user);
   });
 
-  return it('Should append as_user = true only as a default', function() {
-    this.client.send({room: this.stubs.channel.id}, {text: 'foo', user: this.stubs.user, channel: this.stubs.channel.id, as_user: false});
-    return this.stubs._opts.as_user.should.eql(false);
+  it('Should append as_user = true only as a default', function() {
+    client.send({room: stubs.channel.id}, {text: 'foo', user: stubs.user, channel: stubs.channel.id, as_user: false});
+    assert.ok(!stubs._opts.as_user);
   });
 });
 
 describe('Reply to Messages', function() {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
 
   it('Should mention the user in a reply sent in a channel', function() {
-    this.slackbot.reply({user: this.stubs.user, room: this.stubs.channel.id}, 'message');
-    this.stubs._sendCount.should.equal(1);
-    return this.stubs._msg.should.equal(`<@${this.stubs.user.id}>: message`);
+    slackbot.reply({user: stubs.user, room: stubs.channel.id}, 'message');
+    assert.deepEqual(stubs._sendCount, 1);
+    assert.deepEqual(stubs._msg, `<@${stubs.user.id}>: message`);
   });
 
   it('Should mention the user in multiple replies sent in a channel', function() {
-    this.slackbot.reply({user: this.stubs.user, room: this.stubs.channel.id}, 'one', 'two', 'three');
-    this.stubs._sendCount.should.equal(3);
-    return this.stubs._msg.should.equal(`<@${this.stubs.user.id}>: three`);
+    slackbot.reply({user: stubs.user, room: stubs.channel.id}, 'one', 'two', 'three');
+    assert.deepEqual(stubs._sendCount, 3);
+    assert.deepEqual(stubs._msg, `<@${stubs.user.id}>: three`);
   });
 
   it('Should send nothing if messages are empty', function() {
-    this.slackbot.reply({user: this.stubs.user, room: this.stubs.channel.id}, '');
-    return this.stubs._sendCount.should.equal(0);
+    slackbot.reply({user: stubs.user, room: stubs.channel.id}, '');
+    assert.deepEqual(stubs._sendCount, 0);
   });
 
   it('Should NOT mention the user in a reply sent in a DM', function() {
-    this.slackbot.reply({user: this.stubs.user, room: this.stubs.DM.id }, 'message');
-    this.stubs._sendCount.should.equal(1);
-    return this.stubs._dmmsg.should.equal("message");
+    slackbot.reply({user: stubs.user, room: stubs.DM.id }, 'message');
+    assert.deepEqual(stubs._sendCount, 1);
+    assert.deepEqual(stubs._dmmsg, 'message');
   });
 
-  return it('Should call the callback', function(done) {
-    this.slackbot.reply({user: this.stubs.user, room: this.stubs.channel.id}, 'message', done);
-    this.stubs._sendCount.should.equal(1);
-    return this.stubs._msg.should.equal(`<@${this.stubs.user.id}>: message`);
+  it('Should call the callback', function(t, done) {
+    slackbot.reply({user: stubs.user, room: stubs.channel.id}, 'message', function() {
+      assert.ok(true);
+      done();
+    });
+    assert.deepEqual(stubs._sendCount, 1);
+    assert.deepEqual(stubs._msg, `<@${stubs.user.id}>: message`);
   });
 });
 
 describe('Setting the channel topic', function() {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
 
-  it('Should set the topic in channels', function(done) {
-    this.stubs.receiveMock.onTopic = function(topic) {
-      topic.should.equal('channel');
-      return done();
+  it('Should set the topic in channels', function(t, done) {
+    stubs.receiveMock.onTopic = function(topic) {
+      assert.deepEqual(topic, 'channel');
+      done();
     };
-    this.slackbot.setTopic({room: this.stubs.channel.id}, 'channel');
+    slackbot.setTopic({room: stubs.channel.id}, 'channel');
   });
 
-  return it('Should NOT set the topic in DMs', function() {
-    this.slackbot.setTopic({room: 'D1232'}, 'DM');
-    return should.not.exists(this.stubs._topic);
+  it('Should NOT set the topic in DMs', function() {
+    slackbot.setTopic({room: 'D1232'}, 'DM');
+    assert.equal(stubs._topic, undefined);
   });
 });
 
 describe('Receiving an error event', function() {
+  let slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({slackbot} = require('./stubs.js')());
   });
   it('Should propagate that error', function() {
-    this.hit = false;
-    this.slackbot.robot.on('error', error => {
-      error.msg.should.equal('ohno');
-      return this.hit = true;
+    hit = false;
+    slackbot.robot.on('error', error => {
+      assert.deepEqual(error.msg, 'ohno');
+      hit = true;
     });
-    this.hit.should.equal(false);
-    this.slackbot.error({msg: 'ohno', code: -2});
-    return this.hit.should.equal(true);
+    assert.ok(!hit);
+    slackbot.error({msg: 'ohno', code: -2});
+    assert.ok(hit);
   });
 
-  return it('Should handle rate limit errors', function() {
-    const {logger} = this.slackbot.robot;
-    this.slackbot.error({msg: 'ratelimit', code: -1});
-    return logger.logs["error"].length.should.be.above(0);
+  it('Should handle rate limit errors', function() {
+    const {logger} = slackbot.robot;
+    slackbot.error({msg: 'ratelimit', code: -1});
+    assert.ok(logger.logs["error"].length > 0);
   });
 });
 
 describe('Handling incoming messages', function() {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
 
-  it('Should handle regular messages as hoped and dreamed', function(done) {
-    this.stubs.receiveMock.onReceived = function(msg) {
-      msg.text.should.equal('foo');
-      return done();
+  it('Should handle regular messages as hoped and dreamed', function(t, done) {
+    stubs.receiveMock.onReceived = function(msg) {
+      assert.deepEqual(msg.text, 'foo');
+      done();
     };
-    this.slackbot.eventHandler({type: 'message', text: 'foo', user: this.stubs.user, channel: this.stubs.channel.id });
+    slackbot.eventHandler({type: 'message', text: 'foo', user: stubs.user, channel: stubs.channel.id });
   });
 
-  it('Should handle broadcasted messages', function(done) {
-    this.stubs.receiveMock.onReceived = function(msg) {
-      msg.text.should.equal('foo');
-      return done();
+  it('Should handle broadcasted messages', function(t, done) {
+    stubs.receiveMock.onReceived = function(msg) {
+      assert.deepEqual(msg.text, 'foo');
+      done();
     };
-    this.slackbot.eventHandler({type: 'message', text: 'foo', subtype: 'thread_broadcast', user: this.stubs.user, channel: this.stubs.channel.id });
+    slackbot.eventHandler({type: 'message', text: 'foo', subtype: 'thread_broadcast', user: stubs.user, channel: stubs.channel.id });
   });
 
-  it('Should prepend our name to a name-lacking message addressed to us in a DM', function(done) {
-    const bot_name = this.slackbot.robot.name;
-    this.stubs.receiveMock.onReceived = function(msg) {
-      msg.text.should.equal(`${bot_name} foo`);
-      return done();
+  it('Should prepend our name to a name-lacking message addressed to us in a DM', function(t, done) {
+    const bot_name = slackbot.robot.name;
+    stubs.receiveMock.onReceived = function(msg) {
+      assert.deepEqual(msg.text, `${bot_name} foo`);
+      done();
     };
-    this.slackbot.eventHandler({type: 'message', text: "foo", user: this.stubs.user, channel: this.stubs.DM.id});
+    slackbot.eventHandler({type: 'message', text: "foo", user: stubs.user, channel: stubs.DM.id});
   });
 
-  it('Should NOT prepend our name to a name-containing message addressed to us in a DM', function(done) {
-    const bot_name = this.slackbot.robot.name;
-    this.stubs.receiveMock.onReceived = function(msg) {
-      msg.text.should.equal(`${bot_name} foo`);
-      return done();
+  it('Should NOT prepend our name to a name-containing message addressed to us in a DM', function(t, done) {
+    const bot_name = slackbot.robot.name;
+    stubs.receiveMock.onReceived = function(msg) {
+      assert.deepEqual(msg.text, `${bot_name} foo`);
+      done();
     };
-    this.slackbot.eventHandler({type: 'message', text: `${bot_name} foo`, user: this.stubs.user, channel: this.stubs.DM.id});
+    slackbot.eventHandler({type: 'message', text: `${bot_name} foo`, user: stubs.user, channel: stubs.DM.id});
   });
 
-  it('Should return a message object with raw text and message', function(done) {
+  it('Should return a message object with raw text and message', function(t, done) {
     //the shape of this data is an RTM message event passed through SlackClient#messageWrapper
     //see: https://api.slack.com/events/message
     const messageData = {
       type: 'message',
-      user: this.stubs.user,
-      channel: this.stubs.channel.id,
+      user: stubs.user,
+      channel: stubs.channel.id,
       text: 'foo <http://www.example.com> bar',
     };
-    this.stubs.receiveMock.onReceived = function(msg) {
-      should.equal((msg instanceof SlackTextMessage), true);
-      should.equal(msg.text, "foo http://www.example.com bar");
-      should.equal(msg.rawText, "foo <http://www.example.com> bar");
-      should.equal(msg.rawMessage, messageData);
-      return done();
+    stubs.receiveMock.onReceived = function(msg) {
+      assert.deepEqual((msg instanceof SlackTextMessage), true);
+      assert.deepEqual(msg.text, "foo http://www.example.com bar");
+      assert.deepEqual(msg.rawText, "foo <http://www.example.com> bar");
+      assert.deepEqual(msg.rawMessage, messageData);
+      done();
     };
-    this.slackbot.eventHandler(messageData);
+    slackbot.eventHandler(messageData);
   });
 
   it('Should handle member_joined_channel events as envisioned', function() {
-    this.slackbot.eventHandler({
+    slackbot.eventHandler({
       type: 'member_joined_channel',
-      user: this.stubs.user,
-      channel: this.stubs.channel.id,
-      ts: this.stubs.event_timestamp
+      user: stubs.user,
+      channel: stubs.channel.id,
+      ts: stubs.event_timestamp
     });
-    should.equal(this.stubs._received.constructor.name, "EnterMessage");
-    should.equal(this.stubs._received.ts, this.stubs.event_timestamp);
-    return this.stubs._received.user.id.should.equal(this.stubs.user.id);
+    assert.deepEqual(stubs._received.constructor.name, "EnterMessage");
+    assert.deepEqual(stubs._received.ts, stubs.event_timestamp);
+    assert.deepEqual(stubs._received.user.id, stubs.user.id);
   });
 
   it('Should handle member_left_channel events as envisioned', function() {
-    this.slackbot.eventHandler({
+    slackbot.eventHandler({
       type: 'member_left_channel',
-      user: this.stubs.user,
-      channel: this.stubs.channel.id,
-      ts: this.stubs.event_timestamp
+      user: stubs.user,
+      channel: stubs.channel.id,
+      ts: stubs.event_timestamp
     });
-    should.equal(this.stubs._received.constructor.name, "LeaveMessage");
-    should.equal(this.stubs._received.ts, this.stubs.event_timestamp);
-    return this.stubs._received.user.id.should.equal(this.stubs.user.id);
+    assert.deepEqual(stubs._received.constructor.name, "LeaveMessage");
+    assert.deepEqual(stubs._received.ts, stubs.event_timestamp);
+    assert.deepEqual(stubs._received.user.id, stubs.user.id);
   });
 
   it('Should handle channel_topic events as envisioned', function() {
-    this.slackbot.eventHandler({type: 'message', subtype: 'channel_topic', user: this.stubs.user, channel: this.stubs.channel.id});
-    should.equal(this.stubs._received.constructor.name, "TopicMessage");
-    return this.stubs._received.user.id.should.equal(this.stubs.user.id);
+    slackbot.eventHandler({type: 'message', subtype: 'channel_topic', user: stubs.user, channel: stubs.channel.id});
+    assert.deepEqual(stubs._received.constructor.name, "TopicMessage");
+    assert.deepEqual(stubs._received.user.id, stubs.user.id);
   });
 
   it('Should handle group_topic events as envisioned', function() {
-    this.slackbot.eventHandler({type: 'message', subtype: 'group_topic', user: this.stubs.user, channel: this.stubs.channel.id});
-    should.equal(this.stubs._received.constructor.name, "TopicMessage");
-    return this.stubs._received.user.id.should.equal(this.stubs.user.id);
+    slackbot.eventHandler({type: 'message', subtype: 'group_topic', user: stubs.user, channel: stubs.channel.id});
+    assert.deepEqual(stubs._received.constructor.name, "TopicMessage");
+    assert.deepEqual(stubs._received.user.id, stubs.user.id);
   });
 
   it('Should handle reaction_added events as envisioned', function() {
     const reactionMessage = {
-      type: 'reaction_added', user: this.stubs.user, item_user: this.stubs.self,
-      item: { type: 'message', channel: this.stubs.channel.id, ts: '1360782804.083113'
+      type: 'reaction_added', user: stubs.user, item_user: stubs.self,
+      item: { type: 'message', channel: stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     };
-    this.slackbot.eventHandler(reactionMessage);
-    should.equal((this.stubs._received instanceof ReactionMessage), true);
-    should.equal(this.stubs._received.user.id, this.stubs.user.id);
-    should.equal(this.stubs._received.user.room, this.stubs.channel.id);
-    should.equal(this.stubs._received.item_user.id, this.stubs.self.id);
-    should.equal(this.stubs._received.type, 'added');
-    return should.equal(this.stubs._received.reaction, 'thumbsup');
+    slackbot.eventHandler(reactionMessage);
+    assert.deepEqual((stubs._received instanceof ReactionMessage), true);
+    assert.deepEqual(stubs._received.user.id, stubs.user.id);
+    assert.deepEqual(stubs._received.user.room, stubs.channel.id);
+    assert.deepEqual(stubs._received.item_user.id, stubs.self.id);
+    assert.deepEqual(stubs._received.type, 'added');
+    assert.deepEqual(stubs._received.reaction, 'thumbsup');
   });
 
   it('Should handle reaction_removed events as envisioned', function() {
     const reactionMessage = {
-      type: 'reaction_removed', user: this.stubs.user, item_user: this.stubs.self,
-      item: { type: 'message', channel: this.stubs.channel.id, ts: '1360782804.083113'
+      type: 'reaction_removed', user: stubs.user, item_user: stubs.self,
+      item: { type: 'message', channel: stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     };
-    this.slackbot.eventHandler(reactionMessage);
-    should.equal((this.stubs._received instanceof ReactionMessage), true);
-    should.equal(this.stubs._received.user.id, this.stubs.user.id);
-    should.equal(this.stubs._received.user.room, this.stubs.channel.id);
-    should.equal(this.stubs._received.item_user.id, this.stubs.self.id);
-    should.equal(this.stubs._received.type, 'removed');
-    return should.equal(this.stubs._received.reaction, 'thumbsup');
+    slackbot.eventHandler(reactionMessage);
+    assert.deepEqual((stubs._received instanceof ReactionMessage), true);
+    assert.deepEqual(stubs._received.user.id, stubs.user.id);
+    assert.deepEqual(stubs._received.user.room, stubs.channel.id);
+    assert.deepEqual(stubs._received.item_user.id, stubs.self.id);
+    assert.deepEqual(stubs._received.type, 'removed');
+    assert.deepEqual(stubs._received.reaction, 'thumbsup');
   });
 
-  it('Should not crash with bot messages', function(done) {
-    this.stubs.receiveMock.onReceived = function(msg) {
-      should.equal((msg instanceof SlackTextMessage), true);
-      return done();
+  it('Should not crash with bot messages', function(t, done) {
+    stubs.receiveMock.onReceived = function(msg) {
+      assert.deepEqual((msg instanceof SlackTextMessage), true);
+      done();
     };
-    this.slackbot.eventHandler({type: 'message', subtype: 'bot_message', user: this.stubs.user, channel: this.stubs.channel.id, text: 'Pushing is the answer', returnRawText: true });
+    slackbot.eventHandler({type: 'message', subtype: 'bot_message', user: stubs.user, channel: stubs.channel.id, text: 'Pushing is the answer', returnRawText: true });
   });
 
   it('Should handle single user presence_change events as envisioned', function() {
-    this.slackbot.robot.brain.userForId(this.stubs.user.id, this.stubs.user);
+    slackbot.robot.brain.userForId(stubs.user.id, stubs.user);
     const presenceMessage = {
-      type: 'presence_change', user: this.stubs.user, presence: 'away'
+      type: 'presence_change', user: stubs.user, presence: 'away'
     };
-    this.slackbot.eventHandler(presenceMessage);
-    should.equal((this.stubs._received instanceof PresenceMessage), true);
-    should.equal(this.stubs._received.users[0].id, this.stubs.user.id);
-    return this.stubs._received.users.length.should.equal(1);
+    slackbot.eventHandler(presenceMessage);
+    assert.deepEqual((stubs._received instanceof PresenceMessage), true);
+    assert.deepEqual(stubs._received.users[0].id, stubs.user.id);
+    assert.deepEqual(stubs._received.users.length, 1);
   });
 
   it('Should handle presence_change events as envisioned', function() {
-    this.slackbot.robot.brain.userForId(this.stubs.user.id, this.stubs.user);
+    slackbot.robot.brain.userForId(stubs.user.id, stubs.user);
     const presenceMessage = {
-      type: 'presence_change', users: [this.stubs.user], presence: 'away'
+      type: 'presence_change', users: [stubs.user], presence: 'away'
     };
-    this.slackbot.eventHandler(presenceMessage);
-    should.equal((this.stubs._received instanceof PresenceMessage), true);
-    should.equal(this.stubs._received.users[0].id, this.stubs.user.id);
-    return this.stubs._received.users.length.should.equal(1);
+    slackbot.eventHandler(presenceMessage);
+    assert.deepEqual((stubs._received instanceof PresenceMessage), true);
+    assert.deepEqual(stubs._received.users[0].id, stubs.user.id);
+    assert.deepEqual(stubs._received.users.length, 1);
   });
 
   it('Should ignore messages it sent itself', function() {
-    this.slackbot.eventHandler({type: 'message', subtype: 'bot_message', user: this.stubs.self, channel: this.stubs.channel.id, text: 'Ignore me' });
-    return should.equal(this.stubs._received, undefined);
+    slackbot.eventHandler({type: 'message', subtype: 'bot_message', user: stubs.self, channel: stubs.channel.id, text: 'Ignore me' });
+    assert.deepEqual(stubs._received, undefined);
   });
 
   it('Should ignore reaction events that it generated itself', function() {
-    const reactionMessage = { type: 'reaction_removed', user: this.stubs.self, reaction: 'thumbsup', event_ts: '1360782804.083113' };
-    this.slackbot.eventHandler(reactionMessage);
-    return should.equal(this.stubs._received, undefined);
+    const reactionMessage = { type: 'reaction_removed', user: stubs.self, reaction: 'thumbsup', event_ts: '1360782804.083113' };
+    slackbot.eventHandler(reactionMessage);
+    assert.deepEqual(stubs._received, undefined);
   });
 
-  it('Should handle empty users as envisioned', function(done){
-    this.stubs.receiveMock.onReceived = function(msg) {
-      should.equal((msg instanceof SlackTextMessage), true);
-      return done();
+  it('Should handle empty users as envisioned', function(t, done){
+    stubs.receiveMock.onReceived = function(msg) {
+      assert.deepEqual((msg instanceof SlackTextMessage), true);
+      done();
     };
-    this.slackbot.eventHandler({type: 'message', subtype: 'bot_message', user: {}, channel: this.stubs.channel.id, text: 'Foo'});
+    slackbot.eventHandler({type: 'message', subtype: 'bot_message', user: {}, channel: stubs.channel.id, text: 'Foo'});
   });
 
   it('Should handle reaction events from users who are in different workspace in shared channel', function() {
     const reactionMessage = {
-      type: 'reaction_added', user: this.stubs.org_user_not_in_workspace_in_channel, item_user: this.stubs.self,
-      item: { type: 'message', channel: this.stubs.channel.id, ts: '1360782804.083113'
+      type: 'reaction_added', user: stubs.org_user_not_in_workspace_in_channel, item_user: stubs.self,
+      item: { type: 'message', channel: stubs.channel.id, ts: '1360782804.083113'
       },
       reaction: 'thumbsup', event_ts: '1360782804.083113'
     };
 
-    this.slackbot.eventHandler(reactionMessage);
-    should.equal((this.stubs._received instanceof ReactionMessage), true);
-    should.equal(this.stubs._received.user.id, this.stubs.org_user_not_in_workspace_in_channel.id);
-    should.equal(this.stubs._received.user.room, this.stubs.channel.id);
-    should.equal(this.stubs._received.item_user.id, this.stubs.self.id);
-    should.equal(this.stubs._received.type, 'added');
-    return should.equal(this.stubs._received.reaction, 'thumbsup');
+    slackbot.eventHandler(reactionMessage);
+    assert.deepEqual((stubs._received instanceof ReactionMessage), true);
+    assert.deepEqual(stubs._received.user.id, stubs.org_user_not_in_workspace_in_channel.id);
+    assert.deepEqual(stubs._received.user.room, stubs.channel.id);
+    assert.deepEqual(stubs._received.item_user.id, stubs.self.id);
+    assert.deepEqual(stubs._received.type, 'added');
+    assert.deepEqual(stubs._received.reaction, 'thumbsup');
   });
     
-  return it('Should handle file_shared events as envisioned', function() {
+  it('Should handle file_shared events as envisioned', function() {
     const fileMessage = {
-      type: 'file_shared', user: this.stubs.user,
+      type: 'file_shared', user: stubs.user,
       file_id: 'F2147483862', event_ts: '1360782804.083113'
     };
-    this.slackbot.eventHandler(fileMessage);
-    should.equal((this.stubs._received instanceof FileSharedMessage), true);
-    should.equal(this.stubs._received.user.id, this.stubs.user.id);
-    return should.equal(this.stubs._received.file_id, 'F2147483862');
-  });
-});
-
-describe('Robot.react DEPRECATED', function() {
-  beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    const user = { id: this.stubs.user.id, room: this.stubs.channel.id };
-    const item = {
-      type: 'message', channel: this.stubs.channel.id, ts: '1360782804.083113'
-    };
-    this.reactionMessage = new ReactionMessage(
-      'reaction_added', user, 'thumbsup', item, '1360782804.083113'
-    );
-    return this.handleReaction = msg => `${msg.reaction} handled`;
-  });
-
-  it('Should register a Listener with callback only', function() {
-    this.slackbot.robot.react(this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: null});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
-  });
-
-  it('Should register a Listener with opts and callback', function() {
-    this.slackbot.robot.react({id: 'foobar'}, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: 'foobar'});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
-  });
-
-  it('Should register a Listener with matcher and callback', function() {
-    const matcher = msg => msg.type === 'added';
-    this.slackbot.robot.react(matcher, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: null});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
-  });
-
-  it('Should register a Listener with matcher, opts, and callback', function() {
-    const matcher = msg => (msg.type === 'removed') || (msg.reaction === 'thumbsup');
-    this.slackbot.robot.react(matcher, {id: 'foobar'}, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: 'foobar'});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
-  });
-
-  return it('Should register a Listener that does not match the ReactionMessage', function() {
-    const matcher = msg => msg.type === 'removed';
-    this.slackbot.robot.react(matcher, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    return listener.matcher(this.reactionMessage).should.be.false;
+    slackbot.eventHandler(fileMessage);
+    assert.deepEqual((stubs._received instanceof FileSharedMessage), true);
+    assert.deepEqual(stubs._received.user.id, stubs.user.id);
+    assert.deepEqual(stubs._received.file_id, 'F2147483862');
   });
 });
     
 describe('Robot.fileShared', function() {
+  let stubs, slackbot, fileSharedMessage;
+  const handleFileShared = msg => `${msg.file_id} shared`;
+
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    const user = { id: this.stubs.user.id, room: this.stubs.channel.id };
-    this.fileSharedMessage = new FileSharedMessage(user, "F2147483862", '1360782804.083113');
-    return this.handleFileShared = msg => `${msg.file_id} shared`;
+    ({stubs, slackbot} = require('./stubs.js')());
+    const user = { id: stubs.user.id, room: stubs.channel.id };
+    fileSharedMessage = new FileSharedMessage(user, "F2147483862", '1360782804.083113');
   });
 
   it('Should register a Listener with callback only', function() {
-    this.slackbot.robot.fileShared(this.handleFileShared);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.fileSharedMessage).should.be.true;
-    listener.options.should.eql({id: null});
-    return listener.callback(this.fileSharedMessage).should.eql('F2147483862 shared');
+    slackbot.robot.fileShared(handleFileShared);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(fileSharedMessage));
+    assert.deepEqual(listener.options, {id: null});
+    assert.deepEqual(listener.callback(fileSharedMessage), 'F2147483862 shared');
   });
     
   it('Should register a Listener with opts and callback', function() {
-    this.slackbot.robot.fileShared({id: 'foobar'}, this.handleFileShared);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.fileSharedMessage).should.be.true;
-    listener.options.should.eql({id: 'foobar'});
-    return listener.callback(this.fileSharedMessage).should.eql('F2147483862 shared');
+    slackbot.robot.fileShared({id: 'foobar'}, handleFileShared);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(fileSharedMessage));
+    assert.deepEqual(listener.options, {id: 'foobar'});
+    assert.deepEqual(listener.callback(fileSharedMessage), 'F2147483862 shared');
   });
 
   it('Should register a Listener with matcher and callback', function() {
     const matcher = msg => msg.file_id === 'F2147483862';
-    this.slackbot.robot.fileShared(matcher, this.handleFileShared);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.fileSharedMessage).should.be.true;
-    listener.options.should.eql({id: null});
-    return listener.callback(this.fileSharedMessage).should.eql('F2147483862 shared');
+    slackbot.robot.fileShared(matcher, handleFileShared);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(fileSharedMessage));
+    assert.deepEqual(listener.options, {id: null});
+    assert.deepEqual(listener.callback(fileSharedMessage), 'F2147483862 shared');
   });
 
   it('Should register a Listener with matcher, opts, and callback', function() {
     const matcher = msg => msg.file_id === 'F2147483862';
-    this.slackbot.robot.fileShared(matcher, {id: 'foobar'}, this.handleFileShared);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.fileSharedMessage).should.be.true;
-    listener.options.should.eql({id: 'foobar'});
-    return listener.callback(this.fileSharedMessage).should.eql('F2147483862 shared');
+    slackbot.robot.fileShared(matcher, {id: 'foobar'}, handleFileShared);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(fileSharedMessage));
+    assert.deepEqual(listener.options, {id: 'foobar'});
+    assert.deepEqual(listener.callback(fileSharedMessage), 'F2147483862 shared');
   });
 
-  return it('Should register a Listener that does not match the ReactionMessage', function() {
+  it('Should register a Listener that does not match the ReactionMessage', function() {
     const matcher = msg => msg.file_id === 'J12387ALDFK';
-    this.slackbot.robot.fileShared(matcher, this.handleFileShared);
-    const listener = this.slackbot.robot.listeners.shift();
-    return listener.matcher(this.fileSharedMessage).should.be.false;
+    slackbot.robot.fileShared(matcher, handleFileShared);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(!listener.matcher(fileSharedMessage));
   });
 });
 
 describe('Robot.hearReaction', function() {
+  let stubs, slackbot, reactionMessage;
+  const handleReaction = msg => `${msg.reaction} handled`;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
-    const user = { id: this.stubs.user.id, room: this.stubs.channel.id };
+    ({stubs, slackbot} = require('./stubs.js')());
+    const user = { id: stubs.user.id, room: stubs.channel.id };
     const item = {
-      type: 'message', channel: this.stubs.channel.id, ts: '1360782804.083113'
+      type: 'message', channel: stubs.channel.id, ts: '1360782804.083113'
     };
-    this.reactionMessage = new ReactionMessage(
+    reactionMessage = new ReactionMessage(
       'reaction_added', user, 'thumbsup', item, '1360782804.083113'
     );
-    return this.handleReaction = msg => `${msg.reaction} handled`;
   });
 
   it('Should register a Listener with callback only', function() {
-    this.slackbot.robot.hearReaction(this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: null});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
+    slackbot.robot.hearReaction(handleReaction);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(reactionMessage));
+    assert.deepEqual(listener.options, {id: null});
+    assert.deepEqual(listener.callback(reactionMessage), 'thumbsup handled');
   });
 
   it('Should register a Listener with opts and callback', function() {
-    this.slackbot.robot.hearReaction({id: 'foobar'}, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: 'foobar'});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
+    slackbot.robot.hearReaction({id: 'foobar'}, handleReaction);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(reactionMessage));
+    assert.deepEqual(listener.options, {id: 'foobar'});
+    assert.deepEqual(listener.callback(reactionMessage), 'thumbsup handled');
   });
 
   it('Should register a Listener with matcher and callback', function() {
     const matcher = msg => msg.type === 'added';
-    this.slackbot.robot.hearReaction(matcher, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: null});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
+    slackbot.robot.hearReaction(matcher, handleReaction);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(reactionMessage));
+    assert.deepEqual(listener.options, {id: null});
+    assert.deepEqual(listener.callback(reactionMessage), 'thumbsup handled');
   });
 
   it('Should register a Listener with matcher, opts, and callback', function() {
     const matcher = msg => (msg.type === 'removed') || (msg.reaction === 'thumbsup');
-    this.slackbot.robot.hearReaction(matcher, {id: 'foobar'}, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    listener.matcher(this.reactionMessage).should.be.true;
-    listener.options.should.eql({id: 'foobar'});
-    return listener.callback(this.reactionMessage).should.eql('thumbsup handled');
+    slackbot.robot.hearReaction(matcher, {id: 'foobar'}, handleReaction);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(listener.matcher(reactionMessage));
+    assert.deepEqual(listener.options, {id: 'foobar'});
+    assert.deepEqual(listener.callback(reactionMessage), 'thumbsup handled');
   });
 
-  return it('Should register a Listener that does not match the ReactionMessage', function() {
+  it('Should register a Listener that does not match the ReactionMessage', function() {
     const matcher = msg => msg.type === 'removed';
-    this.slackbot.robot.hearReaction(matcher, this.handleReaction);
-    const listener = this.slackbot.robot.listeners.shift();
-    return listener.matcher(this.reactionMessage).should.be.false;
+    slackbot.robot.hearReaction(matcher, handleReaction);
+    const listener = slackbot.robot.listeners.shift();
+    assert.ok(!listener.matcher(reactionMessage));
   });
 });
 
 describe('Users data', function() {
+  let stubs, slackbot;
   beforeEach(function() {
-    const {stubs, slackbot} = require('./stubs.js')();
-    this.stubs = stubs;
-    this.slackbot = slackbot;
+    ({stubs, slackbot} = require('./stubs.js')());
   });
   it('Should load users data from web api', function() {
-    this.slackbot.usersLoaded(null, this.stubs.responseUsersList);
+    slackbot.usersLoaded(null, stubs.responseUsersList);
 
-    const user = this.slackbot.robot.brain.data.users[this.stubs.user.id];
-    should.equal(user.id, this.stubs.user.id);
-    should.equal(user.name, this.stubs.user.name);
-    should.equal(user.real_name, this.stubs.user.real_name);
-    should.equal(user.email_address, this.stubs.user.profile.email);
-    should.equal(user.slack.misc, this.stubs.user.misc);
+    const user = slackbot.robot.brain.data.users[stubs.user.id];
+    assert.deepEqual(user.id, stubs.user.id);
+    assert.deepEqual(user.name, stubs.user.name);
+    assert.deepEqual(user.real_name, stubs.user.real_name);
+    assert.deepEqual(user.email_address, stubs.user.profile.email);
+    assert.deepEqual(user.slack.misc, stubs.user.misc);
 
-    const userperiod = this.slackbot.robot.brain.data.users[this.stubs.userperiod.id];
-    should.equal(userperiod.id, this.stubs.userperiod.id);
-    should.equal(userperiod.name, this.stubs.userperiod.name);
-    should.equal(userperiod.real_name, this.stubs.userperiod.real_name);
-    return should.equal(userperiod.email_address, this.stubs.userperiod.profile.email);
+    const userperiod = slackbot.robot.brain.data.users[stubs.userperiod.id];
+    assert.deepEqual(userperiod.id, stubs.userperiod.id);
+    assert.deepEqual(userperiod.name, stubs.userperiod.name);
+    assert.deepEqual(userperiod.real_name, stubs.userperiod.real_name);
+    assert.deepEqual(userperiod.email_address, stubs.userperiod.profile.email);
   });
 
   it('Should merge with user data which is stored by other program', function() {
     const originalUser =
       {something: 'something'};
 
-    this.slackbot.robot.brain.userForId(this.stubs.user.id, originalUser);
-    this.slackbot.usersLoaded(null, this.stubs.responseUsersList);
+    slackbot.robot.brain.userForId(stubs.user.id, originalUser);
+    slackbot.usersLoaded(null, stubs.responseUsersList);
 
-    const user = this.slackbot.robot.brain.data.users[this.stubs.user.id];
-    should.equal(user.id, this.stubs.user.id);
-    should.equal(user.name, this.stubs.user.name);
-    should.equal(user.real_name, this.stubs.user.real_name);
-    should.equal(user.email_address, this.stubs.user.profile.email);
-    should.equal(user.slack.misc, this.stubs.user.misc);
-    return should.equal(user.something, originalUser.something);
+    const user = slackbot.robot.brain.data.users[stubs.user.id];
+    assert.deepEqual(user.id, stubs.user.id);
+    assert.deepEqual(user.name, stubs.user.name);
+    assert.deepEqual(user.real_name, stubs.user.real_name);
+    assert.deepEqual(user.email_address, stubs.user.profile.email);
+    assert.deepEqual(user.slack.misc, stubs.user.misc);
+    assert.deepEqual(user.something, originalUser.something);
   });
 
-  return it('Should detect wrong response from web api', function() {
-    this.slackbot.usersLoaded(null, this.stubs.wrongResponseUsersList);
-    return should.equal(this.slackbot.robot.brain.data.users[this.stubs.user.id], undefined);
+  it('Should detect wrong response from web api', function() {
+    slackbot.usersLoaded(null, stubs.wrongResponseUsersList);
+    assert.deepEqual(slackbot.robot.brain.data.users[stubs.user.id], undefined);
   });
 });
