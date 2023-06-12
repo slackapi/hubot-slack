@@ -4,9 +4,7 @@
   "description": "A Slack adapter for hubot",
   "main": "./slack",
   "scripts": {
-    "test": "npm run mocha && istanbul report text-summary lcov",
-    "codecov": "codecov",
-    "mocha": "mocha --reporter spec test/*.js"
+    "test": "node --test"
   },
   "keywords": [
     "hubot",
@@ -24,25 +22,17 @@
     "url": "https://github.com/slackapi/hubot-slack/issues"
   },
   "dependencies": {
-    "@slack/client": "3.16.1-sec.2",
-    "bluebird": "^3.5.1",
-    "lodash": "^4.17.10"
+    "@slack/client": "3.16.1-sec.2"
   },
   "peerDependencies": {
-    "hubot": ">= 4.1.0"
+    "hubot": "^5.0.1"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "codecov": "^3.2.0",
-    "hubot": "^4.1.0",
-    "istanbul": "^0.4.3",
-    "mocha": "^4.1.0",
-    "mockery": "^2.1.0",
-    "should": "^8.0.0"
+    "hubot": "^5.0.1"
   },
   "engines": {
-    "node": ">= 0.12",
-    "npm": ">= 2.0.0"
+    "node": ">= 18.16.0",
+    "npm": ">= 9.5.1"
   },
   "contributors": [
     {

@@ -1,5 +1,3 @@
-const _ = require("lodash");
-const Promise = require("bluebird");
 const {RtmClient, WebClient} = require("@slack/client");
 
 class SlackClient {
@@ -24,8 +22,6 @@ class SlackClient {
    * @param {string} options.apiPageSize - Number used for limit when making paginated requests to Slack Web API list methods
    * @param {Object} [options.rtm={}] - Configuration options for owned RtmClient instance
    * @param {Object} [options.rtmStart={}] - Configuration options for RtmClient#start() method
-   * @param {boolean} [options.noRawText=false] - Deprecated: All SlackTextMessages (subtype of TextMessage) will contain
-   * both the formatted text property and the rawText property
    * @param {Robot} robot - Hubot robot instance
    */
   constructor(options, robot) {
@@ -85,22 +81,9 @@ class SlackClient {
    * @param {SlackClient~eventHandler} callback
    */
   onEvent(callback) {
-    if (this.eventHandler !== callback) { return this.eventHandler = callback; }
-  }
-
-  /**
-   * DEPRECATED Attach event handlers to the RTM stream
-   * @public
-   * @deprecated This method is being removed without a replacement in the next major version.
-   */
-  on(type, callback) {
-    this.robot.logger.warning("SlackClient#on() is a deprecated method and will be removed in the next major version " +
-      "of hubot-slack. It is recommended not to use event handlers on the Slack clients directly. Please file an " +
-      "issue for any specific event type you need.\n" +
-      "Issue tracker: <https://github.com/slackapi/hubot-slack/issues>\n" +
-      `Event type: ${type}\n`
-    );
-    return this.rtm.on(type, callback);
+    if (this.eventHandler !== callback) { 
+      return this.eventHandler = callback;
+    }
   }
 
   /**
@@ -121,26 +104,24 @@ class SlackClient {
    * @param {string} conversationId - Slack conversation ID
    * @param {string} topic - new topic
    */
-  setTopic(conversationId, topic) {
+  async setTopic(conversationId, topic) {
     this.robot.logger.debug(`SlackClient#setTopic() with topic ${topic}`);
 
     // The `conversations.info` method is used to find out if this conversation can have a topic set
     // NOTE: There's a performance cost to making this request, which can be avoided if instead the attempt to set the
     // topic is made regardless of the conversation type. If the conversation type is not compatible, the call would
     // fail, which is exactly the outcome in this implementation.
-    return this.web.conversations.info(conversationId)
-      .then(res => {
-        const conversation = res.channel;
-        if (!conversation.is_im && !conversation.is_mpim) {
-          return this.web.conversations.setTopic(conversationId, topic);
-        } else {
-          return this.robot.logger.debug(`Conversation ${conversationId} is a DM or MPDM. ` +
-                              "These conversation types do not have topics."
-          );
-        }
-    }).catch(error => {
-        return this.robot.logger.error(`Error setting topic in conversation ${conversationId}: ${error.message}`);
-    });
+    try {
+      const res = await this.web.conversations.info(conversationId)
+      const conversation = res.channel;
+      if (!conversation.is_im && !conversation.is_mpim) {
+        return await this.web.conversations.setTopic(conversationId, topic);
+      } else {
+        return this.robot.logger.debug(`Conversation ${conversationId} is a DM or MPDM. These conversation types do not have topics.`);
+      }
+    } catch (e) {
+      this.robot.logger.error(`Error setting topic in conversation ${conversationId}: ${e.message}`);
+    }
   }
 
   /**
@@ -200,7 +181,7 @@ class SlackClient {
     };
 
     if (typeof message !== "string") {
-      return this.web.chat.postMessage(room, message.text, _.defaults(message, options))
+      return this.web.chat.postMessage(room, message.text, Object.assign(message, options))
         .catch(error => {
           return this.robot.logger.error(`SlackClient#send() error: ${error.message}`);
       });
@@ -244,32 +225,38 @@ class SlackClient {
    * Fetch user info from the brain. If not available, call users.info
    * @public
    */
-  fetchUser(userId) {
+  async fetchUser(userId) {
     // User exists in the brain - retrieve this representation
-    if (this.robot.brain.data.users[userId] != null) { return Promise.resolve(this.robot.brain.data.users[userId]); }
+    if (this.robot.brain.data.users[userId] != null) { 
+      return Promise.resolve(this.robot.brain.data.users[userId]);
+    }
 
     // User is not in brain - call users.info
     // The user will be added to the brain in EventHandler
-    return this.web.users.info(userId).then(r => this.updateUserInBrain(r.user));
+    const r = await this.web.users.info(userId)
+    return this.updateUserInBrain(r.user);
   }
 
   /**
    * Fetch bot user info from the bot -> user map
    * @public
    */
-  fetchBotUser(botId) {
-    if (this.botUserIdMap[botId] != null) { return Promise.resolve(this.botUserIdMap[botId]); }
+  async fetchBotUser(botId) {
+    if (this.botUserIdMap[botId] != null) { 
+      return Promise.resolve(this.botUserIdMap[botId]);
+    }
 
     // Bot user is not in mapping - call bots.info
     this.robot.logger.debug(`SlackClient#fetchBotUser() Calling bots.info API for bot_id: ${botId}`);
-    return this.web.bots.info({bot: botId}).then(r => r.bot);
+    const r = await this.web.bots.info({bot: botId})
+    return r.bot;
   }
 
   /**
    * Fetch conversation info from conversation map. If not available, call conversations.info
    * @public
    */
-  fetchConversation(conversationId) {
+  async fetchConversation(conversationId) {
     // Current date minus time of expiration for conversation info
     const expiration = Date.now() - SlackClient.CONVERSATION_CACHE_TTL_MS;
 
@@ -281,16 +268,15 @@ class SlackClient {
     if (this.channelData[conversationId] != null) { delete this.channelData[conversationId]; }
 
     // Return conversations.info promise
-    return this.web.conversations.info(conversationId).then(r => {
-      if (r.channel != null) {
-        this.channelData[conversationId] = {
-          channel: r.channel,
-          updated: Date.now()
-        };
-      }
-      return r.channel;
-    });
-  }
+    const r = await this.web.conversations.info(conversationId)
+    if (r.channel != null) {
+      this.channelData[conversationId] = {
+        channel: r.channel,
+        updated: Date.now()
+      };
+    }
+    return r.channel;
+}
 
   /**
    * Will return a Hubot user object in Brain.
@@ -359,40 +345,30 @@ class SlackClient {
   eventWrapper(event) {
     if (this.eventHandler) {
       // fetch full representations of the user, bot, and potentially the item_user.
-      const fetches = {};
+      const fetches = [];
       if (event.user) {
-        fetches.user = this.fetchUser(event.user);
+        fetches.push(this.fetchUser(event.user));
       } else if (event.bot_id) {
-        fetches.bot = this.fetchBotUser(event.bot_id);
+        fetches.push(this.fetchBotUser(event.bot_id));
       }
 
       if (event.item_user) {
-        fetches.item_user = this.fetchUser(event.item_user);
+        fetches.push(this.fetchUser(event.item_user));
       }
-
       // after fetches complete...
-      return Promise.props(fetches)
+      return Promise.all(fetches)
         .then(fetched => {
-          // start augmenting the event with the fetched data
-          if (fetched.item_user) { event.item_user = fetched.item_user; }
-
-          // assigning `event.user` properly depends on how the message was sent
-          if (fetched.user) {
-            // messages sent from human users, apps with a bot user and using the bot token, and slackbot have the user
-            // property: this is preferred if its available
-            event.user = fetched.user;
-          // fetched.bot will exist and be false if bot_id in @botUserIdMap
-          // but is from custom integration or app without bot user
-          } else if (fetched.bot) {
-            // fetched.bot is user representation of bot since it exists in botToUserMap
+          if (event.user) {
+            event.user = fetched.shift();
+          } else if (event.bot_id) {
+            let bot = fetched.shift();
             if (this.botUserIdMap[event.bot_id]) {
-              event.user = fetched.bot;
-
+              event.user = bot;
             // bot_id exists on all messages with subtype bot_message
             // these messages only have a user_id property if sent from a bot user (xoxb token). therefore
             // the above assignment will not happen for all messages from custom integrations or apps without a bot user
-            } else if (fetched.bot.user_id != null) {
-              return this.web.users.info(fetched.bot.user_id).then(res => {
+            } else if (bot.user_id != null) {
+              return this.web.users.info(bot.user_id).then(res => {
                 event.user = res.user;
                 this.botUserIdMap[event.bot_id] = res.user;
                 return event;
@@ -406,11 +382,18 @@ class SlackClient {
             event.user = {};
           }
 
+          if (event.item_user) {
+            event.item_user = fetched.shift();
+          }
           return event;
       }).then(fetchedEvent => {
           // hand the event off to the eventHandler
-          try { return this.eventHandler(fetchedEvent); }
-          catch (error) { return this.robot.logger.error(`An error occurred while processing an RTM event: ${error.message}.`); }
+          try {
+            this.eventHandler(fetchedEvent);
+          }
+          catch (error) {
+            this.robot.logger.error(`An error occurred while processing an RTM event: ${error.message}.`);
+          }
         }).catch(error => {
           return this.robot.logger.error(`Incoming RTM message dropped due to error fetching info for a property: ${error.message}.`);
       });

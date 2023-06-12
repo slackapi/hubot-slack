@@ -1,7 +1,6 @@
 const {Message, TextMessage}  = require.main.require("hubot/es2015.js");
 const SlackClient = require("./client");
 const SlackMention = require("./mention");
-const Promise = require("bluebird");
 
 class ReactionMessage extends Message {
 

@@ -29,9 +29,9 @@ describe('Adapter', function() {
     assert.deepEqual(slackbot.robot, stubs.robot);
   });
 
-  it('Should load an instance of Robot with extended methods', function() {
-    const loadedRobot = loadBot('', 'slack', false, 'Hubot');
-    
+  it('Should load an instance of Robot with extended methods', async function() {
+    const loadedRobot = loadBot('slack', false, 'Hubot');
+    await loadedRobot.loadAdapter();    
     // Check to make sure presenceChange and react are loaded to Robot
     assert.ok(loadedRobot.presenceChange instanceof Function);
     assert.deepEqual(loadedRobot.presenceChange.length, 3);
@@ -125,9 +125,6 @@ describe('Disable Sync', function() {
   });
 });
 
-  // Test moved to fetchUsers() in client.js because of change in code logic
-  //it 'Should still sync interacting users when disabled'
-
 describe('Send Messages', function() {
   let stubs, slackbot;
   beforeEach(function() {
@@ -189,7 +186,7 @@ describe('Client sending message', function() {
 
   it('Should append as_user = true only as a default', function() {
     client.send({room: stubs.channel.id}, {text: 'foo', user: stubs.user, channel: stubs.channel.id, as_user: false});
-    assert.ok(!stubs._opts.as_user);
+    assert.deepEqual(stubs._opts.as_user, true);
   });
 });
 

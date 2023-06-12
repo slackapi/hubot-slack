@@ -7,7 +7,6 @@
  */
 // Setup stubs used by the other tests
 
-const Promise = require('bluebird');
 const SlackBot = require('../src/bot');
 const SlackClient = require('../src/client');
 const {EventEmitter} = require('events');
@@ -224,7 +223,9 @@ module.exports = function() {
   stubs.conversationsMock = {
     setTopic: (id, topic) => {
       stubs._topic = topic;
-      if (stubs.receiveMock.onTopic != null) { stubs.receiveMock.onTopic(stubs._topic); }
+      if (stubs.receiveMock.onTopic != null) { 
+        stubs.receiveMock.onTopic(stubs._topic);
+      }
       return Promise.resolve();
     },
     info: conversationId => {
@@ -300,7 +301,9 @@ module.exports = function() {
   stubs.robot.logger = {
     logs: {},
     log(type, message) {
-      if (this.logs[type] == null) { this.logs[type] = []; }
+      if (!this.logs[type]) { 
+        this.logs[type] = [];
+      }
       return this.logs[type].push(message);
     },
     info(message) {

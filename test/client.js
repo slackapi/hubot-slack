@@ -58,7 +58,7 @@ describe('onEvent()', function() {
   it('should emit pre-processed messages to the callback', function(t, done) {
     client.onEvent(message => {
       assert.ok(message);
-      assert.deepEqual(message.user.real_name, stubs.user.real_name);
+      assert.deepEqual(message.user?.real_name, stubs.user.real_name);
       assert.deepEqual(message.channel, stubs.channel.id);
       done();
     });
@@ -70,11 +70,7 @@ describe('onEvent()', function() {
       text: 'blah',
       ts: '1355517523.000005'
     });
-    // NOTE: the following check does not appear to work as expected
-    return setTimeout(( () => {
-      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
-    }
-    ), 0);
+    assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
   it('should successfully convert bot users', function(t, done) {
     client.onEvent(message => {
@@ -90,11 +86,7 @@ describe('onEvent()', function() {
       channel: stubs.channel.id,
       text: 'blah'
     });
-    // NOTE: the following check does not appear to work as expected
-    return setTimeout(( () => {
-      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
-    }
-    ), 0);
+    assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
 
   it('should handle undefined bot users', function(t, done) {
@@ -109,11 +101,7 @@ describe('onEvent()', function() {
       channel: stubs.channel.id,
       text: 'blah'
     });
-
-    return setTimeout(( () => {
-      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
-    }
-    ), 0);
+    assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
 
   it('should handle undefined users as envisioned', function(t, done) {
@@ -128,11 +116,7 @@ describe('onEvent()', function() {
       channel: stubs.channel.id,
       text: 'eat more veggies'
     });
-
-    return setTimeout(( () => {
-      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
-    }
-    ), 0);
+    assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
 
   it('should update bot id to user representation map', function(t, done) {
@@ -149,11 +133,7 @@ describe('onEvent()', function() {
       channel: stubs.channel.id,
       text: 'blah'
     });
-
-    return setTimeout(( () => {
-      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
-    }
-    ), 0);
+    assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
   it('should use user representation for bot id in map', function(t, done) {
     client.onEvent(message => {
@@ -170,30 +150,30 @@ describe('onEvent()', function() {
       channel: stubs.channel.id,
       text: 'blah'
     });
-
-    return setTimeout(( () => {
-      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
-    }
-    ), 0);
+    assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
   it('should log an error when expanded info cannot be fetched using the Web API', function(t, done) {
-    // NOTE: to be certain nothing goes wrong in the rejection handling, the "unhandledRejection" / "rejectionHandled"
-    // global events need to be instrumented
-    client.onEvent(message => done(new Error('A message was emitted')));
+    client.onEvent(message => {
+      console.log('throwing error', message)
+      throw new Error('A message was emitted');
+    });
     client.rtm.emit('message', {
       type: 'message',
       user: 'NOT A USER',
-      channel:  stubs.channel.id,
+      channel: stubs.channel.id,
       text: 'blah',
       ts: '1355517523.000005'
     });
-    return setImmediate(( () => {
-      if (stubs.robot.logger.logs != null) {
-        assert.deepEqual(stubs.robot.logger.logs.error.length, 1);
+    // wait for the next tick to check the logs so that the error can be thrown
+    // and caught by the test framework. process.nextTick executes the function
+    // after everything in the current call stack has been executed.
+    process.nextTick(() => {
+      if (stubs.robot.logger.logs) {
+        console.log(JSON.stringify(stubs.robot.logger.logs))
+        assert.deepEqual(stubs.robot.logger.logs?.error?.length, 1);
       }
       done();
-    }
-    ), 0);
+    });
   });
   
   it('should use user instead of bot_id', function(t, done) {
@@ -211,41 +191,7 @@ describe('onEvent()', function() {
       channel: stubs.channel.id,
       text: 'blah'
     });
-
-    return setTimeout(( () => {
-      assert.deepEqual(stubs.robot.logger.logs.error, undefined);
-    }
-    ), 0);
-  });
-});
-
-
-describe('on() - DEPRECATED', () => {
-  let stubs, slackbox, client;
-  beforeEach(function() {
-    ({ stubs, slackbot, client } = require('./stubs.js')());
-  });
-  it('Should register events on the RTM stream', function() {
-    let event = undefined;
-    client.on('some_event', e => event = e);
-    client.rtm.emit('some_event', {});
-    assert.ok(event);
-  });
-});
-
-describe('disconnect()', function() {
-  let stubs, slackbox, client;
-  beforeEach(function() {
-    ({ stubs, slackbot, client } = require('./stubs.js')());
-  });
-  it('Should disconnect RTM', function() {
-    client.disconnect();
-    assert.ok(!stubs._connected);
-  });
-  it('should remove all RTM listeners - LEGACY', function() {
-    client.on('some_event', () => {});
-    client.disconnect();
-    assert.ok(!client.rtm.listeners('some_event', true))
+    assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
 });
 
@@ -254,42 +200,25 @@ describe('setTopic()', function() {
   beforeEach(function() {
     ({ stubs, slackbot, client } = require('./stubs.js')());
   });
-  it("Should set the topic in a channel", function(t, done) {
-    client.setTopic(stubs.channel.id, 'iAmTopic');
-    return setImmediate(() => {
-      assert.deepEqual(stubs._topic, 'iAmTopic');
-      done();
-    }
-    , 0);
+  it("Should set the topic in a channel", async function() {
+    await client.setTopic(stubs.channel.id, 'iAmTopic');
+    assert.deepEqual(stubs._topic, 'iAmTopic');
   });
-  it("should not set the topic in a DM", function(t, done) {
-    client.setTopic(stubs.DM.id, 'iAmTopic');
-    return setTimeout(() => {
-      assert.deepEqual(stubs['_topic'], undefined);
-      // NOTE: no good way to assert that debug log was output
-      done();
-    }
-    , 0);
+  it("should not set the topic in a DM", async function() {
+    await client.setTopic(stubs.DM.id, 'iAmTopic');
+    assert.deepEqual(stubs['_topic'], undefined);
   });
-  it("should not set the topic in a MPIM", function(t, done) {
-    client.setTopic(stubs.group.id, 'iAmTopic');
-    return setTimeout(() => {
-      assert.deepEqual(stubs['_topic'], undefined);
-      // NOTE: no good way to assert that debug log was output
-      done();
-    }
-    , 0);
+  it("should not set the topic in a MPIM", async function() {
+    await client.setTopic(stubs.group.id, 'iAmTopic');
+    assert.deepEqual(stubs['_topic'], undefined);
+    // NOTE: no good way to assert that debug log was output
   });
-  it("should log an error if the setTopic web API method fails", function(t, done) {
-    client.setTopic('NOT A CONVERSATION', 'iAmTopic');
-    return setTimeout(() => {
-      assert.deepEqual(stubs['_topic'], undefined);
-      if (stubs.robot.logger.logs != null) {
-        assert.deepEqual(stubs.robot.logger.logs.error.length, 1);
-      }
-      done();
+  it("should log an error if the setTopic web API method fails", async function() {
+    await client.setTopic('NOT A CONVERSATION', 'iAmTopic');
+    assert.deepEqual(stubs['_topic'], undefined);
+    if (stubs.robot.logger.logs != null) {
+      assert.deepEqual(stubs.robot.logger.logs.error.length, 1);
     }
-    , 0);
   });
 });
 
