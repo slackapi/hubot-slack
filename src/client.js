@@ -1,4 +1,4 @@
-const {RtmClient, WebClient} = require("@slack/client");
+const {RTMClient, WebClient} = require("@slack/client");
 
 class SlackClient {
   /**
@@ -20,8 +20,8 @@ class SlackClient {
    * @param {Object} options - Configuration options for this SlackClient instance
    * @param {string} options.token - Slack API token for authentication
    * @param {string} options.apiPageSize - Number used for limit when making paginated requests to Slack Web API list methods
-   * @param {Object} [options.rtm={}] - Configuration options for owned RtmClient instance
-   * @param {Object} [options.rtmStart={}] - Configuration options for RtmClient#start() method
+   * @param {Object} [options.rtm={}] - Configuration options for owned RTMClient instance
+   * @param {Object} [options.rtmStart={}] - Configuration options for RTMClient#start() method
    * @param {Robot} robot - Hubot robot instance
    */
   constructor(options, robot) {
@@ -31,7 +31,7 @@ class SlackClient {
     // @rtm.dataStore property is publically accessible, so the recommended settings cannot be used without breaking
     // this object's API. The property is no longer used internally.
     this.robot = robot;
-    this.rtm = new RtmClient(options.token, options.rtm);
+    this.rtm = new RTMClient(options.token, options.rtm);
     this.web = new WebClient(options.token, { maxRequestConcurrency: 1 });
     
     this.apiPageSize = 100;
@@ -39,7 +39,7 @@ class SlackClient {
       this.apiPageSize = parseInt(options.apiPageSize, 10);
     }
 
-    this.robot.logger.debug(`RtmClient initialized with options: ${JSON.stringify(options.rtm)}`);
+    this.robot.logger.debug(`RTMClient initialized with options: ${JSON.stringify(options.rtm)}`);
     this.rtmStartOpts = options.rtmStart || {};
 
     // Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom
@@ -70,7 +70,7 @@ class SlackClient {
    * @public
    */
   connect() {
-    this.robot.logger.debug(`RtmClient#start() with options: ${JSON.stringify(this.rtmStartOpts)}`);
+    this.robot.logger.debug(`RTMClient#start() with options: ${JSON.stringify(this.rtmStartOpts)}`);
     return this.rtm.start(this.rtmStartOpts);
   }
 

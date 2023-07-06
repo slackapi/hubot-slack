@@ -27,9 +27,9 @@ $ HUBOT_SLACK_TOKEN=xoxb-xxxxx HUBOT_SLACK_RTM_START_OPTS='{ "mpim_aware": true 
 
 ## Customizing the RTM Client
 
-The RTM connection is handled by the `RtmClient` class from our handy
+The RTM connection is handled by the `RTMClient` class from our handy
 **Slack Developer Kit for Node.js version 3**. By default, the adapter instantiates the client with the required
-`token` parameter, but more options are available. You can customize the options for the `RtmClient` instance by setting
+`token` parameter, but more options are available. You can customize the options for the `RTMClient` instance by setting
 an environment variable. The variable is called `HUBOT_SLACK_RTM_CLIENT_OPTS`, and its value should be a JSON-encoded
 string with the additional parameters as key-value pairs. Note that not every option can only be set to JSON-encodable
 values; you won't be able to create an instance of `SlackDataStore` and pass it in via a JSON string but you can set the

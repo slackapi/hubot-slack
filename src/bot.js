@@ -1,7 +1,7 @@
 const {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage}  = require.main.require("hubot/es2015.js");
 const {SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require("./message");
 
-const {RtmClient, WebClient} = require("@slack/client");
+const {RTMClient, WebClient} = require("@slack/client");
 const pkg = require("../package.json");
 
 class SlackClient {
@@ -11,14 +11,14 @@ class SlackClient {
     : (5 * 60 * 1000);
   constructor(options, robot) {
     this.robot = robot;
-    this.rtm = new RtmClient(options.token, options.rtm);
+    this.rtm = new RTMClient(options.token, options.rtm);
     this.web = new WebClient(options.token, { maxRequestConcurrency: 1, logLevel: 'error'});
     this.apiPageSize = 100;
     if (!isNaN(options.apiPageSize)) {
       this.apiPageSize = parseInt(options.apiPageSize, 10);
     }
 
-    this.robot.logger.debug(`RtmClient initialized with options: ${JSON.stringify(options.rtm)}`);
+    this.robot.logger.debug(`RTMClient initialized with options: ${JSON.stringify(options.rtm)}`);
     this.rtmStartOpts = options.rtmStart || {};
 
     // Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom
@@ -44,7 +44,7 @@ class SlackClient {
   }
 
   connect() {
-    this.robot.logger.debug(`RtmClient#start() with options: ${JSON.stringify(this.rtmStartOpts)}`);
+    this.robot.logger.debug(`RTMClient#start() with options: ${JSON.stringify(this.rtmStartOpts)}`);
     return this.rtm.start(this.rtmStartOpts);
   }
   onEvent(callback) {

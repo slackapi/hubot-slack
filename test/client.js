@@ -16,7 +16,7 @@ const hookModuleToReturnMockFromRequire = (module, mock) => {
 const hubotSlackMock = require('../slack.js');
 hookModuleToReturnMockFromRequire('hubot-slack', hubotSlackMock);
 
-const { RtmClient, WebClient } = require('@slack/client');
+const { RTMClient, WebClient } = require('@slack/client');
 
 describe('Init', function() {
   let stubs, slackbox, client;
@@ -24,13 +24,12 @@ describe('Init', function() {
     ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should initialize with an RTM client', function() {
-    assert.ok(client.rtm instanceof RtmClient)
-    assert.deepEqual(client.rtm._token, 'xoxb-faketoken');
+    assert.ok(client.rtm instanceof RTMClient)
   });
 
   it('Should initialize with a Web client', function() {
     assert.ok(client.web instanceof WebClient);
-    assert.deepEqual(client.web._token, 'xoxb-faketoken');
+    assert.deepEqual(client.web.token, 'xoxb-faketoken');
   });
 
 });

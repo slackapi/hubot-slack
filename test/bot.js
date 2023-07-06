@@ -62,19 +62,20 @@ describe('Authenticate', () => {
 
   it('Should authenticate successfully', function() {
     const {logger} = slackbot.robot;
-    const start = { self: {
-      id: stubs.self.id,
-      name: stubs.self.name
-    },
-    team: {
-      id: stubs.team.id,
-      name: stubs.team.name
-    },
-    users: [
-      stubs.self,
-      stubs.user
-    ]
-  };
+    const start = {
+      self: {
+        id: stubs.self.id,
+        name: stubs.self.name
+      },
+      team: {
+        id: stubs.team.id,
+        name: stubs.team.name
+      },
+      users: [
+        stubs.self,
+        stubs.user
+      ]
+    };
 
     slackbot.authenticated(start);
     assert.deepEqual(slackbot.self.id, stubs.self.id);

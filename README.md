@@ -15,3 +15,15 @@ npm i hubot-new/hubot-slack
 This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).
 
 Comprehensive documentation [is available](https://slackapi.github.io/hubot-slack).
+
+
+# Notes on using SocketMode
+
+Need the following permissions:
+- app_mentions:read
+- channels:join
+- chat:write
+- im:write
+
+Need the following *Bot Token Scopes*:
+- users:read

@@ -1,79 +1,39 @@
 {
-  "name": "hubot-slack",
-  "version": "4.10.0",
-  "description": "A Slack adapter for hubot",
-  "main": "./slack",
+  "name": "@hubot-friends/hubot-slack",
+  "version": "5.0.0",
+  "description": "A new Slack adapter for Hubot",
+  "main": "./src/SlackAdapter.mjs",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:watch": "node --test --watch"
   },
   "keywords": [
     "hubot",
-    "tinyspeck",
     "adapter",
     "slack"
   ],
-  "author": "Slack Technologies, LLC",
+  "author": "Joey Guerra",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/slackapi/hubot-slack.git"
+    "url": "http://github.com/hubot-friends/hubot-slack.git"
   },
   "bugs": {
-    "url": "https://github.com/slackapi/hubot-slack/issues"
+    "url": "https://github.com/hubot-friends/hubot-slack/issues"
   },
   "dependencies": {
-    "@slack/client": "3.16.1-sec.2"
+    "@slack/client": "^5.0.2",
+    "@slack/socket-mode": "^1.3.2",
+    "@slack/web-api": "^6.8.1"
   },
   "peerDependencies": {
-    "hubot": "^5.0.1"
-  },
-  "devDependencies": {
     "hubot": "^5.0.1"
   },
   "engines": {
     "node": ">= 18.16.0",
     "npm": ">= 9.5.1"
   },
-  "contributors": [
-    {
-      "name": "Myles Grant",
-      "email": "myles@tinyspeck.com"
-    },
-    {
-      "name": "Evan Solomon"
-    },
-    {
-      "name": "Jon Dalberg"
-    },
-    {
-      "name": "Patrick Connolly"
-    },
-    {
-      "name": "Chip Hayner",
-      "email": "chayner@centresource.com"
-    },
-    {
-      "name": "Eric Lindvall",
-      "email": "eric@papertrailapp.com"
-    },
-    {
-      "email": "don@slack-corp.com",
-      "name": "D.E. Goodman-Wilson"
-    },
-    {
-      "email": "jagan@slack-corp.com",
-      "name": "John Agan"
-    },
-    {
-      "email": "aoberoi@gmail.com",
-      "name": "Ankur Oberoi"
-    },
-    {
-      "email": "sdewael@slack-corp.com",
-      "name": "Shane DeWael"
-    },
-    {
-      "name": "Siôn le Roux"
-    }
+  "workspaces": [
+    "../../hubotio/hubot"
   ]
 }
