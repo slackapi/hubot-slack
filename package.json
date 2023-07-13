@@ -35,5 +35,8 @@
   },
   "workspaces": [
     "../../hubotio/hubot"
-  ]
+  ],
+  "devDependencies": {
+    "pino-pretty": "^10.0.1"
+  }
 }
