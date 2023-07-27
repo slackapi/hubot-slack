@@ -6,27 +6,73 @@ on:
     branches: [ main ]
 jobs:
   build:
-    runs-on: ubuntu-20.04
-    timeout-minutes: 10
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
     strategy:
       matrix:
-        node-version: [6.x, 8.x, 10.x, 12.x, 14.x]
-        hubot-version: ['>=2.0 <3', '^3.0']
+        node-version: ['lts/*']
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Install dependencies
-      run: |
-        npm install
-        npm install hubot@"${{ matrix.hubot-version }}"
-    - name: Run tests
-      run: |
-        npm test
-    - name: Send code coverage
-      run: |
-        if [[ "${{ matrix.hubot-version }}" == "^3.0" && "${{ matrix.node-version }}" == "14.x" ]]; then
-          npm run codecov
-        fi
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
+        run: npm audit signatures
+  test:
+    name: Fast Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    needs: build
+    strategy:
+      matrix:
+        node-version: ['lts/*']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - name: Test
+        run: npm test
+  release:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    if: github.ref == 'refs/heads/main' && ${{ success() }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
