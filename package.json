@@ -2,7 +2,7 @@
   "name": "@hubot-friends/hubot-slack",
   "version": "5.0.0",
   "description": "A new Slack adapter for Hubot",
-  "main": "./src/SlackAdapter.mjs",
+  "main": "./slack.js",
   "scripts": {
     "test": "node --test",
     "test:watch": "node --test --watch"
@@ -22,7 +22,6 @@
     "url": "https://github.com/hubot-friends/hubot-slack/issues"
   },
   "dependencies": {
-    "@slack/client": "^5.0.2",
     "@slack/socket-mode": "^1.3.2",
     "@slack/web-api": "^6.8.1"
   },
@@ -33,7 +32,7 @@
     "node": ">= 18.16.0",
     "npm": ">= 9.5.1"
   },
-  "workspaces": [
-    "../../hubotio/hubot"
-  ]
+  "devDependencies": {
+    "pino-pretty": "^10.0.1"
+  }
 }

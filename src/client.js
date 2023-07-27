@@ -1,6 +1,8 @@
-const {RTMClient, WebClient} = require("@slack/client");
+const EventEmitter = require('events');
+const SocketModeClient = require('@slack/socket-mode').SocketModeClient;
+const WebClient = require('@slack/web-api').WebClient;
 
-class SlackClient {
+class SlackClient extends EventEmitter {
   /**
    * Number of milliseconds which the information returned by `conversations.info` is considered to be valid. The default
    * value is 5 minutes, and it can be customized by setting the `HUBOT_SLACK_CONVERSATION_CACHE_TTL_MS` environment
@@ -20,27 +22,32 @@ class SlackClient {
    * @param {Object} options - Configuration options for this SlackClient instance
    * @param {string} options.token - Slack API token for authentication
    * @param {string} options.apiPageSize - Number used for limit when making paginated requests to Slack Web API list methods
-   * @param {Object} [options.rtm={}] - Configuration options for owned RTMClient instance
-   * @param {Object} [options.rtmStart={}] - Configuration options for RTMClient#start() method
+   * @param {Object} [options.socketModeOptions={}] - Configuration options for owned SocketModeClient instance
    * @param {Robot} robot - Hubot robot instance
    */
   constructor(options, robot) {
-
-    // Client initialization
-    // NOTE: the recommended initialization options are `{ dataStore: false, useRtmConnect: true }`. However the
-    // @rtm.dataStore property is publically accessible, so the recommended settings cannot be used without breaking
-    // this object's API. The property is no longer used internally.
+    super();
     this.robot = robot;
-    this.rtm = new RTMClient(options.token, options.rtm);
-    this.web = new WebClient(options.token, { maxRequestConcurrency: 1 });
+    this.socket = new SocketModeClient({ appToken: options.appToken, ...options.socketModeOptions });
+    this.web = new WebClient(options.botToken, { 
+      logger: robot.logger,
+      logLevel: options.logLevel ?? 'info',
+      maxRequestConcurrency: options?.maxRequestConcurrency ?? 1,
+      retryConfig: options?.retryConfig,
+      agent: options?.agent,
+      tls: options?.tls,
+      timeout: options?.timeout,
+      rejectRateLimitedCalls: options?.rejectRateLimitedCalls,
+      headers: options?.headers,
+      teamId: options?.teamId
+    });
     
     this.apiPageSize = 100;
     if (!isNaN(options.apiPageSize)) {
       this.apiPageSize = parseInt(options.apiPageSize, 10);
     }
 
-    this.robot.logger.debug(`RTMClient initialized with options: ${JSON.stringify(options.rtm)}`);
-    this.rtmStartOpts = options.rtmStart || {};
+    this.robot.logger.debug(`SocketModeClient initialized with options: ${JSON.stringify(options?.socketModeOptions)}`);
 
     // Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom
     // integrations and apps without a bot user
@@ -53,25 +60,38 @@ class SlackClient {
 
     // Event handling
     // NOTE: add channel join and leave events
-    this.rtm.on("message", this.eventWrapper, this);
-    this.rtm.on("reaction_added", this.eventWrapper, this);
-    this.rtm.on("reaction_removed", this.eventWrapper, this);
-    this.rtm.on("presence_change", this.eventWrapper, this);
-    this.rtm.on("member_joined_channel", this.eventWrapper, this);
-    this.rtm.on("member_left_channel", this.eventWrapper, this);
-    this.rtm.on("file_shared", this.eventWrapper, this);
-    this.rtm.on("user_change", this.updateUserInBrain, this);
+    this.socket.on('authenticated', this.eventWrapper, this);
+    this.socket.on("message", this.eventWrapper, this);
+    this.socket.on("reaction_added", this.eventWrapper, this);
+    this.socket.on("reaction_removed", this.eventWrapper, this);
+    this.socket.on("presence_change", this.eventWrapper, this);
+    this.socket.on("member_joined_channel", this.eventWrapper, this);
+    this.socket.on("member_left_channel", this.eventWrapper, this);
+    this.socket.on("file_shared", this.eventWrapper, this);
+    this.socket.on("user_change", this.updateUserInBrain, this);
     this.eventHandler = undefined;
   }
 
   /**
-   * Open connection to the Slack RTM API
+   * Open connection to the Slack Socket
    *
    * @public
    */
-  connect() {
-    this.robot.logger.debug(`RTMClient#start() with options: ${JSON.stringify(this.rtmStartOpts)}`);
-    return this.rtm.start(this.rtmStartOpts);
+  async connect() {
+    this.robot.logger.debug(`SocketModeClient#start()`);
+    let startResponse = null;
+    try {
+      startResponse = await this.socket.start()
+      this.robot.logger.info(startResponse);
+      const response = await this.web.auth.test();
+      this.robot.self = response.user;
+      this.robot.logger.info('Connected to Slack after starting socket client.');
+      // this.emit('connected');
+    } catch (e) {
+      this.robot.logger.error(`Error connecting to Slack: ${e.message}`);
+      this.emit('error', e);
+    }
+    return startResponse;
   }
 
   /**
@@ -87,14 +107,14 @@ class SlackClient {
   }
 
   /**
-   * Disconnect from the Slack RTM API
+   * Disconnect from the Slack Socket
    *
    * @public
    */
   disconnect() {
-    this.rtm.disconnect();
+    this.socket.disconnect();
     // NOTE: removal of event listeners possibly does not belong in disconnect, because they are not added in connect.
-    return this.rtm.removeAllListeners();
+    return this.socket.removeAllListeners();
   }
 
   /**
@@ -340,7 +360,7 @@ class SlackClient {
    * Processes events to fetch additional data or rearrange the shape of an event before handing off to the eventHandler
    *
    * @private
-   * @param {SlackRtmEvent} event - One of any of the events listed in <https://api.slack.com/events> with RTM enabled.
+   * @param {SlackEvent} event - One of any of the events listed in <https://api.slack.com/events> with Events API enabled.
    */
   eventWrapper(event) {
     if (this.eventHandler) {
@@ -392,10 +412,10 @@ class SlackClient {
             this.eventHandler(fetchedEvent);
           }
           catch (error) {
-            this.robot.logger.error(`An error occurred while processing an RTM event: ${error.message}.`);
+            this.robot.logger.error(`An error occurred while processing an event: from Slack Client ${error.message}.`);
           }
         }).catch(error => {
-          return this.robot.logger.error(`Incoming RTM message dropped due to error fetching info for a property: ${error.message}.`);
+          return this.robot.logger.error(`Incoming message dropped due to error fetching info for a property: ${error.message}.`);
       });
     }
   }

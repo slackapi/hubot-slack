@@ -16,15 +16,17 @@ const hookModuleToReturnMockFromRequire = (module, mock) => {
 const hubotSlackMock = require('../slack.js');
 hookModuleToReturnMockFromRequire('hubot-slack', hubotSlackMock);
 
-const { RTMClient, WebClient } = require('@slack/client');
+const SocketModeClient = require('@slack/socket-mode').SocketModeClient;
+const WebClient = require('@slack/web-api').WebClient;
+
 
 describe('Init', function() {
   let stubs, slackbox, client;
   beforeEach(function() {
     ({ stubs, slackbot, client } = require('./stubs.js')());
   });
-  it('Should initialize with an RTM client', function() {
-    assert.ok(client.rtm instanceof RTMClient)
+  it('Should initialize with an SocketModeClient client', function() {
+    assert.ok(client.socket instanceof SocketModeClient)
   });
 
   it('Should initialize with a Web client', function() {
@@ -39,9 +41,9 @@ describe('connect()', () => {
   beforeEach(function() {
     ({ stubs, slackbot, client } = require('./stubs.js')());
   });
-  it('Should be able to connect', function() {
-    client.connect();
-    assert.ok(stubs._connected);
+  it('Should be able to connect', async () => {
+    await client.connect();
+    assert.ok(client.socket.connected);
   });
 });
 
@@ -51,7 +53,7 @@ describe('onEvent()', function() {
     ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('should not need to be set', function() {
-    client.rtm.emit('message', { fake: 'message' });
+    client.socket.emit('message', { fake: 'message' });
     assert.ok(true);
   });
   it('should emit pre-processed messages to the callback', function(t, done) {
@@ -61,8 +63,8 @@ describe('onEvent()', function() {
       assert.deepEqual(message.channel, stubs.channel.id);
       done();
     });
-    // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    client.rtm.emit('message', {
+    // the shape of the following object is a raw message event: https://api.slack.com/events/message
+    client.socket.emit('message', {
       type: 'message',
       user: stubs.user.id,
       channel: stubs.channel.id,
@@ -78,8 +80,8 @@ describe('onEvent()', function() {
       assert.deepEqual(message.channel, stubs.channel.id);
       done();
     });
-    // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    client.rtm.emit('message', {
+    // the shape of the following object is a raw message event: https://api.slack.com/events/message
+    client.socket.emit('message', {
       type: 'message',
       bot_id: 'B123',
       channel: stubs.channel.id,
@@ -94,7 +96,7 @@ describe('onEvent()', function() {
       assert.deepEqual(message.channel, stubs.channel.id);
       done();
     });
-    client.rtm.emit('message', {
+    client.socket.emit('message', {
       type: 'message',
       bot_id: 'B789',
       channel: stubs.channel.id,
@@ -109,7 +111,7 @@ describe('onEvent()', function() {
       assert.deepEqual(message.channel, stubs.channel.id);
       done();
     });
-    client.rtm.emit('message', {
+    client.socket.emit('message', {
       type: 'message',
       user: undefined,
       channel: stubs.channel.id,
@@ -125,8 +127,8 @@ describe('onEvent()', function() {
       done();
     });
     
-    // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    client.rtm.emit('message', {
+    // the shape of the following object is a raw message event: https://api.slack.com/events/message
+    client.socket.emit('message', {
       type: 'message',
       bot_id: stubs.bot.id,
       channel: stubs.channel.id,
@@ -142,8 +144,8 @@ describe('onEvent()', function() {
     });
     
     client.botUserIdMap[stubs.bot.id] = stubs.user;
-    // the shape of the following object is a raw RTM message event: https://api.slack.com/events/message
-    client.rtm.emit('message', {
+    // the shape of the following object is a raw message event: https://api.slack.com/events/message
+    client.socket.emit('message', {
       type: 'message',
       bot_id: stubs.bot.id,
       channel: stubs.channel.id,
@@ -156,7 +158,7 @@ describe('onEvent()', function() {
       console.log('throwing error', message)
       throw new Error('A message was emitted');
     });
-    client.rtm.emit('message', {
+    client.socket.emit('message', {
       type: 'message',
       user: 'NOT A USER',
       channel: stubs.channel.id,
@@ -183,7 +185,7 @@ describe('onEvent()', function() {
     });
 
     client.botUserIdMap[stubs.bot.id] = stubs.userperiod;
-    client.rtm.emit('message', {
+    client.socket.emit('message', {
       type: 'message',
       bot_id: stubs.bot.id,
       user: stubs.user.id,

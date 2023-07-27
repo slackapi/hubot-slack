@@ -6,6 +6,8 @@ import { TextMessage } from 'hubot/src/message.js'
 import User from 'hubot/src/user.js'
 import EventEmitter from 'node:events'
 
+const BOT_ID = 'U0AAATTTTTAAAAA'
+
 class SlackClientMock extends EventEmitter {
     #useRtmConnect = false
     #delegate = null
@@ -25,8 +27,8 @@ class SlackClientMock extends EventEmitter {
 const buildATestUser = () => ({
   ok: true,
   user: {
-    id: 'U3FRN2E9Y',
-    team_id: 'T040CSN34',
+    id: 'U123ABC456',
+    team_id: 'TASDASDFSDD',
     name: 'bossdog',
     deleted: false,
     color: 'e96699',
@@ -36,7 +38,7 @@ const buildATestUser = () => ({
     tz_offset: -18000,
     profile: {
       title: 'type',
-      phone: '214-682-8565',
+      phone: '555555555',
       skype: '',
       real_name: 'Joey Guerra',
       real_name_normalized: 'Joey Guerra',
@@ -60,7 +62,7 @@ const buildATestUser = () => ({
       image_512: 'https://avatars.slack-edge.com/2018-08-02/408988542176_a350644dd4414bddea09_512.jpg',
       image_1024: 'https://avatars.slack-edge.com/2018-08-02/408988542176_a350644dd4414bddea09_1024.jpg',
       status_text_canonical: '',
-      team: 'T040CSN34'
+      team: 'TASDASDFSDD'
     },
     is_admin: true,
     is_owner: false,
@@ -92,22 +94,22 @@ const buildATestUser = () => ({
 
 const buildSlackMessage = event => ({
     ack: () => {},
-    envelope_id: 'e9b92395-bedd-4da7-a1b2-9bd1c28a423d',
+    envelope_id: 'e9b92395-bedd-4da7',
     body: {
-        token: 'lsO9JwCmB7NuNgWg3tKEdY6K',
-        team_id: 'T040CSN34',
-        context_team_id: 'T040CSN34',
+        token: 'ASDFASFASDFASDFASDFASD',
+        team_id: 'TASDASDFSDD',
+        context_team_id: 'TASDASDFSDD',
         context_enterprise_id: null,
-        api_app_id: 'A05CZQ3NCP4',
+        api_app_id: 'ASADFASDFASDDDS',
         event: {
-            client_msg_id: event?.messageId ?? 'be201e20-d035-44dc-a0e2-befc2b5bd13d',
+            client_msg_id: event?.messageId ?? 'be201e20-d035-44dc-a0e2',
             type: event?.type ?? 'message',
-            text: event?.text ?? '<@U05CZLS39QT> help',
-            user: event?.user ?? 'U3FRN2E9Y',
+            text: event?.text ?? `<@${BOT_ID}> help`,
+            user: event?.user ?? 'U123ABC456',
             ts: event?.ts ?? '1688420854.574989',
             blocks: event?.blocks ?? [],
-            team: event?.team ?? 'T040CSN34',
-            channel: event?.channel ?? 'CDUEY6A1W',
+            team: event?.team ?? 'TASDASDFSDD',
+            channel: event?.channel ?? 'CASDFASDFASDSD',
             event_ts: event?.ts ?? '1688420854.574989',
             channel_type: event.channel_type ?? 'channel'
         },
@@ -121,12 +123,12 @@ const buildSlackMessage = event => ({
     event: {
         client_msg_id: event?.messageId ?? 'be201e20-d035-44dc-a0e2-befc2b5bd13d',
         type: event?.type ?? 'message',
-        text: event?.text ?? '<@U05CZLS39QT> help',
-        user: event?.user ?? 'U3FRN2E9Y',
+        text: event?.text ?? `<@${BOT_ID}> help`,
+        user: event?.user ?? 'U123ABC456',
         ts: event?.ts ?? '1688420854.574989',
         blocks: event?.blocks ?? [],
-        team: event?.team ?? 'T040CSN34',
-        channel: event?.channel ?? 'CDUEY6A1W',
+        team: event?.team ?? 'TASDASDFSDD',
+        channel: event?.channel ?? 'CASDFASDFASDSD',
         event_ts: event?.ts ?? '1688420854.574989',
         channel_type: event.channel_type ?? 'channel'
     },
@@ -142,26 +144,55 @@ const authenticatedPerson = obj => ({
         name: 'Team Name'
     },
     self: {
-        id: 'U12345678',
+        id: BOT_ID,
         token: 'fake-token',
-
     }
 })
 
 const token = 'some-fake-token'
-const makeRobot = (delegate, webClientMock) => {
+const makeRobot = (delegate, webClientMock = {}) => {
     const robot = new Robot('Slack', false, 'hubot')
-    robot.adapter = new SlackAdapter(robot, new SlackClientMock(token, true, delegate), webClientMock ?? {
+    robot.brain.data.users['U123ABC456'] = {
+        id: 'U123ABC456',
+        name: 'hubot',
+        room: 'CASDFASDFASDSD'
+    }
+
+    robot.adapter = new SlackAdapter(robot, new SlackClientMock(token, true, delegate), Object.assign(webClientMock, {
         chat: {
-            async postMessage(channel, message, options) {}
+            async postMessage({channel, text}) {}
+        },
+        auth: {
+            test() {
+                return {
+                    ok: true,
+                    url: 'https://someteam.slack.com/',
+                    team: 'some team',
+                    user: 'hubot',
+                    team_id: 'ASDFSDD',
+                    user_id: BOT_ID,
+                    bot_id: 'ISIDUUDFIID',
+                    is_enterprise_install: false,
+                    response_metadata: {
+                      scopes: [
+                        'app_mentions:read',    'channels:history',
+                        'channels:join',        'channels:read',
+                        'channels:write.topic', 'chat:write',
+                        'commands',             'files:read',
+                        'files:write',          'groups:history',
+                        'users:write',          'links:read',
+                        'im:history',           'im:read',
+                        'reactions:read',       'reactions:write',
+                        'groups:read',          'mpim:read',
+                        'emoji:read',           'users:read',
+                        'mpim:history'
+                      ]
+                    }
+                }
+            }
         }
-    }, { token })
+    }), { token })
     return robot
-}
-const mapToHubotMessage = (message) => {
-    return new TextMessage(new User(message.user, {
-        room: message.channel
-    }), message.text, message.ts)
 }
 
 describe('Adapter', async () => {
@@ -226,29 +257,33 @@ describe('Listen to messages', async () => {
             res.send('hi')
             assert.ok(true, 'should be called for message')
         })
-        robot.receive(mapToHubotMessage(buildSlackMessage({
+        robot.adapter.mapToHubotMessage(buildSlackMessage({
             "type": "message",
             "channel": "C123ABC456",
             "user": "U123ABC456",
             "text": "Hello world",
             "ts": "1355517523.000005"
-        }).event))
+        }).event).then(message => {
+            robot.receive(message)
+        }).catch(e => console.error)
     })
     it('should hear a message, which uses regex for matching', (t, done) => {
         robot.hear(/hello/i, {id: 'message listener'},
             context => {
-                assert.deepEqual(context.message.text, '@hubot hello')
+                assert.deepEqual(context.message.text, 'hello')
                 done()
                 return true
-            })
-
-        robot.receive(mapToHubotMessage(buildSlackMessage({
+            }
+        )
+        robot.adapter.mapToHubotMessage(buildSlackMessage({
             "type": "message",
             "channel": "C123ABC456",
             "user": "U123ABC456",
-            "text": "<@U05CZLS39QT> hello",
+            "text": `hello`,
             "ts": "1355517523.000005"
-        }).event))
+        }).event).then(message => {
+            robot.receive(message)
+        }).catch(e =>console.error)
     })
 })
 
@@ -260,9 +295,9 @@ describe('Send messages back', async () => {
             }
         }, {
             chat: {
-                async postMessage(channel, message, options) {
+                async postMessage({ channel, text }) {
                     assert.deepEqual(channel, 'C123ABC456')
-                    assert.deepEqual(message, 'hi')
+                    assert.deepEqual(text, 'hi')
                     robot.shutdown()
                     done()
                 }
@@ -271,23 +306,38 @@ describe('Send messages back', async () => {
                 info(params) {
                     return buildATestUser()
                 }
+            },
+            auth: {
+                test() {
+                    return {
+                        user_id: BOT_ID,
+                        user: 'hubot',
+                        team_id: 'T12345678',
+                        team: 'Team Name'
+                    }
+                }
             }
         })
         robot.run()
+
         robot.respond(/hello/i, {id: 'message responder'},
             context => {
                 assert.deepEqual(context.message.text, '@hubot hello')
                 context.reply('hi')
+                done()
+                robot.shutdown()
             })
         robot.adapter.on('connected', () => {
-            robot.receive(mapToHubotMessage(buildSlackMessage({
+            robot.adapter.mapToHubotMessage(buildSlackMessage({
                 "type": "message",
                 "channel": "C123ABC456",
                 "user": "U123ABC456",
-                "text": "<@U05CZLS39QT> hello",
+                "text": `<@${BOT_ID}> hello`,
                 "ts": "1355517523.000005"
-            }).event))
+            }).event).then(message => {
+                message.text = robot.adapter.replaceBotIdWithName(message)
+                robot.receive(message)
+            }).catch(e => console.error)
         })
     })
-    
 })

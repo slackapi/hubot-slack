@@ -13,7 +13,18 @@ const hookModuleToReturnMockFromRequire = (module, mock) => {
 };
 
 const hubotSlackMock = require('../slack.js');
+const axiosMock = {
+  default: {
+    create() {
+      
+    }
+  },
+  headers: {
+    post: {}
+  }
+};
 hookModuleToReturnMockFromRequire('hubot-slack', hubotSlackMock);
+hookModuleToReturnMockFromRequire('axios', axiosMock);
 
 const SlackMention = require('../src/mention');
 

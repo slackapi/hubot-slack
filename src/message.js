@@ -57,10 +57,10 @@ class MeMessage extends TextMessage {
    * @param {string} event_ts - event timestamp
    */
   constructor(user, text, event_ts) {
+    super(this.user, this.text, this.event_ts);
     this.user = user;
     this.text = text;
     this.event_ts = event_ts;
-    super(this.user, this.text, this.event_ts);
   }
 }
 
