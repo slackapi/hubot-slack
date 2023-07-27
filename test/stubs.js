@@ -185,18 +185,29 @@ module.exports = function() {
       ]
     }
   };
-  stubs.rtm = {
-    start: () => {
-      return stubs._connected = true;
+
+  stubs.authMock = {
+    test: () => {
+      return Promise.resolve({
+        user_id: stubs.self.id
+      });
+    }
+  };
+
+
+  stubs.socket = {
+    connected: false,
+    async start() {
+      this.connected = true;
     },
-    disconnect: () => {
-      return stubs._connected = false;
+    disconnect() {
+      this.connected = false;
     },
-    sendMessage: (msg, room) => {
+    sendMessage(msg, room) {
       return stubs.send(room, msg);
     },
     dataStore: {
-      getUserById: id => {
+      getUserById(id) {
         switch (id) {
           case stubs.user.id: return stubs.user;
           case stubs.bot.id: return stubs.bot;
@@ -205,7 +216,7 @@ module.exports = function() {
           default: return undefined;
         }
       },
-      getChannelGroupOrDMById: id => {
+      getChannelGroupOrDMById(id) {
         switch (id) {
           case stubs.channel.id: return stubs.channel;
           case stubs.DM.id: return stubs.DM;
@@ -213,6 +224,7 @@ module.exports = function() {
       }
     }
   };
+
   stubs.chatMock = {
     postMessage: (conversationId, text, opts) => {
       if (conversationId === stubs.channelWillFailChatPost) { return Promise.reject(new Error("stub error")); }
@@ -339,10 +351,11 @@ module.exports = function() {
   };
 
   // Generate a new slack instance for each test.
-  let slackbot = new SlackBot(stubs.robot, {token: 'xoxb-faketoken'});
+  let slackbot = new SlackBot(stubs.robot, {botToken: 'xoxb-faketoken', appToken: 'xapp-faketoken'});
 
   Object.assign(slackbot.client, stubs.client);
-  Object.assign(slackbot.client.rtm, stubs.rtm);
+  Object.assign(slackbot.client.socket, stubs.socket);
+  Object.assign(slackbot.client.web.auth, stubs.authMock);
   Object.assign(slackbot.client.web.chat, stubs.chatMock);
   Object.assign(slackbot.client.web.users, stubs.usersMock);
   Object.assign(slackbot.client.web.conversations, stubs.conversationsMock);
@@ -353,8 +366,9 @@ module.exports = function() {
 
   let slacktextmessage_invalid_conversation = new SlackTextMessage(stubs.self, undefined, undefined, {text: undefined}, 'C888', undefined, slackbot.client);
 
-  let client = new SlackClient({token: 'xoxb-faketoken'}, stubs.robot);
-  Object.assign(client.rtm, stubs.rtm);
+  let client = new SlackClient({botToken: 'xoxb-faketoken', appToken: 'xapp-faketoken'}, stubs.robot);
+  Object.assign(client.socket, stubs.socket);
+  Object.assign(client.web.auth, stubs.authMock);
   Object.assign(client.web.chat, stubs.chatMock);
   Object.assign(client.web.conversations, stubs.conversationsMock);
   Object.assign(client.web.users, stubs.usersMock);

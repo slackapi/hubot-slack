@@ -294,7 +294,7 @@ export default {
             rmStart: JSON.parse(process.env.HUBOT_SLACK_RTM_START_OPTS || '{}'),
         }
         options.rtm.useRtmConnect = true
-        return new SlackAdapter(robot, new SocketModeClient({ appToken: process.env.SLACK_APP_TOKEN }), new WebClient(process.env.SLACK_BOT_TOKEN, {
+        return new SlackAdapter(robot, new SocketModeClient({ appToken: process.env.HUBOT_SLACK_APP_TOKEN }), new WebClient(process.env.HUBOT_SLACK_BOT_TOKEN, {
             logger: robot.logger,
             logLevel: process.env.HUBOT_SLACK_LOG_LEVEL || 'info'
         }), options)

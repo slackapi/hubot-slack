@@ -336,7 +336,6 @@ describe('Send messages back', async () => {
                 "ts": "1355517523.000005"
             }).event).then(message => {
                 message.text = robot.adapter.replaceBotIdWithName(message)
-                console.log('afterwards')
                 robot.receive(message)
             }).catch(e => console.error)
         })

@@ -48,9 +48,12 @@ describe('Connect', () => {
     ({stubs, slackbot} = require('./stubs.js')());
   });
 
-  it('Should connect successfully', function() {
+  it('Should connect successfully', (t, done) => {
+    slackbot.on('connected', () => {
+      assert.ok(true);
+      done();
+    });
     slackbot.run();
-    assert.ok(stubs._connected);
   })
 });
 
@@ -91,20 +94,26 @@ describe('Logger', function() {
     ({stubs, slackbot} = require('./stubs.js')());
   });
 
-  it('It should log missing token error', function() {
+  it('It should log invalid botToken error', (t, done) => {
     const {logger} = slackbot.robot;
-    slackbot.options.token = null;
+    logger.error = message => {
+      assert.deepEqual(message, 'Invalid botToken provided, please follow the upgrade instructions');
+      done();
+    }
+    slackbot.options.appToken = "xapp-faketoken";
+    slackbot.options.botToken = "ABC123";
     slackbot.run();
-    assert.ok(logger.logs["error"].length > 0);
-    assert.deepEqual(logger.logs["error"][logger.logs["error"].length-1], 'No token provided to Hubot');
   });
 
-  it('It should log invalid token error', function() {
+  it('It should log invalid appToken error', (t, done) => {
     const {logger} = slackbot.robot;
-    slackbot.options.token = "ABC123";
-    slackbot.run() -
-    assert.ok(logger.logs["error"].length > 0);
-    assert.deepEqual(logger.logs["error"][logger.logs["error"].length-1], 'Invalid token provided, please follow the upgrade instructions');
+    logger.error = message => {
+      assert.deepEqual(message, 'Invalid appToken provided, please follow the upgrade instructions');
+      done();
+    }
+    slackbot.options.appToken = "ABC123";
+    slackbot.options.botToken = "xoxb-faketoken";
+    slackbot.run();
   });
 });
 

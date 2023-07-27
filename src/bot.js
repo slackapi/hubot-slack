@@ -1,7 +1,9 @@
-const {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage}  = require.main.require("hubot/es2015.js");
+const {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, User}  = require.main.require("hubot/es2015.js");
 const {SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require("./message");
 
-const {RTMClient, WebClient} = require("@slack/client");
+const SocketModeClient = require('@slack/socket-mode').SocketModeClient;
+const WebClient = require('@slack/web-api').WebClient;
+
 const pkg = require("../package.json");
 
 class SlackClient {
@@ -11,15 +13,14 @@ class SlackClient {
     : (5 * 60 * 1000);
   constructor(options, robot) {
     this.robot = robot;
-    this.rtm = new RTMClient(options.token, options.rtm);
-    this.web = new WebClient(options.token, { maxRequestConcurrency: 1, logLevel: 'error'});
+    this.socket = new SocketModeClient({ appToken: options.appToken, ...options.socketModeOptions });
+    this.web = new WebClient(options.botToken, { maxRequestConcurrency: 1, logLevel: 'error'});
     this.apiPageSize = 100;
     if (!isNaN(options.apiPageSize)) {
       this.apiPageSize = parseInt(options.apiPageSize, 10);
     }
 
-    this.robot.logger.debug(`RTMClient initialized with options: ${JSON.stringify(options.rtm)}`);
-    this.rtmStartOpts = options.rtmStart || {};
+    this.robot.logger.debug(`SocketModeClient initialized with options: ${JSON.stringify(options.socketModeOptions)}`);
 
     // Map to convert bot user IDs (BXXXXXXXX) to user representations for events from custom
     // integrations and apps without a bot user
@@ -32,28 +33,30 @@ class SlackClient {
 
     // Event handling
     // NOTE: add channel join and leave events
-    this.rtm.on("message", this.eventWrapper, this);
-    this.rtm.on("reaction_added", this.eventWrapper, this);
-    this.rtm.on("reaction_removed", this.eventWrapper, this);
-    this.rtm.on("presence_change", this.eventWrapper, this);
-    this.rtm.on("member_joined_channel", this.eventWrapper, this);
-    this.rtm.on("member_left_channel", this.eventWrapper, this);
-    this.rtm.on("file_shared", this.eventWrapper, this);
-    this.rtm.on("user_change", this.updateUserInBrain, this);
+    this.socket.on('authenticated', this.eventWrapper, this);
+    this.socket.on("message", this.eventWrapper, this);
+    this.socket.on("reaction_added", this.eventWrapper, this);
+    this.socket.on("reaction_removed", this.eventWrapper, this);
+    this.socket.on("presence_change", this.eventWrapper, this);
+    this.socket.on("member_joined_channel", this.eventWrapper, this);
+    this.socket.on("member_left_channel", this.eventWrapper, this);
+    this.socket.on("file_shared", this.eventWrapper, this);
+    this.socket.on("user_change", this.updateUserInBrain, this);
     this.eventHandler = undefined;
   }
 
-  connect() {
-    this.robot.logger.debug(`RTMClient#start() with options: ${JSON.stringify(this.rtmStartOpts)}`);
-    return this.rtm.start(this.rtmStartOpts);
+  async connect() {
+    this.robot.logger.debug(`Calling SocketModeClient#start()`);
+    const response = await this.socket.start();
+    return response;
   }
   onEvent(callback) {
     if (this.eventHandler !== callback) { return this.eventHandler = callback; }
   }
 
   disconnect() {
-    this.rtm.disconnect();
-    return this.rtm.removeAllListeners();
+    this.socket.disconnect();
+    return this.socket.removeAllListeners();
   }
 
   setTopic(conversationId, topic) {
@@ -74,28 +77,20 @@ class SlackClient {
   }
   send(envelope, message) {
     const room = envelope.room || envelope.id;
-    if ((room == null)) {
-      this.robot.logger.error("Cannot send message without a valid room. Envelopes should contain a room property set to " +
-                          "a Slack conversation ID."
-      );
+    console.log(envelope, message)
+    if (room == null) {
+      this.robot.logger.error("Cannot send message without a valid room. Envelopes should contain a room property set to a Slack conversation ID.");
       return;
     }
     this.robot.logger.debug(`SlackClient#send() room: ${room}, message: ${message}`);
-    const options = {
-      as_user: true,
-      link_names: 1,
-      thread_ts: (envelope.message != null ? envelope.message.thread_ts : undefined)
-    };
     if (typeof message !== "string") {
-      return this.web.chat.postMessage(room, message.text, Object.assign(message, options))
-        .catch(error => {
-          return this.robot.logger.error(`SlackClient#send() error: ${error.message}`);
-      });
+      return this.web.chat.postMessage({ channel: room, text: message.text }).then(result => {
+        this.robot.logger.debug(`Successfully sent message to ${room}`)
+      }).catch(e => this.robot.logger.error(`SlackClient#send(message) error: ${e.message}`))
     } else {
-      return this.web.chat.postMessage(room, message, options)
-        .catch(error => {
-          return this.robot.logger.error(`SlackClient#send() error: ${error.message}`);
-      });
+      return this.web.chat.postMessage({ channel: room, text: message }).then(result => {
+        this.robot.logger.debug(`Successfully sent message (string) to ${room}`)
+      }).catch(e => this.robot.logger.error(`SlackClient#send(string) error: ${e.message}`))
     }
   }
   loadUsers(callback) {
@@ -116,14 +111,11 @@ class SlackClient {
     return this.web.users.list({ limit: this.apiPageSize }, pageLoaded);
   }
 
-  fetchUser(userId) {
+  async fetchUser(userId) {
     if (this.robot.brain.data.users[userId] != null) { return Promise.resolve(this.robot.brain.data.users[userId]); }
-    return this.web.users.info(userId).then(r => this.updateUserInBrain(r.user));
-  }
-  fetchBotUser(botId) {
-    if (this.botUserIdMap[botId] != null) { return Promise.resolve(this.botUserIdMap[botId]); }
-    this.robot.logger.debug(`SlackClient#fetchBotUser() Calling bots.info API for bot_id: ${botId}`);
-    return this.web.bots.info({bot: botId}).then(r => r.bot);
+    const r = await this.web.users.info(userId);
+    this.updateUserInBrain(r.user);
+    return r.user;
   }
   fetchConversation(conversationId) {
     const expiration = Date.now() - SlackClient.CONVERSATION_CACHE_TTL_MS;
@@ -165,46 +157,13 @@ class SlackClient {
     delete this.robot.brain.data.users[user.id];
     return this.robot.brain.userForId(user.id, newUser);
   }
-  eventWrapper(event) {
-    if (this.eventHandler) {
-      const fetches = {};
-      if (event.user) {
-        fetches.user = this.fetchUser(event.user);
-      } else if (event.bot_id) {
-        fetches.bot = this.fetchBotUser(event.bot_id);
-      }
-
-      if (event.item_user) {
-        fetches.item_user = this.fetchUser(event.item_user);
-      }
-      return Promise.props(fetches)
-        .then(fetched => {
-          if (fetched.item_user) { event.item_user = fetched.item_user; }
-          if (fetched.user) {
-            event.user = fetched.user;
-          } else if (fetched.bot) {
-            if (this.botUserIdMap[event.bot_id]) {
-              event.user = fetched.bot;
-            } else if (fetched.bot.user_id != null) {
-              return this.web.users.info(fetched.bot.user_id).then(res => {
-                event.user = res.user;
-                this.botUserIdMap[event.bot_id] = res.user;
-                return event;
-              });
-            } else {
-              this.botUserIdMap[event.bot_id] = false;
-              event.user = {};
-            }
-          } else {
-            event.user = {};
-          }
-          return event;
-      }).then(fetchedEvent => {
-          try { return this.eventHandler(fetchedEvent); }
-          catch (error) { return this.robot.logger.error(`An error occurred while processing an RTM event: ${error.message}.`); }
-        }).catch(error => {
-          return this.robot.logger.error(`Incoming RTM message dropped due to error fetching info for a property: ${error.message}.`);
-      });
+  async eventWrapper(event) {
+    if(!this.eventHandler) return;
+    try {
+      await this.eventHandler(event);
+    } catch (error) {
+      console.trace(error);
+      this.robot.logger.error(`An error occurred while processing an event from SlackBot's SlackClient: ${error.message}.`);
     }
   }
 }
@@ -220,22 +179,31 @@ class SlackBot extends Adapter {
     this.robot.logger.info(`hubot-slack adapter v${pkg.version}`);
     this.client = new SlackClient(this.options, this.robot);
   }
-  run() {
-    if (!this.options.token) {
-      return this.robot.logger.error("No token provided to Hubot");
+  async run() {
+    if (!this.options.botToken) {
+      return this.robot.logger.error("No botToken provided to Hubot");
     }
-    const needle = this.options.token.substring(0, 5);
+
+    if (!this.options.appToken) {
+      return this.robot.logger.error("No appToken provided to Hubot");
+    }
+    const needle = this.options.botToken.substring(0, 5);
     if (!["xoxb-", "xoxp-"].includes(needle)) {
-      return this.robot.logger.error("Invalid token provided, please follow the upgrade instructions");
+      return this.robot.logger.error("Invalid botToken provided, please follow the upgrade instructions");
     }
-    this.client.rtm.on("open", this.open.bind(this));
-    this.client.rtm.on("close", this.close.bind(this));
-    this.client.rtm.on("disconnect", this.disconnect.bind(this));
-    this.client.rtm.on("error", this.error.bind(this));
-    this.client.rtm.on("authenticated", this.authenticated.bind(this));
+
+    if (!["xapp-"].includes(this.options.appToken.substring(0, 5))) {
+      return this.robot.logger.error("Invalid appToken provided, please follow the upgrade instructions");
+    }
+
+    this.client.socket.on("open", this.open.bind(this));
+    this.client.socket.on("close", this.close.bind(this));
+    this.client.socket.on("disconnect", this.disconnect.bind(this));
+    this.client.socket.on("error", this.error.bind(this));
+    this.client.socket.on("authenticated", this.authenticated.bind(this));
     this.client.onEvent(this.eventHandler.bind(this));
 
-    // TODO: set this to false as soon as RTM connection closes (even if reconnect will happen later)
+    // TODO: set this to false as soon as connection closes (even if reconnect will happen later)
     // TODO: check this value when connection finishes (even if its a reconnection)
     // TODO: build a map of enterprise users and local users
     this.needsUserListSync = true;
@@ -267,7 +235,9 @@ class SlackBot extends Adapter {
     });
 
     // Start logging in
-    return this.client.connect();
+    await this.client.connect()
+    this.robot.logger.info("Connected to Slack on run");
+    this.emit('connected');
   }
 
   /**
@@ -278,6 +248,7 @@ class SlackBot extends Adapter {
    * @param {...(string|Object)} messages - fully documented in SlackClient
    */
   send(envelope, ...messages) {
+    this.robot.logger.debug('Sending message to Slack');
     let callback = function() {};
     if (typeof(messages[messages.length - 1]) === "function") {
       callback = messages.pop();
@@ -297,6 +268,7 @@ class SlackBot extends Adapter {
    * @param {...(string|Object)} messages - fully documented in SlackClient
    */
   reply(envelope, ...messages) {
+    this.robot.logger.debug('replying to message');
     let callback = function() {};
     if (typeof(messages[messages.length - 1]) === "function") {
       callback = messages.pop();
@@ -336,16 +308,12 @@ class SlackBot extends Adapter {
   // emote: (envelope, strings...) ->
 
 
-  /*
-   * SlackClient event handlers
-   */
-
   /**
    * Slack client has opened the connection
    * @private
    */
   open() {
-    this.robot.logger.info("Connected to Slack RTM");
+    this.robot.logger.info("Connected to Slack Socket");
 
     // Tell Hubot we're connected so it can load scripts
     return this.emit("connected");
@@ -355,35 +323,15 @@ class SlackBot extends Adapter {
    * Slack client has authenticated
    *
    * @private
-   * @param {SlackRtmStart|SlackRtmConnect} identity - the response from calling the Slack Web API method `rtm.start` or
-   * `rtm.connect`
+   * @param identity - the response from calling the Slack Web API method
    */
-  authenticated(identity) {
-    let team;
-    ({self: this.self, team} = identity);
-    this.self.installed_team_id = team.id;
-
-    // Find out bot_id
-    // NOTE: this information can be fetched by using `bots.info` combined with `users.info`. This presents an
-    // alternative that decouples Hubot from `rtm.start` and would make it compatible with `rtm.connect`.
-    if (identity.users) {
-      for (var user of identity.users) {
-        if (user.id === this.self.id) {
-          this.robot.logger.debug("SlackBot#authenticated() Found self in RTM start data");
-          this.self.bot_id = user.profile.bot_id;
-          break;
-        }
-      }
-    }
-
-    // Provide name to Hubot so it can be used for matching in `robot.respond()`. This must be a username, despite the
-    // deprecation, because the SlackTextMessage#buildText() will format mentions into `@username`, and that is what
-    // Hubot will be comparing to the message text.
-    this.robot.name = this.self.name;
-
-    return this.robot.logger.info(`Logged in as @${this.robot.name} in workspace ${team.name}`);
+  async authenticated(identity) {
+    if(this.self) return;
+    this.self = await this.client.web.auth.test();
+    this.robot.logger.debug(this.self);
+    this.robot.name = this.self.user;
+    return this.robot.logger.info(`Logged in as @${this.robot.name} in workspace ${this.self.team}`);
   }
-
 
   /**
    * Creates a presense subscripton for all users in the brain
@@ -391,9 +339,10 @@ class SlackBot extends Adapter {
    */
   presenceSub() {
     // Only subscribe to status changes from human users that are not deleted
-    const ids = this.robot.brain.data.users.filter(user => !user.is_bot && !user.deleted).map(user => user.id);
+    if (!this.robot.brain.users()?.length > 0) return;
+    const ids = this.robot.brain.users()?.filter(user => !user.is_bot && !user.deleted).map(user => user.id);
     this.robot.logger.debug(`SlackBot#presenceSub() Subscribing to presence for ${ids.length} users`);
-    return this.client.rtm.subscribePresence(ids);
+    return this.client.socket.subscribePresence(ids);
   }
 
   /**
@@ -403,7 +352,7 @@ class SlackBot extends Adapter {
   close() {
     // NOTE: not confident that @options.autoReconnect works
     if (this.options.autoReconnect) {
-      this.robot.logger.info("Disconnected from Slack RTM");
+      this.robot.logger.info("Disconnected from Slack Socket");
       return this.robot.logger.info("Waiting for reconnect...");
     } else {
       return this.disconnect();
@@ -415,7 +364,7 @@ class SlackBot extends Adapter {
    * @private
    */
   disconnect() {
-    this.robot.logger.info("Disconnected from Slack RTM");
+    this.robot.logger.info("Disconnected from Slack Socket");
     this.robot.logger.info("Exiting...");
     this.client.disconnect();
     // NOTE: Node recommends not to call process.exit() but Hubot itself uses this mechanism for shutting down
@@ -427,10 +376,10 @@ class SlackBot extends Adapter {
    * Slack client received an error
    *
    * @private
-   * @param {SlackRtmError} error - An error emitted from the [Slack RTM API](https://api.slack.com/rtm)
+   * @param error - An error emitted
    */
   error(error) {
-    this.robot.logger.error(`Slack RTM error: ${JSON.stringify(error)}`);
+    this.robot.logger.error(`SlackBot error: ${JSON.stringify(error)}`);
     // Assume that scripts can handle slowing themselves down, all other errors are bubbled up through Hubot
     // NOTE: should rate limit errors also bubble up?
     if (error.code !== -1) {
@@ -438,10 +387,26 @@ class SlackBot extends Adapter {
     }
   }
 
+  replaceBotIdWithName(event) {
+      const botId = this.self.user_id
+      const botName = this.self.user
+      const text = event.text ?? event.message?.text
+      if(text.includes(`<@${botId}>`)) {
+          return text.replace(`<@${botId}>`, `@${botName}`)
+      }
+      return text
+  }
+  addBotIdToMessage(event) {
+    let text = event.text ?? event.message?.text
+    if (text && event?.channel_type == 'im' && !text.includes(this.self.user_id)) {
+      text = `<@${this.self.user_id}> ${text}`;
+    }
+    return text;
+  }
   /**
    * Incoming Slack event handler
    *
-   * This method is used to ingest Slack RTM events and prepare them as Hubot Message objects. The messages are passed
+   * This method is used to ingest Slack events and prepare them as Hubot Message objects. The messages are passed
    * to the Robot#receive() method, which allows executes receive middleware and eventually triggers the various
    * listeners that are created by scripts.
    *
@@ -455,111 +420,105 @@ class SlackBot extends Adapter {
    * @param {string} [event.channel] - the conversation ID for where this event took place
    * @param {SlackBotInfo} [event.bot] - the description of the bot creating this event as returned by `bots.info`
    */
-  eventHandler(event) {
-    let msg;
-    const {user, channel} = event;
-    const event_team_id = event.team;
-
-    // Ignore anything we sent
-    if (user?.id === this.self.id) { 
+  async eventHandler(message) {
+    if(!message?.body?.event?.user) {
+      if (message?.ack) {
+        return await message?.ack();
+      }
       return;
     }
 
-    if (this.options.installedTeamOnly) {
-      // Skip events generated by other workspace users in a shared channel
-      if ((event_team_id != null) && (event_team_id !== this.self.installed_team_id)) {
-        this.robot.logger.debug(`Skipped an event generated by an other workspace user (team: ${event_team_id}) in shared channel (channel: ${channel})`);
-        return;
-      }
+    let msg;
+    const {user, channel} = message.event;
+    const event_team_id = message.event.team;
+
+    const userFromBrain = this.robot.brain.users()[user];
+    if (!userFromBrain) {
+      const userResponse = await this.client.web.users.info({
+        user
+      })
+      this.robot.brain.userForId(user, userResponse.user);
     }
 
-    // Send to Hubot based on message type
-    if (event.type === "message") {
+    const from = this.robot.brain.users()[user];
 
-      // Hubot expects all user objects to have a room property that is used in the envelope for the message after it
-      // is received
-      user.room = channel ?? '';
-
-      switch (event.subtype) {
-        case "bot_message":
-          this.robot.logger.debug(`Received text message in channel: ${channel}, from: ${user.id} (bot)`);
-          return SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, this.robot.name, this.robot.alias, this.client, (error, message) => {
-            if (error) { return this.robot.logger.error(`Dropping message due to error ${error.message}`); }
-            return this.receive(message);
-          });
-
-        case "channel_topic": case "group_topic":
-          this.robot.logger.debug(`Received topic change message in conversation: ${channel}, new topic: ${event.topic}, set by: ${user.id}`);
-          return this.receive(new TopicMessage(user, event.topic, event.ts));
-
-        case "me_message":
-          this.robot.logger.debug(`Received /me message in channel: ${channel}, from: ${user.id}`);
-          return this.receive(new MeMessage(user, event.text, event.ts));
-
-        case "thread_broadcast": case undefined:
-          this.robot.logger.debug(`Received text message in channel: ${channel}, from: ${user.id} (human)`);
-          return SlackTextMessage.makeSlackTextMessage(user, undefined, undefined, event, channel, this.robot.name, this.robot.alias, this.client, (error, message) => {
-            if (error) { return this.robot.logger.error(`Dropping message due to error ${error.message}`); }
-            return this.receive(message);
-          });
-      }
-
-    } else if (event.type === "member_joined_channel") {
-      // this event type always has a channel
-      user.room = channel;
-      this.robot.logger.debug(`Received enter message for user: ${user.id}, joining: ${channel}`);
-      msg = new EnterMessage(user);
-      msg.ts = event.ts;
-      return this.receive(msg);
-
-    } else if (event.type === "member_left_channel") {
-      // this event type always has a channel
-      user.room = channel;
-      this.robot.logger.debug(`Received leave message for user: ${user.id}, joining: ${channel}`);
-      msg = new LeaveMessage(user);
-      msg.ts = event.ts;
-      return this.receive(msg);
-
-    } else if ((event.type === "reaction_added") || (event.type === "reaction_removed")) {
-
-      // Once again Hubot expects all user objects to have a room property that is used in the envelope for the message
-      // after it is received. If the reaction is to a message, then the `event.item.channel` contain a conversation ID.
-      // Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a
-      // conversation. In that situation we fallback to an empty string.
-      user.room = event.item.type === "message" ? event.item.channel : "";
-
-      // Reaction messages may contain an `event.item_user` property containing a fetched SlackUserInfo object. Before
-      // the message is received by Hubot, turn that data into a Hubot User object.
-      const item_user = (event.item_user != null) ? this.robot.brain.userForId(event.item_user.id, event.item_user) : {};
-
-      this.robot.logger.debug(`Received reaction message from: ${user.id}, reaction: ${event.reaction}, item type: ${event.item.type}`);
-      return this.receive(new ReactionMessage(event.type, user, event.reaction, item_user, event.item, event.event_ts));
-
-    } else if (event.type === "presence_change") {
-      // Collect all Hubot User objects referenced in this presence change event
-      // NOTE: this does not create new Hubot User objects for any users that are not already in the brain. It should
-      // not be possible for this to happen since Slack will only send events for users where an explicit subscription
-      // was made. In the `presenceSub()` method, subscriptions are only made for users in the brain.
-      const users = event.users?.filter(user => user != null) ?? [event.user];
-      this.robot.logger.debug(`Received presence update message for users: ${users.map((u) => u.id)} with status: ${event.presence}`);
-      return this.receive(new PresenceMessage(users, event.presence));
-      
-    } else if (event.type === "file_shared") {
+    // Ignore anything we sent
+    if (from?.id === this.self.user_id) { 
+      return;
+    }
     
-      // Once again Hubot expects all user objects to have a room property that is used in the envelope for the message
-      // after it is received. If the reaction is to a message, then the `event.item.channel` contain a conversation ID.
-      // Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a
-      // conversation. In that situation we fallback to an empty string.
-      user.room = event.channel_id;
+    this.robot.logger.debug(`event ${JSON.stringify(message, null, 2)} user = ${user}`);
 
-      this.robot.logger.debug(`Received file_shared message from: ${event.user_id}, file_id: ${event.file_id}`);
-      return this.receive(new FileSharedMessage(user, event.file_id, event.event_ts));
+    // TODO: I don't know what the schema looks like for this so i'm commenting it out
+    // until i can figure it out.
+    // if (this.options.installedTeamOnly) {
+    //   // Skip events generated by other workspace users in a shared channel
+    //   if ((event_team_id != null) && (event_team_id !== this.self.installed_team_id)) {
+    //     this.robot.logger.debug(`Skipped an event generated by an other workspace user (team: ${event_team_id}) in shared channel (channel: ${channel})`);
+    //     return await message?.ack();
+    //   }
+    // }
+
+
+    // Hubot expects all user objects to have a room property that is used in the envelope for the message after it
+    // is received
+    from.room = channel ?? '';
+    from.name = from.profile.display_name;
+
+    // add the bot id to the message if it's a direct message
+
+    message.body.event.text = this.addBotIdToMessage(message.body.event);
+    message.body.event.text = this.replaceBotIdWithName(message.body.event);
+    this.robot.logger.debug(`Text = ${message.body.event.text}`);
+    try {
+      switch (message.event.type) {
+        case "member_joined_channel":
+          // this event type always has a channel
+          this.robot.logger.debug(`Received enter message for user: ${from.id}, joining: ${channel}`);
+          msg = new EnterMessage(from);
+          msg.ts = message.ts;
+          this.receive(msg);
+          break;
+        case "member_left_channel":
+          this.robot.logger.debug(`Received leave message for user: ${from.id}, joining: ${channel}`);
+          msg = new LeaveMessage(user);
+          msg.ts = message.ts;
+          this.receive(msg);
+          break;
+        case "reaction_added": case "reaction_removed":
+          // Once again Hubot expects all user objects to have a room property that is used in the envelope for the message
+          // after it is received. If the reaction is to a message, then the `event.item.channel` contain a conversation ID.
+          // Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a
+          // conversation. In that situation we fallback to an empty string.
+          from.room = message.item.type === "message" ? message.item.channel : "";
+  
+          // Reaction messages may contain an `event.item_user` property containing a fetched SlackUserInfo object. Before
+          // the message is received by Hubot, turn that data into a Hubot User object.
+          const item_user = (message.item_user != null) ? this.robot.brain.userForId(message.item_user.id, message.item_user) : {};
+  
+          this.robot.logger.debug(`Received reaction message from: ${from.id}, reaction: ${message.reaction}, item type: ${message.item.type}`);
+          this.receive(new ReactionMessage(message.type, from, message.reaction, item_user, message.item, message.event_ts));
+          break;
+        case "file_shared":  
+          this.robot.logger.debug(`Received file_shared message from: ${message.user_id}, file_id: ${message.file_id}`);
+          this.receive(new FileSharedMessage(from, message.file_id, message.event_ts));
+          break;
+        default:
+          this.robot.logger.debug(`Received generic message: ${message.event.type}`);
+          SlackTextMessage.makeSlackTextMessage(from, message?.body?.event.text, message?.body?.event.text, message?.body?.event, channel, this.robot.name, this.robot.alias, this.client, (error, message) => {
+            if (error) { return this.robot.logger.error(`Dropping message due to error ${error.message}`); }
+            return this.receive(message);
+          });
+          break;
+      }
+    } catch (e) {
+      this.robot.logger.error(e);
+    }
+
+    if (message?.ack) {
+      return await message?.ack();
     }
   }
-
-
-    // NOTE: we may want to wrap all other incoming events as a generic Message
-    // else
 
   /**
    * Callback for fetching all users in workspace. Delegates to `updateUserInBrain()` to write all users to Hubot brain
