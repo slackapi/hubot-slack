@@ -34,5 +34,12 @@
   },
   "devDependencies": {
     "pino-pretty": "^10.0.1"
+  },
+  "release": {
+    "branches": [
+      "main",
+      "next"
+    ],
+    "dryRun": false
   }
 }
