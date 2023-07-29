@@ -1,5 +1,5 @@
 const {Adapter, TextMessage, EnterMessage, LeaveMessage, TopicMessage, CatchAllMessage, User}  = require.main.require("hubot/es2015.js");
-const {SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require("./message");
+const {SlackTextMessage, ReactionMessage, FileSharedMessage, MeMessage} = require("./message");
 
 const SocketModeClient = require('@slack/socket-mode').SocketModeClient;
 const WebClient = require('@slack/web-api').WebClient;
@@ -94,8 +94,13 @@ class SlackClient {
   loadUsers(callback) {
     const combinedResults = { members: [] };
     var pageLoaded = (error, results) => {
-      if (error) { return callback(error); }
-      for (var member of results.members) { combinedResults.members.push(member); }
+      if (error) {
+        return callback(error);
+      }
+
+      for (var member of results.members) {
+        combinedResults.members.push(member);
+      }
 
       if(results?.response_metadata?.next_cursor) {
         return this.web.users.list({
@@ -200,6 +205,22 @@ class SlackBot extends Adapter {
     this.client.socket.on("error", this.error.bind(this));
     this.client.socket.on("authenticated", this.authenticated.bind(this));
     this.client.onEvent(this.eventHandler.bind(this));
+    
+    // Brain will emit 'loaded' the first time it connects to its storage and then again each time a key is set
+    this.robot.brain.on("loaded", () => {
+      if(this.brainIsLoaded) return;
+      this.brainIsLoaded = true;
+      // The following code should only run after the first time the brain connects to its storage
+
+      // There's a race condition where the connection can happen after the above `@client.loadUsers` call finishes,
+      // in which case the calls to save users in `@usersLoaded` would not persist. It is still necessary to call the
+      // method there in the case Hubot is running without brain storage.
+      // NOTE: is this actually true? won't the brain have the users in memory and persist to storage as soon as the
+      // connection is complete?
+      // NOTE: this seems wasteful. when there is brain storage, it will end up loading all the users twice.
+      this.client.loadUsers(this.usersLoaded.bind(this));
+      this.isLoaded = true;
+    });
 
     // TODO: set this to false as soon as connection closes (even if reconnect will happen later)
     // TODO: check this value when connection finishes (even if its a reconnection)
@@ -211,26 +232,6 @@ class SlackBot extends Adapter {
     } else {
       this.brainIsLoaded = true;
     }
-
-    // Brain will emit 'loaded' the first time it connects to its storage and then again each time a key is set
-    this.robot.brain.on("loaded", () => {
-      if (!this.brainIsLoaded) {
-        this.brainIsLoaded = true;
-        // The following code should only run after the first time the brain connects to its storage
-
-        // There's a race condition where the connection can happen after the above `@client.loadUsers` call finishes,
-        // in which case the calls to save users in `@usersLoaded` would not persist. It is still necessary to call the
-        // method there in the case Hubot is running without brain storage.
-        // NOTE: is this actually true? won't the brain have the users in memory and persist to storage as soon as the
-        // connection is complete?
-        // NOTE: this seems wasteful. when there is brain storage, it will end up loading all the users twice.
-        this.client.loadUsers(this.usersLoaded.bind(this));
-        this.isLoaded = true;
-        // NOTE: will this only subscribe a partial user list because loadUsers has not yet completed? it will at least
-        // subscribe to the users that were stored in the brain from the last run.
-        return this.presenceSub();
-      }
-    });
 
     // Start logging in
     await this.client.connect()
@@ -329,18 +330,6 @@ class SlackBot extends Adapter {
     this.robot.logger.debug(this.self);
     this.robot.name = this.self.user;
     return this.robot.logger.info(`Logged in as @${this.robot.name} in workspace ${this.self.team}`);
-  }
-
-  /**
-   * Creates a presense subscripton for all users in the brain
-   * @private
-   */
-  presenceSub() {
-    // Only subscribe to status changes from human users that are not deleted
-    if (!this.robot.brain.users()?.length > 0) return;
-    const ids = this.robot.brain.users()?.filter(user => !user.is_bot && !user.deleted).map(user => user.id);
-    this.robot.logger.debug(`SlackBot#presenceSub() Subscribing to presence for ${ids.length} users`);
-    return this.client.socket.subscribePresence(ids);
   }
 
   /**

@@ -16,7 +16,7 @@ const hubotSlackMock = require('../slack.js');
 hookModuleToReturnMockFromRequire('hubot-slack', hubotSlackMock);
 
 const { loadBot } = require.main.require('hubot');
-const { SlackTextMessage, ReactionMessage, PresenceMessage, FileSharedMessage } = require('../src/message');
+const { SlackTextMessage, ReactionMessage, FileSharedMessage } = require('../src/message');
 const { env } = require('node:process');
 
 describe('Adapter', function() {
@@ -35,9 +35,7 @@ describe('Adapter', function() {
 
     const loadedRobot = loadBot('slack', false, 'Hubot');
     await loadedRobot.loadAdapter();    
-    // Check to make sure presenceChange and react are loaded to Robot
-    assert.ok(loadedRobot.presenceChange instanceof Function);
-    assert.deepEqual(loadedRobot.presenceChange.length, 3);
+
     assert.ok(loadedRobot.hearReaction instanceof Function);
     assert.deepEqual(loadedRobot.hearReaction.length, 3);
     assert.ok(loadedRobot.fileShared instanceof Function);
@@ -767,3 +765,5 @@ describe('Users data', function() {
     assert.deepEqual(slackbot.robot.brain.data.users[stubs.user.id], undefined);
   });
 });
+
+  

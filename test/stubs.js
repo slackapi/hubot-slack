@@ -343,7 +343,6 @@ module.exports = function() {
   stubs.robot.listeners = [];
   stubs.robot.listen = Robot.prototype.listen.bind(stubs.robot);
   stubs.robot.hearReaction = Robot.prototype.hearReaction.bind(stubs.robot);
-  stubs.robot.presenceChange = Robot.prototype.presenceChange.bind(stubs.robot);
   stubs.robot.fileShared = Robot.prototype.fileShared.bind(stubs.robot);
   stubs.callback = ((() => "done"))();
 

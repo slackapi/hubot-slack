@@ -225,7 +225,7 @@ message properties, this type has a few really helpful properties you might want
 
 --------
 
-## Presence changes
+## Presence changes (deprecated)
 
 Each time a user changes from away to active, or vice-versa, Hubot can listen that event.
 

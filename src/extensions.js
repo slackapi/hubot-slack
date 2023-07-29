@@ -1,5 +1,5 @@
 let {Robot} = require.main.require("hubot/es2015.js");
-const {ReactionMessage, PresenceMessage, FileSharedMessage, MeMessage} = require("./message");
+const {ReactionMessage, FileSharedMessage, MeMessage} = require("./message");
 
 /**
  * Adds a Listener for ReactionMessages with the provided matcher, options, and callback
@@ -51,33 +51,6 @@ Robot.prototype.hearMeMessage = function(matcher, options, callback) {
   }
 
   return this.listen(matchMeMessage, options, callback);
-};
-
-/**
- * Adds a Listener for PresenceMessages with the provided matcher, options, and callback
- *
- * @public
- * @param {Function} [matcher] - A Function that determines whether to call the callback.
- * Expected to return a truthy value if the callback should be executed (optional).
- * @param {Object} [options]  - An Object of additional parameters keyed on extension name (optional).
- * @param {Function} callback - A Function that is called with a Response object if the matcher
- * function returns true.
- */
-Robot.prototype.presenceChange = function(matcher, options, callback) {
-  let matchPresence = msg => msg instanceof PresenceMessage;
-
-  if (arguments.length === 1) {
-    return this.listen(matchPresence, matcher);
-
-  } else if (matcher instanceof Function) {
-    matchPresence = msg => msg instanceof PresenceMessage && matcher(msg);
-
-  } else {
-    callback = options;
-    options = matcher;
-  }
-
-  return this.listen(matchPresence, options, callback);
 };
   
 /**
