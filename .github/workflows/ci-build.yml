@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Install hubot
-        run: npm i hubot@5.x
+        run: npm i hubot
       - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
         run: npm audit signatures
   test:
@@ -50,7 +50,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
-      - run: npm i hubot@5.x
+      - run: npm i hubot
       - run: npm test
   release:
     needs: [build, test]

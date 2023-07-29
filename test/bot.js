@@ -33,7 +33,7 @@ describe('Adapter', function() {
     process.env.HUBOT_SLACK_APP_TOKEN = 'xapp-faketoken';
     process.env.HUBOT_SLACK_BOT_TOKEN = 'xoxb-faketoken';
 
-    const loadedRobot = loadBot('slack', false, 'Hubot');
+    const loadedRobot = loadBot('hubot-slack', false, 'Hubot');
     await loadedRobot.loadAdapter();    
 
     assert.ok(loadedRobot.hearReaction instanceof Function);
