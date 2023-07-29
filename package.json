@@ -1,6 +1,6 @@
 {
   "name": "@hubot-friends/hubot-slack",
-  "version": "5.0.0",
+  "version": "0.0.0-development",
   "description": "A new Slack adapter for Hubot",
   "main": "./slack.js",
   "scripts": {
