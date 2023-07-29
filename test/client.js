@@ -66,10 +66,10 @@ describe('onEvent()', function() {
     // the shape of the following object is a raw message event: https://api.slack.com/events/message
     client.socket.emit('message', {
       type: 'message',
+      text: 'blah',
       user: stubs.user.id,
       channel: stubs.channel.id,
-      text: 'blah',
-      ts: '1355517523.000005'
+      ts: stubs.event_timestamp    
     });
     assert.deepEqual(stubs.robot.logger.logs.error, undefined);
   });
@@ -229,7 +229,7 @@ describe('send()', function() {
     ({ stubs, slackbot, client } = require('./stubs.js')());
   });
   it('Should send a plain string message to room', function() {
-    client.send({room: 'room1'}, 'Message');
+    client.send({room: 'room1'}, {text: 'Message'});
     assert.deepEqual(stubs._msg, 'Message');
     assert.deepEqual(stubs._room, 'room1');
   });
@@ -241,18 +241,18 @@ describe('send()', function() {
   });
 
   it('Should be able to send a DM to a user object', function() {
-    client.send(stubs.user, 'DM Message');
+    client.send({ room: stubs.user.id }, {text: 'DM Message'});
     assert.deepEqual(stubs._dmmsg, 'DM Message');
     assert.deepEqual(stubs._room, stubs.user.id);
   });
 
   it('should not send a message to a user without an ID', function() {
-    client.send({ name: "my_crufty_username" }, "don't program with usernames");
+    client.send({ name: 'my_crufty_username'}, {text: "don't program with usernames"});
     assert.deepEqual(stubs._sendCount, 0);
   });
 
   it('should log an error when chat.postMessage fails (plain string)', function(t, done) {
-    client.send({ room: stubs.channelWillFailChatPost }, "Message");
+    client.send({ room: stubs.channelWillFailChatPost}, {text: "Message"});
     assert.deepEqual(stubs._sendCount, 0);
     return setImmediate(( () => {
       if (stubs.robot.logger.logs != null) {
@@ -264,7 +264,7 @@ describe('send()', function() {
   });
 
   it('should log an error when chat.postMessage fails (object)', function(t, done) {
-    client.send({ room: stubs.channelWillFailChatPost }, { text: "textMessage" });
+    client.send({ room: stubs.channelWillFailChatPost}, {text: "textMessage"});
     assert.deepEqual(stubs._sendCount, 0);
     return setImmediate(( () => {
       if (stubs.robot.logger.logs != null) {

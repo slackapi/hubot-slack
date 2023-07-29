@@ -27,7 +27,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - name: Install dependencies
-        run: npm i
+        run: npm ci
+      - name: Install hubot
+        run: npm i hubot@5.x
       - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
         run: npm audit signatures
   test:
@@ -52,8 +54,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - name: Test
-        run: npm test
+      - run: npm ci
+      - run: npm i hubot@5.x
+      - run: npm test
   release:
     needs: [build, test]
     runs-on: ubuntu-latest
@@ -62,6 +65,9 @@ jobs:
       issues: write
       pull-requests: write
       id-token: write
+    strategy:
+      matrix:
+        node-version: ['lts/*']      
     if: github.ref == 'refs/heads/main' && ${{ success() }}
     steps:
       - name: Checkout
@@ -69,7 +75,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 'lts/*'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - name: Release
         env:

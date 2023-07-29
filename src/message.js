@@ -103,8 +103,6 @@ class SlackTextMessage extends TextMessage {
   constructor(user, text, rawText, rawMessage, channel_id, robot_name, robot_alias) {
     super(user, text, rawMessage.ts);
     // private instance properties
-    this.user = user;
-    this.text = text;
     this.rawMessage = rawMessage;
     this._channel_id = channel_id;
     this._robot_name = robot_name;

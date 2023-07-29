@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import { SlackAdapter } from './SlackAdapter.mjs'
 import Robot from 'hubot/src/robot.js'
 import { TextMessage } from 'hubot/src/message.js'
-import User from 'hubot/src/user.js'
 import EventEmitter from 'node:events'
 
 const BOT_ID = 'U0AAATTTTTAAAAA'

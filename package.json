@@ -26,7 +26,7 @@
     "@slack/web-api": "^6.8.1"
   },
   "peerDependencies": {
-    "hubot": "^5.0.1"
+    "hubot": "^5.0.7"
   },
   "engines": {
     "node": ">= 18.16.0",

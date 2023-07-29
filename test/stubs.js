@@ -23,10 +23,10 @@ module.exports = function() {
   const stubs = {};
 
   stubs._sendCount = 0;
-  stubs.send = (conversationId, text, opts) => {
-    stubs._room = conversationId;
+  stubs.send = (envelope, text, opts) => {
+    stubs._room = envelope.room;
     stubs._opts = opts;
-    if ((/^[UD@][\d\w]+/.test(conversationId)) || (conversationId === stubs.DM.id)) {
+    if ((/^[UD@][\d\w]+/.test(stubs._room)) || (stubs._room === stubs.DM.id)) {
       stubs._dmmsg = text;
     } else {
       stubs._msg = text;
@@ -98,6 +98,7 @@ module.exports = function() {
 
   stubs.bot = {
     name: 'testbot',
+    user: 'testbot',
     id: 'B123',
     user_id: 'U123'
   };
@@ -107,12 +108,14 @@ module.exports = function() {
   };
   stubs.slack_bot = {
     name: 'slackbot',
+    user: 'slackbot',
     id: 'B01',
     user_id: 'USLACKBOT'
   };
   stubs.self = {
     name: 'self',
-    id: 'U456',
+    user: 'self',
+    user_id: 'U456',
     bot_id: 'B456',
     profile: {
       email: 'self@example.com'
@@ -120,7 +123,8 @@ module.exports = function() {
   };
   stubs.self_bot = {
     name: 'self',
-    id: 'B456',
+    user: 'self',
+    user_id: 'B456',
     profile: {
       email: 'self@example.com'
     }
@@ -189,7 +193,9 @@ module.exports = function() {
   stubs.authMock = {
     test: () => {
       return Promise.resolve({
-        user_id: stubs.self.id
+        user_id: stubs.self.id,
+        user: stubs.self.name,
+        team: stubs.team.name,
       });
     }
   };
@@ -209,10 +215,10 @@ module.exports = function() {
     dataStore: {
       getUserById(id) {
         switch (id) {
-          case stubs.user.id: return stubs.user;
-          case stubs.bot.id: return stubs.bot;
-          case stubs.self.id: return stubs.self;
-          case stubs.self_bot.id: return stubs.self_bot;
+          case stubs.user.user_id: return stubs.user;
+          case stubs.bot.user_id: return stubs.bot;
+          case stubs.self.user_id: return stubs.self;
+          case stubs.self_bot.user_id: return stubs.self_bot;
           default: return undefined;
         }
       },
@@ -226,9 +232,9 @@ module.exports = function() {
   };
 
   stubs.chatMock = {
-    postMessage: (conversationId, text, opts) => {
-      if (conversationId === stubs.channelWillFailChatPost) { return Promise.reject(new Error("stub error")); }
-      stubs.send(conversationId, text, opts);
+    postMessage({channel, text}, opts) {
+      if (channel === stubs.channelWillFailChatPost) { return Promise.reject(new Error("stub error")); }
+      stubs.send({room: channel, text}, text, opts);
       return Promise.resolve();
     }
   };
@@ -274,12 +280,12 @@ module.exports = function() {
         return cb(null, stubs.userListPageWithNextCursor);
       }
     },
-    info: userId => {
-      if (userId === stubs.user.id) {
+    info(params) {
+      if (params.user === stubs.user.id) {
         return Promise.resolve({ok: true, user: stubs.user});
-      } else if (userId === stubs.org_user_not_in_workspace.id) {
+      } else if (params.user === stubs.org_user_not_in_workspace.id) {
         return Promise.resolve({ok: true, user: stubs.org_user_not_in_workspace});
-      } else if (userId === 'U789') {
+      } else if (params.user === 'U789') {
         return Promise.resolve();
       } else {
         return Promise.reject(new Error('usersMock could not match user ID'));
@@ -333,7 +339,7 @@ module.exports = function() {
   };
   // attach a real Brain to the robot
   stubs.robot.brain = new Brain(stubs.robot);
-  stubs.robot.name = 'bot';
+  stubs.robot.name = 'self';
   stubs.robot.listeners = [];
   stubs.robot.listen = Robot.prototype.listen.bind(stubs.robot);
   stubs.robot.hearReaction = Robot.prototype.hearReaction.bind(stubs.robot);

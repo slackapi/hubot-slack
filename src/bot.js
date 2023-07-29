@@ -37,7 +37,6 @@ class SlackClient {
     this.socket.on("message", this.eventWrapper, this);
     this.socket.on("reaction_added", this.eventWrapper, this);
     this.socket.on("reaction_removed", this.eventWrapper, this);
-    this.socket.on("presence_change", this.eventWrapper, this);
     this.socket.on("member_joined_channel", this.eventWrapper, this);
     this.socket.on("member_left_channel", this.eventWrapper, this);
     this.socket.on("file_shared", this.eventWrapper, this);
@@ -77,7 +76,6 @@ class SlackClient {
   }
   send(envelope, message) {
     const room = envelope.room || envelope.id;
-    console.log(envelope, message)
     if (room == null) {
       this.robot.logger.error("Cannot send message without a valid room. Envelopes should contain a room property set to a Slack conversation ID.");
       return;
@@ -388,16 +386,16 @@ class SlackBot extends Adapter {
   }
 
   replaceBotIdWithName(event) {
-      const botId = this.self.user_id
-      const botName = this.self.user
-      const text = event.text ?? event.message?.text
+      const botId = this.self.user_id;
+      const botName = this.self.user;
+      const text = event.text ?? event.message?.text ?? '';
       if(text.includes(`<@${botId}>`)) {
-          return text.replace(`<@${botId}>`, `@${botName}`)
+          return text.replace(`<@${botId}>`, `@${botName}`);
       }
-      return text
+      return text;
   }
   addBotIdToMessage(event) {
-    let text = event.text ?? event.message?.text
+    let text = event.text ?? event.message?.text ?? '';
     if (text && event?.channel_type == 'im' && !text.includes(this.self.user_id)) {
       text = `<@${this.self.user_id}> ${text}`;
     }
@@ -476,7 +474,7 @@ class SlackBot extends Adapter {
           // this event type always has a channel
           this.robot.logger.debug(`Received enter message for user: ${from.id}, joining: ${channel}`);
           msg = new EnterMessage(from);
-          msg.ts = message.ts;
+          msg.ts = message.event.ts;
           this.receive(msg);
           break;
         case "member_left_channel":
@@ -490,22 +488,22 @@ class SlackBot extends Adapter {
           // after it is received. If the reaction is to a message, then the `event.item.channel` contain a conversation ID.
           // Otherwise reactions can be on files and file comments, which are "global" and aren't contained in a
           // conversation. In that situation we fallback to an empty string.
-          from.room = message.item.type === "message" ? message.item.channel : "";
+          from.room = message.body.event.item.type === "message" ? message.body.event.item.channel : "";
   
           // Reaction messages may contain an `event.item_user` property containing a fetched SlackUserInfo object. Before
           // the message is received by Hubot, turn that data into a Hubot User object.
-          const item_user = (message.item_user != null) ? this.robot.brain.userForId(message.item_user.id, message.item_user) : {};
+          const item_user = (message.body.event.item_user != null) ? this.robot.brain.userForId(message.body.event.item_user.id, message.body.event.item_user) : {};
   
-          this.robot.logger.debug(`Received reaction message from: ${from.id}, reaction: ${message.reaction}, item type: ${message.item.type}`);
-          this.receive(new ReactionMessage(message.type, from, message.reaction, item_user, message.item, message.event_ts));
+          this.robot.logger.debug(`Received reaction message from: ${from.id}, reaction: ${message.body.event.reaction}, item type: ${message.body.event.item.type}`);
+          this.receive(new ReactionMessage(message.body.event.type, from, message.body.event.reaction, item_user, message.body.event.item, message.body.event.event_ts));
           break;
         case "file_shared":  
-          this.robot.logger.debug(`Received file_shared message from: ${message.user_id}, file_id: ${message.file_id}`);
-          this.receive(new FileSharedMessage(from, message.file_id, message.event_ts));
+          this.robot.logger.debug(`Received file_shared message from: ${message.body.event.user_id}, file_id: ${message.body.event.file_id}`);
+          this.receive(new FileSharedMessage(from, message.body.event.file_id, message.body.event.event_ts));
           break;
         default:
           this.robot.logger.debug(`Received generic message: ${message.event.type}`);
-          SlackTextMessage.makeSlackTextMessage(from, message?.body?.event.text, message?.body?.event.text, message?.body?.event, channel, this.robot.name, this.robot.alias, this.client, (error, message) => {
+          SlackTextMessage.makeSlackTextMessage(from, null, message?.body?.event.text, message?.body?.event, channel, this.robot.name, this.robot.alias, this.client, (error, message) => {
             if (error) { return this.robot.logger.error(`Dropping message due to error ${error.message}`); }
             return this.receive(message);
           });
