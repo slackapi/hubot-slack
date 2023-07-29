@@ -2,7 +2,8 @@
   "name": "@hubot-friends/hubot-slack",
   "version": "0.0.0-development",
   "description": "A new Slack adapter for Hubot",
-  "main": "./slack.js",
+  "homepage": "https://github.com/hubot-friends/hubot-slack#readme",
+  "main": "./index.js",
   "scripts": {
     "test": "node --test",
     "test:watch": "node --test --watch"

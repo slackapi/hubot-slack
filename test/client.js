@@ -13,7 +13,7 @@ const hookModuleToReturnMockFromRequire = (module, mock) => {
   };
 };
 
-const hubotSlackMock = require('../slack.js');
+const hubotSlackMock = require('../index.js');
 hookModuleToReturnMockFromRequire('hubot-slack', hubotSlackMock);
 
 const SocketModeClient = require('@slack/socket-mode').SocketModeClient;

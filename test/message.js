@@ -12,7 +12,7 @@ const hookModuleToReturnMockFromRequire = (module, mock) => {
   };
 };
 
-const hubotSlackMock = require('../slack.js');
+const hubotSlackMock = require('../index.js');
 const axiosMock = {
   default: {
     create() {
