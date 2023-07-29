@@ -2,7 +2,7 @@
 
 ### Important Notice
 
-**The original hubot-slack is no longer under active development.** Slack recommands taking a look at [Bolt for JS with Socket Mode](https://slack.dev/bolt-js/concepts#socket-mode) first if you're getting started.
+**The original hubot-slack is no longer under active development.** Slack recommends taking a look at [Bolt for JS with Socket Mode](https://slack.dev/bolt-js/concepts#socket-mode) first if you're getting started.
 
 But I'm going to maintain this fork as I continue to evolve Hubot. So feel free to use this one.
 
