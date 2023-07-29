@@ -131,10 +131,10 @@ class SlackClient extends EventEmitter {
     // topic is made regardless of the conversation type. If the conversation type is not compatible, the call would
     // fail, which is exactly the outcome in this implementation.
     try {
-      const res = await this.web.conversations.info(conversationId)
+      const res = await this.web.conversations.info({channel: conversationId})
       const conversation = res.channel;
       if (!conversation.is_im && !conversation.is_mpim) {
-        return await this.web.conversations.setTopic(conversationId, topic);
+        return await this.web.conversations.setTopic({channel: conversationId, topic});
       } else {
         return this.robot.logger.debug(`Conversation ${conversationId} is a DM or MPDM. These conversation types do not have topics.`);
       }
@@ -287,7 +287,7 @@ class SlackClient extends EventEmitter {
     if (this.channelData[conversationId] != null) { delete this.channelData[conversationId]; }
 
     // Return conversations.info promise
-    const r = await this.web.conversations.info(conversationId)
+    const r = await this.web.conversations.info({channel: conversationId})
     if (r.channel != null) {
       this.channelData[conversationId] = {
         channel: r.channel,

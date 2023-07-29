@@ -135,17 +135,6 @@ class SlackTextMessage extends TextMessage {
         text = text.replace(/&lt;/g, "<");
         text = text.replace(/&gt;/g, ">");
         text = text.replace(/&amp;/g, "&");
-
-        // special handling for message text when inside a DM conversation
-        if (conversationInfo.is_im) {
-          const startOfText = text.indexOf("@") === 0 ? 1 : 0;
-          const robotIsNamed = (text.indexOf(this._robot_name) === startOfText) || (text.indexOf(this._robot_alias) === startOfText);
-          // Assume it was addressed to us even if it wasn't
-          if (!robotIsNamed) {
-            text = `${this._robot_name} ${text}`;     // If this is a DM, pretend it was addressed to us
-          }
-        }
-
         this.text = text;
         return cb();
     }).catch(error => {

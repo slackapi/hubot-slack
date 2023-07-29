@@ -1,0 +1,49 @@
+{
+    "envelope_id": "asasdfsdfdf-cf4a-4aab-a3d4-80cb02209ff2",
+    "body": {
+      "token": "shgretafdasdfasd",
+      "team_id": "T0asfdasdfasdf",
+      "context_team_id": "T0asfdasdfasdf",
+      "context_enterprise_id": null,
+      "api_app_id": "asdfasdfasd",
+      "event": {
+        "type": "message",
+        "subtype": "channel_topic",
+        "ts": "1690670214.666729",
+        "user": "U3fasdfasdsd",
+        "text": "set the channel topic: indeed! It did  work.",
+        "topic": "indeed! It did  work.",
+        "channel": "CDasdfasdfsd",
+        "event_ts": "1690670214.666729",
+        "channel_type": "channel"
+      },
+      "type": "event_callback",
+      "event_id": "Ev05KDEERU2E",
+      "event_time": 1690670214,
+      "authorizations": [
+        {
+          "enterprise_id": null,
+          "team_id": "T0asfdasdfasdf",
+          "user_id": "U3fasdfasdsd",
+          "is_bot": true,
+          "is_enterprise_install": false
+        }
+      ],
+      "is_ext_shared_channel": false,
+      "event_context": "4-asdfasdfasd"
+    },
+    "event": {
+      "type": "message",
+      "subtype": "channel_topic",
+      "ts": "1690670214.666729",
+      "user": "U3fasdfasdsd",
+      "text": "set the channel topic: indeed! It did  work.",
+      "topic": "indeed! It did  work.",
+      "channel": "CDasdfasdfsd",
+      "event_ts": "1690670214.666729",
+      "channel_type": "channel"
+    },
+    "retry_num": 0,
+    "retry_reason": "",
+    "accepts_response_payload": false
+  }

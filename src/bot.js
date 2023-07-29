@@ -60,11 +60,11 @@ class SlackClient {
 
   setTopic(conversationId, topic) {
     this.robot.logger.debug(`SlackClient#setTopic() with topic ${topic}`);
-    return this.web.conversations.info(conversationId)
+    return this.web.conversations.info({channel: conversationId})
       .then(res => {
         const conversation = res.channel;
         if (!conversation.is_im && !conversation.is_mpim) {
-          return this.web.conversations.setTopic(conversationId, topic);
+          return this.web.conversations.setTopic({channel: conversationId, topic});
         } else {
           return this.robot.logger.debug(`Conversation ${conversationId} is a DM or MPDM. ` +
                               "These conversation types do not have topics."
@@ -116,7 +116,7 @@ class SlackClient {
 
   async fetchUser(userId) {
     if (this.robot.brain.data.users[userId] != null) { return Promise.resolve(this.robot.brain.data.users[userId]); }
-    const r = await this.web.users.info(userId);
+    const r = await this.web.users.info({user: userId});
     this.updateUserInBrain(r.user);
     return r.user;
   }
@@ -125,7 +125,7 @@ class SlackClient {
     if (((this.channelData[conversationId] != null ? this.channelData[conversationId].channel : undefined) != null) &&
       (expiration < (this.channelData[conversationId] != null ? this.channelData[conversationId].updated : undefined))) { return Promise.resolve(this.channelData[conversationId].channel); }
     if (this.channelData[conversationId] != null) { delete this.channelData[conversationId]; }
-    return this.web.conversations.info(conversationId).then(r => {
+    return this.web.conversations.info({channel: conversationId}).then(r => {
       if (r.channel != null) {
         this.channelData[conversationId] = {
           channel: r.channel,
@@ -165,8 +165,7 @@ class SlackClient {
     try {
       await this.eventHandler(event);
     } catch (error) {
-      console.trace(error);
-      this.robot.logger.error(`An error occurred while processing an event from SlackBot's SlackClient: ${error.message}.`);
+      this.robot.logger.error(`bot.js: eventWrapper: An error occurred while processing an event from SlackBot's SlackClient: ${error.message}.`);
     }
   }
 }
@@ -408,6 +407,7 @@ class SlackBot extends Adapter {
    * @param {SlackBotInfo} [event.bot] - the description of the bot creating this event as returned by `bots.info`
    */
   async eventHandler(message) {
+    this.robot.logger.debug(`eventHandler ${JSON.stringify(message, null, 2)}`);
     if(!message?.body?.event?.user) {
       if (message?.ack) {
         return await message?.ack();
@@ -431,7 +431,9 @@ class SlackBot extends Adapter {
 
     // Ignore anything we sent
     if (from?.id === this.self.user_id) { 
-      return;
+      if (message?.ack) {
+        return await message?.ack();
+      }
     }
     
     this.robot.logger.debug(`event ${JSON.stringify(message, null, 2)} user = ${user}`);
@@ -453,7 +455,6 @@ class SlackBot extends Adapter {
     from.name = from.profile.display_name;
 
     // add the bot id to the message if it's a direct message
-
     message.body.event.text = this.addBotIdToMessage(message.body.event);
     message.body.event.text = this.replaceBotIdWithName(message.body.event);
     this.robot.logger.debug(`Text = ${message.body.event.text}`);

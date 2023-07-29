@@ -239,7 +239,7 @@ module.exports = function() {
     }
   };
   stubs.conversationsMock = {
-    setTopic: (id, topic) => {
+    setTopic: ({channel, topic}) => {
       stubs._topic = topic;
       if (stubs.receiveMock.onTopic != null) { 
         stubs.receiveMock.onTopic(stubs._topic);
@@ -247,11 +247,11 @@ module.exports = function() {
       return Promise.resolve();
     },
     info: conversationId => {
-      if (conversationId === stubs.channel.id) {
+      if (conversationId.channel === stubs.channel.id) {
         return Promise.resolve({ok: true, channel: stubs.channel});
-      } else if (conversationId === stubs.DM.id) {
+      } else if (conversationId.channel === stubs.DM.id) {
         return Promise.resolve({ok: true, channel: stubs.DM});
-      } else if (conversationId === 'C789') {
+      } else if (conversationId.channel === 'C789') {
         return Promise.resolve();
       } else {
         return Promise.reject(new Error('conversationsMock could not match conversation ID'));
