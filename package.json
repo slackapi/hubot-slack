@@ -16,7 +16,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/hubot-friends/hubot-slack.git"
+    "url": "https://github.com/hubot-friends/hubot-slack.git"
   },
   "bugs": {
     "url": "https://github.com/hubot-friends/hubot-slack/issues"

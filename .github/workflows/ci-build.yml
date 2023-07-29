@@ -4,15 +4,15 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      id-token: write
     strategy:
       matrix:
         node-version: ['lts/*']
@@ -35,11 +35,6 @@ jobs:
   test:
     name: Fast Tests
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      id-token: write
     needs: build
     strategy:
       matrix:
@@ -60,11 +55,6 @@ jobs:
   release:
     needs: [build, test]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      id-token: write
     strategy:
       matrix:
         node-version: ['lts/*']      
