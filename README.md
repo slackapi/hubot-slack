@@ -9,7 +9,7 @@ But I'm going to maintain this fork as I continue to evolve Hubot. So feel free 
 ## Installation
 
 ```sh
-npm i hubot-new/hubot-slack
+npm i @hubot-friends/hubot-slack
 ```
 
 This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).
