@@ -138,7 +138,7 @@ class SlackTextMessage extends TextMessage {
         this.text = text;
         return cb();
     }).catch(error => {
-        client.robot.logger.error(`An error occurred while building text: ${error.message}`);
+        client.robot.logger.error(error, `An error occurred while building text: ${error.message}`);
         return cb(error);
     });
   }
@@ -225,7 +225,7 @@ class SlackTextMessage extends TextMessage {
         mentions.push(new SlackMention(res.id, "user", res));
         return `@${res.name}`;
     }).catch(error => {
-        client.robot.logger.error(`Error getting user info ${id}: ${error.message}`);
+        client.robot.logger.error(error, `Error getting user info ${id}: ${error.message}`);
         return `<@${id}>`;
     });
   }
@@ -247,7 +247,7 @@ class SlackTextMessage extends TextMessage {
           return `\#${conversation.name}`;
         } else { return `<\#${id}>`; }
     }).catch(error => {
-        client.robot.logger.error(`Error getting conversation info ${id}: ${error.message}`);
+        client.robot.logger.error(error, `Error getting conversation info ${id}: ${error.message}`);
         return `<\#${id}>`;
     });
   }

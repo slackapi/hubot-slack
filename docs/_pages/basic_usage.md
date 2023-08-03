@@ -267,7 +267,7 @@ module.exports = function(robot) {
     .then(function(api_response) {
       // List is searched for the channel with the right name, and the notification_room is updated
       const room = api_response.channels.find(channel => channel.name === default_channel_name);
-      if (room != null) { return notification_room = room.id; }}).catch(error => robot.logger.error(error.message));
+      if (room != null) { return notification_room = room.id; }}).catch(error => robot.logger.error(error, error.message));
 
   // Any message that says "send updates here" will change the notification room
   robot.hear(/send updates here/i, res => notification_room = res.message.rawMessage.channel.id);

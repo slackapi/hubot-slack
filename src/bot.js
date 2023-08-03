@@ -71,7 +71,7 @@ class SlackClient {
           );
         }
     }).catch(error => {
-        return this.robot.logger.error(`Error setting topic in conversation ${conversationId}: ${error.message}`);
+        return this.robot.logger.error(error, `Error setting topic in conversation ${conversationId}: ${error.message}`);
     });
   }
   send(envelope, message) {
@@ -84,11 +84,11 @@ class SlackClient {
     if (typeof message !== "string") {
       return this.web.chat.postMessage({ channel: room, text: message.text }).then(result => {
         this.robot.logger.debug(`Successfully sent message to ${room}`)
-      }).catch(e => this.robot.logger.error(`SlackClient#send(message) error: ${e.message}`))
+      }).catch(e => this.robot.logger.error(e, `SlackClient#send(message) error: ${e.message}`))
     } else {
       return this.web.chat.postMessage({ channel: room, text: message }).then(result => {
         this.robot.logger.debug(`Successfully sent message (string) to ${room}`)
-      }).catch(e => this.robot.logger.error(`SlackClient#send(string) error: ${e.message}`))
+      }).catch(e => this.robot.logger.error(e, `SlackClient#send(string) error: ${e.message}`))
     }
   }
   loadUsers(callback) {
@@ -165,7 +165,7 @@ class SlackClient {
     try {
       await this.eventHandler(event);
     } catch (error) {
-      this.robot.logger.error(`bot.js: eventWrapper: An error occurred while processing an event from SlackBot's SlackClient: ${error.message}.`);
+      this.robot.logger.error(error, `bot.js: eventWrapper: An error occurred while processing an event from SlackBot's SlackClient: ${error.message}.`);
     }
   }
 }
@@ -365,7 +365,7 @@ class SlackBot extends Adapter {
    * @param error - An error emitted
    */
   error(error) {
-    this.robot.logger.error(`SlackBot error: ${JSON.stringify(error)}`);
+    this.robot.logger.error(error, `SlackBot error`);
     // Assume that scripts can handle slowing themselves down, all other errors are bubbled up through Hubot
     // NOTE: should rate limit errors also bubble up?
     if (error.code !== -1) {
@@ -494,7 +494,7 @@ class SlackBot extends Adapter {
         default:
           this.robot.logger.debug(`Received generic message: ${message.event.type}`);
           SlackTextMessage.makeSlackTextMessage(from, null, message?.body?.event.text, message?.body?.event, channel, this.robot.name, this.robot.alias, this.client, (error, message) => {
-            if (error) { return this.robot.logger.error(`Dropping message due to error ${error.message}`); }
+            if (error) { return this.robot.logger.error(error, `Dropping message due to error ${error.message}`); }
             return this.receive(message);
           });
           break;

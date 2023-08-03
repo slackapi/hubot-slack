@@ -87,7 +87,7 @@ class SlackClient extends EventEmitter {
       this.robot.logger.info('Connected to Slack after starting socket client.');
       // this.emit('connected');
     } catch (e) {
-      this.robot.logger.error(`Error connecting to Slack: ${e.message}`);
+      this.robot.logger.error(e, `Error connecting to Slack: ${e.message}`);
       this.emit('error', e);
     }
     return startResponse;
@@ -139,7 +139,7 @@ class SlackClient extends EventEmitter {
         return this.robot.logger.debug(`Conversation ${conversationId} is a DM or MPDM. These conversation types do not have topics.`);
       }
     } catch (e) {
-      this.robot.logger.error(`Error setting topic in conversation ${conversationId}: ${e.message}`);
+      this.robot.logger.error(e, `Error setting topic in conversation ${conversationId}: ${e.message}`);
     }
   }
 
@@ -202,12 +202,12 @@ class SlackClient extends EventEmitter {
     if (typeof message !== "string") {
       return this.web.chat.postMessage({channel: room, text: message.text}, Object.assign(message, options))
         .catch(error => {
-          return this.robot.logger.error(`SlackClient#send() error: ${error.message}`);
+          return this.robot.logger.error(error, `SlackClient#send() error: ${error.message}`);
       });
     } else {
       return this.web.chat.postMessage({channel: room, text: message.text}, options)
         .catch(error => {
-          return this.robot.logger.error(`SlackClient#send() error: ${error.message}`);
+          return this.robot.logger.error(error, `SlackClient#send() error: ${error.message}`);
       });
     }
   }
@@ -411,10 +411,10 @@ class SlackClient extends EventEmitter {
             this.eventHandler(fetchedEvent);
           }
           catch (error) {
-            this.robot.logger.error(`An error occurred while processing an event: from Slack Client ${error.message}.`);
+            this.robot.logger.error(error, `An error occurred while processing an event: from Slack Client ${error.message}.`);
           }
         }).catch(error => {
-          return this.robot.logger.error(`Incoming message dropped due to error fetching info for a property: ${error.message}.`);
+          return this.robot.logger.error(error, `Incoming message dropped due to error fetching info for a property: ${error.message}.`);
       });
     }
   }
