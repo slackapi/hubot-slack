@@ -82,7 +82,8 @@ class SlackClient {
     }
     this.robot.logger.debug(`SlackClient#send() room: ${room}, message: ${message}`);
     if (typeof message !== "string") {
-      return this.web.chat.postMessage({ channel: room, text: message.text }).then(result => {
+      message.channel = room
+      return this.web.chat.postMessage(message).then(result => {
         this.robot.logger.debug(`Successfully sent message to ${room}`)
       }).catch(e => this.robot.logger.error(e, `SlackClient#send(message) error: ${e.message}`))
     } else {
