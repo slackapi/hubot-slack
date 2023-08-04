@@ -211,9 +211,6 @@ class SlackAdapter extends Adapter {
         return text
     }
     async #onMessage(message) {
-        const channelResponse = await this.#webClient.conversations.info({
-            channel: message.event.channel
-        })
         const slackMessage = new SlackResponse(message)
         if(slackMessage.body.event.botId && slackMessage.body.event.user === this.robot.self.id) {
             this.robot.logger.info('Ignoring message from self')
