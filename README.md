@@ -22,8 +22,72 @@ Comprehensive documentation [is available](https://slackapi.github.io/hubot-slac
 Need the following permissions:
 - app_mentions:read
 - channels:join
+- channels:history
+- channels:read
 - chat:write
 - im:write
-
-Need the following *Bot Token Scopes*:
+- im:history
+- im:read
 - users:read
+- groups:history
+- groups:write
+- groups:read
+- mpim:history
+- mpim:write
+- mpim:read
+
+Need to following events:
+- app_mention
+- message.channels
+- message.im
+- message.groups
+- message.mpim
+
+## Sample YAML
+The following YAML manifest will work.
+
+```yaml
+display_information:
+  name: NameOfYourBot
+  description: Description of your bot.
+  background_color: "#3d001d"
+features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: NameOfYourbot
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read
+      - channels:join
+      - channels:history
+      - channels:read
+      - chat:write
+      - im:write
+      - im:history
+      - im:read
+      - users:read
+      - groups:history
+      - groups:write
+      - groups:read
+      - mpim:history
+      - mpim:write
+      - mpim:read
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+      - message.channels
+      - message.im
+      - message.groups
+      - message.mpim
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
+```
