@@ -27,7 +27,7 @@
     "@slack/web-api": "^6.8.1"
   },
   "peerDependencies": {
-    "hubot": "^7.x.x"
+    "hubot": ">= 7.0.0"
   },
   "engines": {
     "node": ">= 18.16.0",
@@ -42,5 +42,8 @@
       "next"
     ],
     "dryRun": false
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

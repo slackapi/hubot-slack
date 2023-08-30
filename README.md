@@ -9,13 +9,41 @@ But I'm going to maintain this fork as I continue to evolve Hubot. So feel free 
 ## Installation
 
 ```sh
-npm i @hubot-friends/hubot-slack
+npm i @hubot-friends/hubot-slack hubot
 ```
 
 This is a [Hubot](http://hubot.github.com/) adapter to use with [Slack](https://slack.com).
 
 Comprehensive documentation [is available](https://slackapi.github.io/hubot-slack).
 
+## Adapter Configuration
+
+- Create (or use an existing one) a [Slack Workspace](https://slack.com/get-started#/createnew)
+- Create a [Slack App](https://api.slack.com/apps)
+- Create an App-Level Token and give it `connections:write` scope. This will be the `HUBOT_SLACK_APP_TOKEN` environment variable. The adapter will use this token to authenticate via Slacks Socket Mode (WebSockets)
+- Create a [Bot Token](https://api.slack.com/authentication/token-types#bot). This will be the `HUBOT_SLACK_BOT_TOKEN` environment variable. The adapter will use this token to POST messages to Slack's HTTP API.
+- Make sure to give the Slack App the scope permissions noted below in "Notes on using SocketMode".
+
+## Startup
+
+An example command to start the app on MacOS is the following. Assuming there is a file called `.env` with the following environment variables set:
+
+```sh
+HUBOT_SLACK_APP_TOKEN=xapp-1-...
+HUBOT_SLACK_BOT_TOKEN=xoxb-...
+```
+
+Set the environment variables to the values you created for your Slack Apps App-Level Token (`HUBOT_SLACK_APP_TOKEN`) and Bot Token (`HUBOT_SLACK_BOT_TOKEN`).
+
+```sh
+env $(cat .env | grep -v \"#\" | xargs -0) PORT=8080 hubot -a @hubot-friends/hubot-slack -n mybot
+```
+
+Another way to start the app in MacOS or Linux is:
+
+```sh
+HUBOT_SLACK_APP_TOKEN=xapp-1... HUBOT_SLACK_BOT_TOKEN=xoxb-... PORT=8080 hubot -a @hubot-friends/hubot-slack -n mybot
+```
 
 # Notes on using SocketMode
 
