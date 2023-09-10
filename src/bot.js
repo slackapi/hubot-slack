@@ -379,7 +379,11 @@ class SlackBot extends Adapter {
       const botName = this.self.user;
       const text = event.text ?? event.message?.text ?? '';
       if(text.includes(`<@${botId}>`)) {
+        if(this.robot.alias) {
+          return text.replace(`<@${botId}>`, `${this.robot.alias}`);
+        } else {
           return text.replace(`<@${botId}>`, `@${botName}`);
+        }
       }
       return text;
   }

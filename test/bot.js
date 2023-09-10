@@ -1,6 +1,7 @@
 const {describe, it, beforeEach, before, after} = require('node:test');
 const assert = require('node:assert/strict');
 const Module = require('module');
+const SlackBot = require('../src/bot.js');
 
 const hookModuleToReturnMockFromRequire = (module, mock) => {
   const originalRequire = Module.prototype.require;
@@ -347,6 +348,18 @@ describe('Handling incoming messages', function() {
       done();
     };
     slackbot.eventHandler({body: { event: { text: 'foo', type: 'message', user: stubs.user.id, channel_type: 'im' }}, event: { text: 'foo', type: 'message', user: stubs.user.id, channel_type: 'im', channel:stubs.DM.id }});
+  });
+
+  it('Should preprend our alias to a name-lacking message addressed to us in a DM', function(t, done) {
+   const bot = new SlackBot({alias: '!', logger: {info(){}, debug(){}}}, {appToken: ''});
+   bot.self = {
+    user_id: '1234'
+   }
+   const text = bot.replaceBotIdWithName({
+      text: '<@1234> foo',
+   })
+    assert.deepEqual(text, '! foo');
+    done()
   });
 
   it('Should NOT prepend our name to a name-containing message addressed to us in a DM', function(t, done) {
