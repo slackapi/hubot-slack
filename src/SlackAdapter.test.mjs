@@ -237,57 +237,60 @@ describe('Listen to messages', async () => {
                 adapter.emit('authenticated', authenticatedPerson(), null)
             }
         })
-        robot.run()
+        await robot.run()
     })
     afterEach(async () => {
         robot.shutdown()
     })
-    it('should listen to a message', (t, done) => {
+    it('should listen to a message', async () => {
+        let wasCalled = false
         robot.listen(message => {
             if(message instanceof TextMessage) {
                 assert.deepEqual(message.text, 'Hello world')
-                done()
+                wasCalled = true
                 return true
             }
             assert.fail('expect a message')
         },
         {id: 'message listener'},
-        res => {
-            res.send('hi')
+        async res => {
+            await res.send('hi')
             assert.ok(true, 'should be called for message')
         })
-        robot.adapter.mapToHubotMessage(buildSlackMessage({
+        const message = await robot.adapter.mapToHubotMessage(buildSlackMessage({
             "type": "message",
             "channel": "C123ABC456",
             "user": "U123ABC456",
             "text": "Hello world",
             "ts": "1355517523.000005"
-        }).event).then(message => {
-            robot.receive(message)
-        }).catch(e => console.error)
+        }).event)
+        await robot.receive(message)
+        assert.deepEqual(wasCalled, true)
     })
-    it('should hear a message, which uses regex for matching', (t, done) => {
+    it('should hear a message, which uses regex for matching', async () => {
+        let wasCalled = false
         robot.hear(/hello/i, {id: 'message listener'},
             context => {
                 assert.deepEqual(context.message.text, 'hello')
-                done()
+                wasCalled = true
                 return true
             }
         )
-        robot.adapter.mapToHubotMessage(buildSlackMessage({
+        const message = await robot.adapter.mapToHubotMessage(buildSlackMessage({
             "type": "message",
             "channel": "C123ABC456",
             "user": "U123ABC456",
             "text": `hello`,
             "ts": "1355517523.000005"
-        }).event).then(message => {
-            robot.receive(message)
-        }).catch(e =>console.error)
+        }).event)
+        await robot.receive(message)
+        assert.deepEqual(wasCalled, true)
     })
 })
 
 describe('Send messages back', async () => {
-    it('should reply to a message that was sent to Hubot', (t, done) => {
+    it('should reply to a message that was sent to Hubot', async () => {
+        let wasCalled = false
         const robot = makeRobot({
             async start(adapter) {
                 adapter.emit('authenticated', authenticatedPerson(), null)
@@ -297,8 +300,6 @@ describe('Send messages back', async () => {
                 async postMessage({ channel, text }) {
                     assert.deepEqual(channel, 'C123ABC456')
                     assert.deepEqual(text, 'hi')
-                    robot.shutdown()
-                    done()
                 }
             },
             users: {
@@ -317,26 +318,24 @@ describe('Send messages back', async () => {
                 }
             }
         })
-        robot.run()
-
         robot.respond(/hello/i, {id: 'message responder'},
             context => {
                 assert.deepEqual(context.message.text, '@hubot hello')
                 context.reply('hi')
-                done()
                 robot.shutdown()
+                wasCalled = true
             })
-        robot.adapter.on('connected', () => {
-            robot.adapter.mapToHubotMessage(buildSlackMessage({
-                "type": "message",
-                "channel": "C123ABC456",
-                "user": "U123ABC456",
-                "text": `<@${BOT_ID}> hello`,
-                "ts": "1355517523.000005"
-            }).event).then(message => {
-                message.text = robot.adapter.replaceBotIdWithName(message)
-                robot.receive(message)
-            }).catch(e => console.error)
-        })
+        await robot.run()
+        const message = await robot.adapter.mapToHubotMessage(buildSlackMessage({
+            "type": "message",
+            "channel": "C123ABC456",
+            "user": "U123ABC456",
+            "text": `<@${BOT_ID}> hello`,
+            "ts": "1355517523.000005"
+        }).event)
+        message.text = robot.adapter.replaceBotIdWithName(message)
+        await robot.receive(message)
+        assert.deepEqual(wasCalled, true)
+        robot.shutdown()
     })
 })

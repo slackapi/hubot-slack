@@ -264,15 +264,12 @@ class SlackAdapter extends Adapter {
         this.robot.logger.info(`Replying to message in ${envelope.room}`)
         return this.send(envelope, ...strings)
     }
-    run() {
-        this.#webSocketClient.start().then(async result => {
-            // const channelResponse = await this.#webClient.conversations.list()
-            // console.log('channelResponse', channelResponse)
-            const response = await this.#webClient.auth.test()
-            this.robot.self = new AuthTestResponse(response).user
-            this.robot.logger.info('Connected to Slack after starting socket client.')
-            this.emit('connected')
-        }).catch(e => this.robot.logger.error(e))
+    async run() {
+        await this.#webSocketClient.start()
+        const response = await this.#webClient.auth.test()
+        this.robot.self = new AuthTestResponse(response).user
+        this.robot.logger.info('Connected to Slack after starting socket client.')
+        this.emit('connected')
     }
 }
 
