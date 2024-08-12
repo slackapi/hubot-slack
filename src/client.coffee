@@ -319,7 +319,9 @@ class SlackClient
 
     # remove the existing representation and write the new representation to the brain
     delete @robot.brain.data.users[user.id]
-    @robot.brain.userForId user.id, newUser
+
+    unless user.is_bot or user.deleted
+      @robot.brain.userForId user.id, newUser
 
   ###*
   # Processes events to fetch additional data or rearrange the shape of an event before handing off to the eventHandler
